@@ -1,9 +1,18 @@
+export function tituloPunto(numero) {
+  if (!Number.isInteger(numero)) return '';
+  return `PLE/${String(numero).padStart(3, '0')}`;
+}
+
+export function contarPuntos(puntos) {
+  return puntos.filter((p) => !p.encabezado).length;
+}
+
 export function puntosOrdenados(puntos, secciones) {
-  return secciones.flatMap((seccion) =>
-    puntos
-      .filter((p) => p.seccion === seccion.id)
-      .map((punto, i) => ({ punto, seccion, titulo: `${seccion.nombre} ${i + 1}` }))
-  );
+  return puntos
+    .filter((p) => !p.encabezado)
+    .sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0))
+    .map((punto) => ({ punto, seccion: secciones.find((s) => s.id === punto.seccion), titulo: tituloPunto(punto.numero) }))
+    .filter((item) => item.seccion);
 }
 
 export function puntoActivo(items, id) {

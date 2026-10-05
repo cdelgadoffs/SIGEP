@@ -152,6 +152,82 @@ export function calcularEstados(sesiones) {
   });
 }
 
+const MESES_LARGOS = [
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+];
+
+function fechaLarga(id) {
+  const d = new Date(id + 'T00:00:00');
+  return `${d.getDate()} de ${MESES_LARGOS[d.getMonth()]} de ${d.getFullYear()}`;
+}
+
+export function esPuntoFijo(id) {
+  return typeof id === 'string' && id.startsWith('fijo:');
+}
+
+export function analizarPuntoFijo(id) {
+  const [, sesionId, clave] = id.split(':');
+  return { sesionId, clave };
+}
+
+export function exigirNoFijo(id) {
+  if (esPuntoFijo(id)) {
+    throw new ApiError('VALIDACION', 'Los puntos fijos se generan automáticamente y no se pueden modificar.');
+  }
+}
+
+function cumpleCondicion(requiere, anterior) {
+  if (!requiere) return true;
+  if (requiere === 'sesion-anterior-celebrada') return !!anterior && !!anterior.celebrada;
+  return false;
+}
+
+export function generarPuntosFijos(sesion, sesiones, catalogoFijos) {
+  const anterior = sesiones.filter((s) => s.id < sesion.id).sort((a, b) => (a.id < b.id ? -1 : 1)).pop();
+  const fecha = anterior ? fechaLarga(anterior.id) : '';
+  return (catalogoFijos || [])
+    .map((f, i) => ({ f, i }))
+    .filter(({ f }) => cumpleCondicion(f.requiere, anterior))
+    .map(({ f, i }) => ({
+      id: `fijo:${sesion.id}:${f.id}`,
+      sesionId: sesion.id,
+      seccion: f.seccion,
+      remitente: f.remitente,
+      contenido: f.texto.replaceAll('{tipo}', 'ordinaria').replaceAll('{fecha}', fecha),
+      acuerdo: '',
+      confidencial: false,
+      archivos: [],
+      orden: i,
+      tratado: !!sesion.fijosTratados?.[f.id],
+      fijo: true,
+      encabezado: !!f.encabezado,
+      version: 1,
+      creadoPor: 'sistema',
+      creadoEn: sesion.creadaEn ?? '',
+      modificadoEn: sesion.creadaEn ?? '',
+    }));
+}
+
+export function ordenarPuntosDocumento(puntos, secciones) {
+  const posicion = new Map(secciones.map((s, i) => [s.id, i]));
+  const rango = (p) => (posicion.has(p.seccion) ? posicion.get(p.seccion) : secciones.length);
+  return [...puntos]
+    .sort((a, b) => {
+      if (rango(a) !== rango(b)) return rango(a) - rango(b);
+      if (!!a.fijo !== !!b.fijo) return a.fijo ? -1 : 1;
+      if (a.orden !== b.orden) return a.orden - b.orden;
+      if (a.creadoEn !== b.creadoEn) return a.creadoEn < b.creadoEn ? -1 : 1;
+      return a.id < b.id ? -1 : 1;
+    })
+    .map((p, i) => ({ ...p, numero: i + 1 }));
+}
+
+export function ocultarConfidencial(p) {
+  if (!p.confidencial) return p;
+  return { ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [] };
+}
+
 export function camposPunto(datos) {
   const limpio = {};
   CAMPOS_PUNTO.forEach((c) => {

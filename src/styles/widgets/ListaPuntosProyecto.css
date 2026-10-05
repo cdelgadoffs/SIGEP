@@ -148,3 +148,18 @@
 .widget-lista-puntos-item-seleccionado .widget-lista-puntos-header {
   background: #e3ecfd;
 }
+
+.widget-lista-puntos-encabezado {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 2px 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #444;
+  letter-spacing: 0.02em;
+}
+.widget-lista-puntos-encabezado-codigo {
+  color: #888;
+  font-weight: 600;
+}

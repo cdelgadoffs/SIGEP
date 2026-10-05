@@ -7,7 +7,8 @@ export default function BotonMarcarTodos() {
   const { PUNTOS, sesionFinalizada, marcarTodosPuntos } = useProyecto();
   const [guardando, setGuardando] = useState(false);
   const [errorAccion, setErrorAccion] = useState(null);
-  const todosMarcados = PUNTOS.length > 0 && PUNTOS.every((p) => p.tratado);
+  const marcables = PUNTOS.filter((p) => !p.encabezado);
+  const todosMarcados = marcables.length > 0 && marcables.every((p) => p.tratado);
 
   async function alternar() {
     setGuardando(true);
@@ -25,7 +26,7 @@ export default function BotonMarcarTodos() {
       <BotonIcono
         icono={todosMarcados ? 'ri-checkbox-multiple-blank-line' : 'ri-checkbox-multiple-line'}
         ariaLabel={todosMarcados ? 'Desmarcar todos' : 'Marcar todos'}
-        disabled={PUNTOS.length === 0 || sesionFinalizada || guardando}
+        disabled={marcables.length === 0 || sesionFinalizada || guardando}
         onClick={alternar}
       />
       <Modal abierto={!!errorAccion} titulo="No se pudo actualizar" onCerrar={() => setErrorAccion(null)}>

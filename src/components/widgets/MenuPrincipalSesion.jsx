@@ -2,6 +2,7 @@ import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
 import SubMenuDD from './SubMenuDD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
+import { contarPuntos } from '../../utils/puntos.js';
 
 const VISTAS_MENU_PRINCIPAL = [
   { id: 'inicio', label: 'Inicio' },
@@ -22,7 +23,7 @@ export default function MenuPrincipalSesion() {
 
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
-    badge: PUNTOS.filter((p) => p.seccion === s.id).length,
+    badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado).length,
   }));
 
   const avisoSecciones = seccionesConBadge.length > 0
@@ -57,7 +58,7 @@ export default function MenuPrincipalSesion() {
           <div key={v.id}>
             <BotonSeleccionableMenu
               activo={activo}
-              badge={v.mostrarTotalPuntos ? PUNTOS.length : undefined}
+              badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS) : undefined}
               expandible={v.expandible}
               expandido={expandido}
               onClick={() => seleccionarVista(v)}

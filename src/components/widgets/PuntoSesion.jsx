@@ -54,7 +54,7 @@ export default function PuntoSesion() {
           <div className="widget-punto-sesion-columna widget-punto-sesion-principal">
             <span className="widget-punto-sesion-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</span>
             <div className="widget-punto-sesion-contenido">{punto.contenido || 'Sin contenido'}</div>
-            {!esInforme && (
+            {!esInforme && !punto.fijo && (
               <div className="widget-punto-sesion-bloque-acuerdo">
                 <span className="widget-punto-sesion-label">Acuerdo</span>
                 <div className="widget-punto-sesion-acuerdo">{punto.acuerdo || 'Sin acuerdo'}</div>
@@ -87,7 +87,7 @@ export default function PuntoSesion() {
             etiquetaAnterior="Punto anterior"
             etiquetaSiguiente="Punto siguiente"
           />
-          {!sesionFinalizada && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
+          {!sesionFinalizada && !punto.fijo && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
         </div>
       </Card>
     </div>
