@@ -75,7 +75,10 @@ Un estándar con excepciones deja de ser verificable: la regla manda sobre la co
 
 ## 5. `pages/`
 
-- Monta instancias de `base`/`widgets` + contenido estático trivial. **No llama a contexto para construir contenido de negocio**; sí puede leer contexto para pasar valores simples como props a un `base`.
+- Monta instancias de `base`/`widgets` + contenido estático trivial. **No llama a contexto para construir contenido de negocio**; el contexto se conecta a los **widgets** (ellos lo llaman por sí mismos), nunca a la page. Qué sí y qué no hace una page con el contexto:
+  - **Sí lee `UIContext`** para cablear los `base` que monta (`abierto`, `onCerrar`, posiciones…).
+  - **Sí lee valores simples** de un contexto de negocio para pasarlos como props a un `base` (ej. el título de la sesión, un conteo).
+  - **No** recorre, filtra ni transforma datos de negocio, no arma tarjetas ni listas, y no llama acciones de negocio. Si necesitara procesar datos para mostrarlos, esa parte es un widget. Los textos de presentación derivados de un dato crudo se arman en la page con una función de `utils/`; el contexto solo expone el dato.
 - **Quien monta un `base` es quien wirea sus props estructurales** (`abierto`, `onCerrar`…). Un widget puede además disparar una acción de negocio sobre ese mismo estado compartido: son dos responsabilidades independientes.
 - **"Sal al gusto":** un ajuste de estilo presentacional y de un solo uso sobre un componente reutilizable se aplica como `style` inline en un wrapper dentro de la page — nunca se modifica el CSS del componente compartido ni se crea un CSS nuevo para una sola declaración.
 - *Excepción documentable:* una carpeta de "widgets de panel" dentro de `pages/` puede existir si un switcher genérico necesita referenciarlos con una forma específica (`export default` = contenido, `export function BotonX` = acción de header). Es una excepción acotada a esa carpeta, no una redefinición de "page".
@@ -187,4 +190,39 @@ Procedimiento para reestructurar un proyecto que no sigue este patrón:
 6. **Estado de UI compartido a `UIContext`**, un estado por responsabilidad.
 7. **Escribir el contrato** antes de implementar `LocalAPI`.
 8. **Verificar tras cada paso** con el flujo de la sección 12; migrar por funcionalidad completa, no por capa entera, para que la app siga funcionando en cada commit.
-9. **Traducir, no copiar:** cuando se toma algo de un proyecto anterior como referencia visual o de comportamiento, se identifica qué parte es átomo (`base`), qué parte combina o toca negocio (`widget`) y qué parte es dato/acción (`context`). Nunca se copia su estructura de archivos tal cual.
+9. **Migrar por etapas.** Etapa 1: solo `components/` (clasificar `base`/`widgets`, un CSS por componente, armar las pages; los widgets llaman a los contextos que ya existen, sin cambiarlos). Etapa 2: `context/`, `services/` y `hooks/`. Lo que en la etapa 1 **no puede cumplir** el estándar (I/O directo en un componente, un hook que usa contexto) se registra como **deuda con nombre** en el plan de migración y **no se mueve a `widgets/` hasta limpiarse**: nunca se certifica como widget algo que rompe una regla "provisionalmente".
+10. **Traducir, no copiar:** cuando se toma algo de un proyecto anterior como referencia visual o de comportamiento, se identifica qué parte es átomo (`base`), qué parte combina o toca negocio (`widget`) y qué parte es dato/acción (`context`). Nunca se copia su estructura de archivos tal cual.
+
+---
+
+## 14. Pendientes del estándar (por decidir)
+
+Huecos que un proyecto con identidad, documentos e integraciones va a tocar. Cada uno lleva alternativas y una recomendación; **se decide antes de migrar la parte que lo necesita**, y entonces se pasa a la sección que corresponda.
+
+### 14.1 Identidad, roles y permisos
+- **A.** `AuthContext` como puente hacia un servicio de identidad (`services/Identidad.js`, que envuelve a MSAL u otro); el rol sale del token y los permisos finos los decide el API; el cliente recibe de `AuthContext` una función `puede(accion)` solo para UX.
+- **B.** Un hook puro en `hooks/` (`usePermisos(rol)`) que recibe el rol por parámetro y devuelve los permisos de UX. Cumple la pureza, pero la tabla de permisos queda duplicada en el cliente.
+- **Recomendación: A.** Un hook que lee contexto no es puro y no va en `hooks/`; y los permisos son del API.
+
+### 14.2 Generación de documentos (Word, PDF, zip)
+- **A.** Constructores puros en `utils/` (datos entran, `Blob` sale; sin React, sin estado, sin I/O); un widget los invoca con datos del contexto y descarga el resultado.
+- **B.** Un servicio del cliente que llama el contexto (`services/Documentos.js`).
+- **C.** El API genera el documento (operación del contrato) y el cliente solo lo descarga.
+- **Recomendación: A** para documentos que se arman con datos que el cliente ya tiene; **C** si el documento es oficial o necesita datos que solo el servidor conoce.
+
+### 14.3 Integraciones externas (correo, almacenamiento en la nube)
+- **A.** Siempre detrás del API: el backend habla con el tercero y el cliente solo ve operaciones del contrato; `LocalAPI` las simula.
+- **B.** El cliente llama al tercero directamente desde un servicio.
+- **Recomendación: A.** Si no, el intercambio `LocalAPI`/`ServerConnection` deja de ser total y aparecen secretos y permisos en el cliente. La identidad es la única excepción natural (14.1).
+
+### 14.4 Pruebas automatizadas
+- **A.** Pruebas de contrato: la misma batería contra `LocalAPI` y, cuando exista, `ServerConnection`.
+- **B.** Recorridos de Playwright por page como humo.
+- **C.** Ambas.
+- **Recomendación: C**, empezando por el contrato (es lo que garantiza que el backend real cumpla lo que el prototipo prometió).
+
+### 14.5 Convención de lint para contextos
+`react-refresh/only-export-components` marca los archivos que exportan el proveedor y su hook juntos.
+- **A.** Separar en dos archivos (objeto de contexto y proveedor aparte del hook).
+- **B.** Aceptar la excepción de la regla solo en `src/context/**` (afecta solo al refresco en caliente de desarrollo).
+- **Recomendación: B**: no cambia la estructura y el efecto es solo de desarrollo.
