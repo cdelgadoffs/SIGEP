@@ -2,6 +2,8 @@ import Topbar from '../components/widgets/Topbar.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar2 from '../components/base/Sidebar2.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
+import Sidebar6 from '../components/base/Sidebar6.jsx';
+import ListaAsuetos from '../components/widgets/ListaAsuetos.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import BotonMarcarTodos from '../components/widgets/BotonMarcarTodos.jsx';
 import ListaPuntosSesion from '../components/widgets/ListaPuntosSesion.jsx';
@@ -10,7 +12,7 @@ import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR2 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
-import { encabezadoSesion } from '../utils/sesiones.js';
+import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
 
 const ANCHO_SIDEBAR1_SESION = 340;
 
@@ -19,9 +21,10 @@ export default function Sesion() {
     izquierdaSidebar1,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
+    sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada, PUNTOS } = useProyecto();
+  const { sesionSeleccionada, CALENDARIO, PUNTOS } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const izquierdaSidebar2 = izquierdaSidebar1 + ANCHO_SIDEBAR1_SESION;
   const panelIzquierda = izquierdaSidebar2 + ANCHO_SIDEBAR2;
@@ -57,6 +60,15 @@ export default function Sesion() {
       >
         <MenuPanelControl />
       </Sidebar5>
+      <Sidebar6
+        abierto={sidebar6Abierto}
+        izquierda={izquierdaSidebar6}
+        titulo="Días de asueto"
+        subtitulo={subtituloAsuetos(CALENDARIO)}
+        onCerrar={() => setSidebar6Abierto(false)}
+      >
+        <ListaAsuetos />
+      </Sidebar6>
       <PanelPrincipal izquierda={panelIzquierda}>
         <PuntoSesion />
       </PanelPrincipal>

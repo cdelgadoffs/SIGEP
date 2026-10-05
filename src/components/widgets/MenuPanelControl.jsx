@@ -1,10 +1,10 @@
 import BotonSeleccionablePanel from '../base/BotonSeleccionablePanel.jsx';
-import CalendarizacionMensual, { BotonNuevoCalendarioMensual } from '../../pages/panelcontrol/CalendarizacionMensual.jsx';
+import CalendarizacionAnual, { BotonNuevoCalendarioAnual } from '../../pages/panelcontrol/CalendarizacionAnual.jsx';
 import Quorum from '../../pages/panelcontrol/Quorum.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 
 const ITEMS_PANEL_CONTROL = [
-  { id: 'calendarizacionMensual', label: 'Calendarización mensual', Panel: CalendarizacionMensual, AccionHeader: BotonNuevoCalendarioMensual },
+  { id: 'calendarizacionAnual', label: 'Calendarización anual', Panel: CalendarizacionAnual, AccionHeader: BotonNuevoCalendarioAnual },
   { id: 'quorum', label: 'Quorum', Panel: Quorum },
 ];
 

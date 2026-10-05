@@ -1,28 +1,13 @@
 import { CATALOGOS_SEMILLA } from './semilla.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 5;
+const DB_VERSION = 7;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
 export const STORE_CATALOGOS = 'catalogos';
 export const STORE_ARCHIVOS = 'archivos';
-
-function asignarOrden(store) {
-  store.getAll().onsuccess = (evento) => {
-    const grupos = new Map();
-    evento.target.result.forEach((p) => {
-      const clave = `${p.sesionId}|${p.seccion}`;
-      if (!grupos.has(clave)) grupos.set(clave, []);
-      grupos.get(clave).push(p);
-    });
-    grupos.forEach((lista) => {
-      lista
-        .sort((a, b) => (a.creadoEn === b.creadoEn ? (a.id < b.id ? -1 : 1) : (a.creadoEn < b.creadoEn ? -1 : 1)))
-        .forEach((p, i) => store.put({ ...p, orden: i + 1 }));
-    });
-  };
-}
+export const STORE_CALENDARIOS = 'calendarios';
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -38,11 +23,19 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_ARCHIVOS)) {
         db.createObjectStore(STORE_ARCHIVOS, { keyPath: 'id' });
       }
+      if (!db.objectStoreNames.contains(STORE_CALENDARIOS)) {
+        db.createObjectStore(STORE_CALENDARIOS, { keyPath: 'anio' });
+      }
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
       }
-      if (evento.oldVersion < 5) asignarOrden(req.transaction.objectStore(STORE_PUNTOS));
+      if (evento.oldVersion < 6) {
+        const tx = req.transaction;
+        tx.objectStore(STORE_CATALOGOS).put({ nombre: 'secciones', items: CATALOGOS_SEMILLA.secciones });
+        tx.objectStore(STORE_PUNTOS).clear();
+        tx.objectStore(STORE_ARCHIVOS).clear();
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

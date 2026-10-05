@@ -39,12 +39,103 @@ export function validarFechasISO(fechas) {
   });
 }
 
+function fechaValida(f) {
+  return typeof f === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f) && fechaISO(new Date(f + 'T00:00:00')) === f;
+}
+
+function sumarDias(f, dias) {
+  const d = new Date(f + 'T00:00:00');
+  d.setDate(d.getDate() + dias);
+  return fechaISO(d);
+}
+
+function diaDeSemana(f) {
+  return new Date(f + 'T00:00:00').getDay();
+}
+
+export function enVacaciones(vacaciones, f) {
+  return vacaciones.some((v) => f >= v.inicio && f <= v.fin);
+}
+
+function validarAnio(anio) {
+  if (!Number.isInteger(anio) || anio < 2000 || anio > 2100) {
+    throw new ApiError('VALIDACION', 'El año del calendario es inválido.');
+  }
+}
+
+export function validarCalendario(anio, datos) {
+  validarAnio(anio);
+  if (!datos || typeof datos !== 'object') throw new ApiError('VALIDACION', 'Datos de calendario inválidos.');
+  const { diaSemana } = datos;
+  if (!Number.isInteger(diaSemana) || diaSemana < 1 || diaSemana > 5) {
+    throw new ApiError('VALIDACION', 'El día de sesión debe ser de lunes a viernes.');
+  }
+  const vacaciones = datos.vacaciones ?? [];
+  if (!Array.isArray(vacaciones)) throw new ApiError('VALIDACION', 'Las vacaciones deben ser una lista.');
+  vacaciones.forEach((v) => {
+    if (!v || !fechaValida(v.inicio) || !fechaValida(v.fin)) {
+      throw new ApiError('VALIDACION', 'Periodo vacacional con fechas inválidas.');
+    }
+    if (v.inicio > v.fin) throw new ApiError('VALIDACION', 'El inicio de las vacaciones debe ser anterior a su fin.');
+  });
+  return {
+    anio,
+    diaSemana,
+    vacaciones: vacaciones.map((v) => ({ inicio: v.inicio, fin: v.fin })),
+  };
+}
+
+export function validarAsueto(anio, calendario, asueto) {
+  validarAnio(anio);
+  if (!asueto || !fechaValida(asueto.fecha) || !fechaValida(asueto.destino)) {
+    throw new ApiError('VALIDACION', 'Asueto con fechas inválidas.');
+  }
+  const { fecha, destino } = asueto;
+  if (!fecha.startsWith(`${anio}-`)) throw new ApiError('VALIDACION', `El asueto del ${fecha} no es del año ${anio}.`);
+  if (diaDeSemana(fecha) !== calendario.diaSemana) {
+    throw new ApiError('VALIDACION', `El ${fecha} no es día de sesión ordinaria; no requiere reprogramación.`);
+  }
+  if (destino !== sumarDias(fecha, -1) && destino !== sumarDias(fecha, 1)) {
+    throw new ApiError('VALIDACION', 'Un asueto solo puede reprogramarse al día anterior o al siguiente.');
+  }
+  if (enVacaciones(calendario.vacaciones, destino)) {
+    throw new ApiError('VALIDACION', 'El día de destino cae en un periodo vacacional.');
+  }
+  if (calendario.asuetos.some((a) => a.fecha === fecha)) {
+    throw new ApiError('VALIDACION', `Ya existe un asueto registrado el ${fecha}.`);
+  }
+  return { fecha, destino };
+}
+
+export function generarFechasAnuales({ anio, diaSemana, vacaciones, asuetos }) {
+  const d = new Date(anio, 0, 1);
+  let diferencia = diaSemana - d.getDay();
+  if (diferencia < 0) diferencia += 7;
+  d.setDate(d.getDate() + diferencia);
+  const fechas = [];
+  while (d.getFullYear() === anio) {
+    const f = fechaISO(d);
+    if (!enVacaciones(vacaciones, f)) {
+      const destino = asuetos.find((a) => a.fecha === f)?.destino ?? f;
+      if (!enVacaciones(vacaciones, destino) && !fechas.includes(destino)) fechas.push(destino);
+    }
+    d.setDate(d.getDate() + 7);
+  }
+  return fechas.sort();
+}
+
 export function calcularEstados(sesiones) {
   const hoyISO = fechaISO(new Date());
   const ordenadas = [...sesiones].sort((a, b) => (a.id < b.id ? -1 : 1));
   const proxima = ordenadas.find((s) => s.id >= hoyISO && !s.celebrada);
+  let anioActual = null;
   let consecutivo = 0;
   return ordenadas.map((s) => {
+    const anio = s.id.slice(0, 4);
+    if (anio !== anioActual) {
+      anioActual = anio;
+      consecutivo = 0;
+    }
     let estado = 'pendiente';
     if (s.celebrada) estado = 'celebrada';
     else if (proxima && s.id === proxima.id) estado = 'proxima';
@@ -52,7 +143,7 @@ export function calcularEstados(sesiones) {
     if (estado !== 'no-celebrada') consecutivo += 1;
     return {
       id: s.id,
-      numeroSesion: consecutivo,
+      numeroSesion: estado === 'no-celebrada' ? null : consecutivo,
       estado,
       celebrada: !!s.celebrada,
       celebradaEn: s.celebradaEn || null,

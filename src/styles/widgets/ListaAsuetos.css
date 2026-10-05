@@ -1,0 +1,27 @@
+.widget-lista-asuetos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.widget-lista-asuetos .base-card-s {
+  border-left-color: #ffc107;
+  padding: 9px 12px;
+  gap: 3px;
+  cursor: default;
+}
+.widget-lista-asuetos .base-card-s:hover {
+  transform: none;
+  box-shadow: none;
+}
+.widget-lista-asuetos-vacio {
+  font-size: 12px;
+  color: #888;
+  padding: 12px;
+  text-align: center;
+  border: 1px dashed #3a3a3a;
+  border-radius: 4px;
+}
+.widget-lista-asuetos-error {
+  font-size: 12px;
+  color: #e57373;
+}

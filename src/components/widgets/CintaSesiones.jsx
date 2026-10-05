@@ -4,13 +4,8 @@ import ListaExpandible from '../base/ListaExpandible.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { MESES } from '../../utils/meses.js';
+import { etiquetaMes } from '../../utils/fechas.js';
 import '../../styles/widgets/CintaSesiones.css';
-
-function etiquetaMes(iso) {
-  const [anio, mes] = iso.split('-');
-  return `${MESES[Number(mes) - 1]} ${anio}`;
-}
 
 export default function CintaSesiones({ textoVacio }) {
   const { FECHAS_SESIONES: fechas, sesionActivaFecha, cargarSesion, cargando, error } = useProyecto();

@@ -18,7 +18,7 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | Campo | Tipo | Notas |
 |---|---|---|
 | `id` | string | Fecha `YYYY-MM-DD`. Es la identidad natural: **una sesión por fecha**. |
-| `numeroSesion` | int | Derivado. Consecutivo oficial. Avanza en `celebrada` y `proxima`; una `no-celebrada` no consume número. |
+| `numeroSesion` | int \| null | Derivado. Consecutivo oficial **dentro de su año** (el de `id`): reinicia en 1 cada año. Avanza en `celebrada`, `proxima` y `pendiente`; una `no-celebrada` no tiene número (`null`) ni consume uno. |
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
 | `celebradaEn` | string \| null | Timestamp. |
@@ -26,6 +26,19 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 
 Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas por `id`):
 `celebrada` si `celebrada`; `proxima` si es la primera con `id >= hoy` y no celebrada; `no-celebrada` si `id < hoy` y no celebrada; `pendiente` en cualquier otro caso.
+
+### Calendario
+Un calendario por año: es el dato a partir del cual se generan las sesiones ordinarias.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `anio` | int | Identidad natural: **un calendario por año**. |
+| `diaSemana` | int | 1 (lunes) … 5 (viernes): día de las sesiones ordinarias. |
+| `vacaciones` | `{ inicio, fin }[]` | Periodos `YYYY-MM-DD`, con `inicio <= fin`. |
+| `asuetos` | `{ fecha, destino }[]` | `fecha`: día de sesión del año que se reprograma (debe caer en `diaSemana`); `destino`: el día anterior o el siguiente (`fecha ± 1`). Una entrada por `fecha`. Se administran **solo** con `agregarAsueto` y `quitarAsueto`; no se mandan al generar. |
+| `version`, `modificadoEn`, `modificadoPor` | | Control de versiones y autoría, del servidor. |
+
+Generación de fechas (regla del servidor): desde el primer `diaSemana` del año, una fecha cada 7 días hasta terminar el año. Una fecha dentro de unas vacaciones se omite; si tiene asueto se usa su `destino`, que a su vez se omite si cae en vacaciones.
 
 ### Punto
 | Campo | Tipo | Notas |
@@ -68,11 +81,13 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 
 Los catálogos de dominio son **datos, no código**: el API ofrece un mecanismo genérico y cada proyecto carga sus propias filas (semilla). El API valida contra lo que haya cargado y aplica los atributos sin saber qué significan. Así el motor es reutilizable entre proyectos.
 
+El **orden** de cada catálogo es significativo: es el orden en que el cliente los presenta.
+
 `listarCatalogos()` devuelve `{ [nombreCatalogo]: Item[] }`, donde cada `Item` es `{ id, nombre, ...atributos }`. En este proyecto:
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `requiereAcuerdo: bool` | `informes` (false), `dictamenes`, `acuerdos`, `asuntos generales` (true) |
+| `secciones` | `requiereAcuerdo: bool` | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
 | `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
 
 Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interfaz (menú, textos, íconos).
@@ -89,6 +104,23 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `editarPunto(id, version, cambios)` | id, `version` que el cliente tiene, campos a cambiar | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
 | `eliminarPunto(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
+
+### Operaciones de calendario
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `obtenerCalendario(anio)` | año (int) | `Calendario` \| `null` | `VALIDACION` |
+| `generarCalendarioAnual(anio, datos, sobrescribir)` | año, `{ diaSemana, vacaciones }`, bool | `{ calendario, sesiones }` (el calendario guardado y la lista completa de sesiones con derivados) | `NO_AUTORIZADO`, `VALIDACION`, `CALENDARIO_EXISTE` |
+| `agregarAsueto(anio, asueto)` | año, `{ fecha, destino }` | `{ calendario, sesiones }` | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `SESION_CELEBRADA` |
+| `quitarAsueto(anio, fecha)` | año, fecha del asueto | `{ calendario, sesiones }` | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `SESION_CELEBRADA` |
+
+- `generarCalendarioAnual` guarda el calendario del año y crea las sesiones que falten (las existentes se conservan con su `celebrada`). Es **atómica** y **idempotente**.
+- Si ya existe un calendario de ese año y `sobrescribir` no es `true` → `CALENDARIO_EXISTE`.
+- Con `sobrescribir: true` se eliminan las sesiones **de ese año** que ya no corresponden a las fechas generadas, **siempre que no estén celebradas y no tengan puntos**; las demás se conservan.
+- Al generar se aplican también los `asuetos` que el calendario ya tenía, salvo que cambie `diaSemana` (entonces se descartan, porque dependen del día).
+- Validación (`VALIDACION`): `anio` entero entre 2000 y 2100; `diaSemana` entero de 1 a 5; cada vacación con fechas válidas e `inicio <= fin`.
+- **Asuetos sin regenerar el calendario.** `agregarAsueto` exige que el año ya tenga calendario (`NO_ENCONTRADO` si no). Valida que `fecha` sea del año y caiga en `diaSemana`, que `destino` sea `fecha ± 1` y no caiga en vacaciones, y que no haya ya un asueto en esa `fecha`. La sesión de `fecha` debe existir, no estar celebrada (`SESION_CELEBRADA`) ni tener puntos (`VALIDACION`): se elimina y se crea la del `destino` (si no existía). `quitarAsueto` revierte: elimina la sesión del `destino` (que no debe estar celebrada ni tener puntos) y recrea la de `fecha` si no cae en vacaciones. Ambas son atómicas y suben la `version` del calendario.
+- `crearSesiones(fechas)` sigue en el contrato (para sesiones sueltas, como las extraordinarias), pero el cliente no la usa hoy.
 
 ### Operaciones de archivos, de orden y de celebración
 
@@ -125,6 +157,7 @@ Notas de comportamiento:
 | `CONFLICTO` | `version` desactualizada. |
 | `SESION_CELEBRADA` | La operación no aplica a una sesión ya celebrada. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
+| `CALENDARIO_EXISTE` | Ya hay un calendario de ese año y no se pidió sobrescribirlo. |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
 
 ## Permisos

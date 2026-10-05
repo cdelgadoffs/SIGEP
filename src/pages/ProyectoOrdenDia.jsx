@@ -3,6 +3,8 @@ import CintaSesiones from '../components/widgets/CintaSesiones.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar3 from '../components/base/Sidebar3.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
+import Sidebar6 from '../components/base/Sidebar6.jsx';
+import ListaAsuetos from '../components/widgets/ListaAsuetos.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
@@ -11,7 +13,7 @@ import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widg
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
-import { encabezadoSesion } from '../utils/sesiones.js';
+import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
 import '../styles/pages/ProyectoOrdenDia.css';
 
 export default function ProyectoOrdenDia() {
@@ -20,9 +22,10 @@ export default function ProyectoOrdenDia() {
     sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
+    sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada } = useProyecto();
+  const { sesionSeleccionada, CALENDARIO } = useProyecto();
   const { vistaCompletaProyecto, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3 + (sidebar3Abierto ? ANCHO_SIDEBAR3 : 0);
@@ -67,6 +70,15 @@ export default function ProyectoOrdenDia() {
       >
         <MenuPanelControl />
       </Sidebar5>
+      <Sidebar6
+        abierto={sidebar6Abierto}
+        izquierda={izquierdaSidebar6}
+        titulo="Días de asueto"
+        subtitulo={subtituloAsuetos(CALENDARIO)}
+        onCerrar={() => setSidebar6Abierto(false)}
+      >
+        <ListaAsuetos />
+      </Sidebar6>
       <PanelPrincipal izquierda={panelIzquierda} arriba={arriba}>
         <ListaPuntosProyecto />
       </PanelPrincipal>

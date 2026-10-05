@@ -1,11 +1,11 @@
 import { ApiError } from '../ApiError.js';
 import {
-  STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS,
+  STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS,
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
   usuarioActual, exigirEscritura, puedeVerConfidencial,
-  validarFechasISO, calcularEstados,
+  validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
 } from './reglas.js';
@@ -50,6 +50,115 @@ export async function crearSesiones(fechas) {
     });
   }
   return listarSesiones();
+}
+
+export async function obtenerCalendario(anio) {
+  if (!Number.isInteger(anio)) throw new ApiError('VALIDACION', 'El año del calendario es inválido.');
+  return (await obtener(STORE_CALENDARIOS, anio)) ?? null;
+}
+
+async function puntosPorSesion() {
+  return new Set((await obtenerTodos(STORE_PUNTOS)).map((p) => p.sesionId));
+}
+
+function nuevaSesion(id, ahora) {
+  return { id, celebrada: false, celebradaEn: null, version: 1, creadaEn: ahora, creadaPor: usuarioActual().id };
+}
+
+function registroCalendario(calendario, existente, ahora) {
+  return {
+    ...calendario,
+    version: (existente?.version ?? 0) + 1,
+    modificadoEn: ahora,
+    modificadoPor: usuarioActual().id,
+  };
+}
+
+export async function generarCalendarioAnual(anio, datos, sobrescribir) {
+  exigirEscritura();
+  const base = validarCalendario(anio, datos);
+  const existente = await obtener(STORE_CALENDARIOS, anio);
+  if (existente && sobrescribir !== true) {
+    throw new ApiError('CALENDARIO_EXISTE', `Ya existe un calendario para ${anio}. Marca «Sobrescribir» para regenerarlo.`);
+  }
+  const asuetos = existente && existente.diaSemana === base.diaSemana ? existente.asuetos : [];
+  const calendario = { ...base, asuetos };
+  const fechas = generarFechasAnuales(calendario);
+  const sesiones = await obtenerTodos(STORE_SESIONES);
+  const conPuntos = await puntosPorSesion();
+  const ahora = new Date().toISOString();
+  const nuevas = fechas.filter((id) => !sesiones.some((s) => s.id === id)).map((id) => nuevaSesion(id, ahora));
+  const sobrantes = sobrescribir === true
+    ? sesiones.filter((s) => s.id.startsWith(`${anio}-`) && !fechas.includes(s.id) && !s.celebrada && !conPuntos.has(s.id))
+    : [];
+  const registro = registroCalendario(calendario, existente, ahora);
+  await escribirVarios({
+    poner: [
+      ...nuevas.map((valor) => ({ store: STORE_SESIONES, valor })),
+      { store: STORE_CALENDARIOS, valor: registro },
+    ],
+    borrar: sobrantes.map((s) => ({ store: STORE_SESIONES, id: s.id })),
+  });
+  return { calendario: registro, sesiones: await listarSesiones() };
+}
+
+async function exigirCalendario(anio) {
+  const calendario = await obtener(STORE_CALENDARIOS, anio);
+  if (!calendario) throw new ApiError('NO_ENCONTRADO', `Aún no hay calendario para ${anio}. Genera el calendario primero.`);
+  return calendario;
+}
+
+async function exigirSesionLibre(id, conPuntos, mensajePuntos) {
+  const sesion = await obtener(STORE_SESIONES, id);
+  if (!sesion) return null;
+  if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', `La sesión del ${id} ya fue celebrada y no se puede reprogramar.`);
+  if (conPuntos.has(id)) throw new ApiError('VALIDACION', mensajePuntos);
+  return sesion;
+}
+
+export async function agregarAsueto(anio, asueto) {
+  exigirEscritura();
+  const calendario = await exigirCalendario(anio);
+  const nuevo = validarAsueto(anio, calendario, asueto);
+  const origen = await obtener(STORE_SESIONES, nuevo.fecha);
+  if (!origen) throw new ApiError('VALIDACION', `No hay una sesión programada el ${nuevo.fecha}.`);
+  await exigirSesionLibre(nuevo.fecha, await puntosPorSesion(), `La sesión del ${nuevo.fecha} ya tiene puntos; no se puede reprogramar.`);
+  const destinoExiste = await obtener(STORE_SESIONES, nuevo.destino);
+  const ahora = new Date().toISOString();
+  const registro = registroCalendario({ ...calendario, asuetos: [...calendario.asuetos, nuevo] }, calendario, ahora);
+  await escribirVarios({
+    poner: [
+      { store: STORE_CALENDARIOS, valor: registro },
+      ...(destinoExiste ? [] : [{ store: STORE_SESIONES, valor: nuevaSesion(nuevo.destino, ahora) }]),
+    ],
+    borrar: [{ store: STORE_SESIONES, id: nuevo.fecha }],
+  });
+  return { calendario: registro, sesiones: await listarSesiones() };
+}
+
+export async function quitarAsueto(anio, fecha) {
+  exigirEscritura();
+  const calendario = await exigirCalendario(anio);
+  const asueto = calendario.asuetos.find((a) => a.fecha === fecha);
+  if (!asueto) throw new ApiError('NO_ENCONTRADO', `No hay un asueto registrado el ${fecha}.`);
+  const destino = await exigirSesionLibre(
+    asueto.destino,
+    await puntosPorSesion(),
+    `La sesión del ${asueto.destino} ya tiene puntos; no se puede devolver al ${fecha}.`,
+  );
+  const origenExiste = await obtener(STORE_SESIONES, fecha);
+  const ahora = new Date().toISOString();
+  const restantes = calendario.asuetos.filter((a) => a.fecha !== fecha);
+  const registro = registroCalendario({ ...calendario, asuetos: restantes }, calendario, ahora);
+  const recrear = !origenExiste && !enVacaciones(calendario.vacaciones, fecha);
+  await escribirVarios({
+    poner: [
+      { store: STORE_CALENDARIOS, valor: registro },
+      ...(recrear ? [{ store: STORE_SESIONES, valor: nuevaSesion(fecha, ahora) }] : []),
+    ],
+    borrar: destino ? [{ store: STORE_SESIONES, id: asueto.destino }] : [],
+  });
+  return { calendario: registro, sesiones: await listarSesiones() };
 }
 
 export async function celebrarSesion(id) {

@@ -1,0 +1,92 @@
+.widget-formulario-calendario {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.widget-formulario-calendario-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.widget-formulario-calendario-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+.widget-formulario-calendario-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #333;
+  color: #ddd;
+  font-size: 11px;
+}
+.widget-formulario-calendario-selector {
+  background: #232323;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #eee;
+  font-size: 12.5px;
+}
+.widget-formulario-calendario-fechas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.widget-formulario-calendario-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.widget-formulario-calendario-etiqueta {
+  font-size: 11px;
+  color: #999;
+}
+.widget-formulario-calendario-pista {
+  font-size: 11.5px;
+  color: #888;
+  line-height: 1.4;
+}
+.widget-formulario-calendario-aviso {
+  font-size: 12px;
+  color: #e0b25c;
+}
+.widget-formulario-calendario-accion {
+  align-self: flex-start;
+}
+.widget-formulario-calendario-seccion-asueto {
+  padding-top: 18px;
+  border-top: 1px solid #333;
+}
+.widget-formulario-calendario-acciones {
+  display: flex;
+  gap: 8px;
+}
+.widget-formulario-calendario-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.widget-formulario-calendario-vacio {
+  font-size: 12px;
+  color: #777;
+  font-style: italic;
+}
+.widget-formulario-calendario-sobrescribir .base-checkbox-label {
+  color: #ddd;
+}
+.widget-formulario-calendario-estado {
+  font-size: 12.5px;
+  color: #e57373;
+}
+.widget-formulario-calendario-estado-ok {
+  color: #81c784;
+}

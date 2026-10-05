@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  listarCatalogos, listarSesiones, crearSesiones, celebrarSesion,
+  listarCatalogos, listarSesiones, celebrarSesion,
+  obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi,
+  agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
@@ -17,6 +19,9 @@ const ProyectoContext = createContext(null);
 const CACHE_CATALOGOS = 'catalogos';
 const CACHE_SESIONES = 'sesiones';
 const cachePuntos = (sesionId) => `puntos:${sesionId}`;
+const cacheCalendario = (anio) => `calendario:${anio}`;
+
+const ANIO_CALENDARIO = new Date().getFullYear();
 
 const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFecha(s.id) }));
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
@@ -28,7 +33,8 @@ export function ProyectoProvider({ children }) {
   const [sesionActivaFecha, setSesionActivaFecha] = useState(null);
   const [puntos, setPuntos] = useState([]);
   const [catalogos, setCatalogos] = useState(CATALOGOS_VACIOS);
-  const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, puntos: {} });
+  const [calendario, setCalendario] = useState(null);
+  const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, calendario: { cargando: true }, puntos: {} });
 
   function marcarCarga(recurso, estado) {
     setCargas((c) => ({ ...c, [recurso]: estado }));
@@ -73,6 +79,25 @@ export function ProyectoProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    let vigente = true;
+    let servidorListo = false;
+    const clave = cacheCalendario(ANIO_CALENDARIO);
+    obtenerCache(clave).then((c) => {
+      if (vigente && !servidorListo && c) setCalendario(c);
+    });
+    obtenerCalendarioEnApi(ANIO_CALENDARIO)
+      .then((c) => {
+        if (!vigente) return;
+        servidorListo = true;
+        setCalendario(c);
+        guardarCache(clave, c);
+        marcarCarga('calendario', {});
+      })
+      .catch((e) => vigente && marcarCarga('calendario', { error: e }));
+    return () => { vigente = false; };
+  }, []);
+
+  useEffect(() => {
     if (sesionActivaFecha !== null) return;
     const proxima = fechasSesiones.find((f) => f.estado === 'proxima');
     if (proxima) setSesionActivaFecha(proxima.id);
@@ -110,8 +135,21 @@ export function ProyectoProvider({ children }) {
     guardarCache(CACHE_SESIONES, lista);
   }
 
-  async function agregarSesiones(fechas) {
-    aplicarSesiones(await crearSesiones(fechas));
+  function aplicarCalendario({ calendario: actualizado, sesiones }) {
+    aplicarSesiones(sesiones);
+    setCalendario(actualizado);
+    guardarCache(cacheCalendario(actualizado.anio), actualizado);
+    if (!sesiones.some((s) => s.id === sesionActivaFecha)) setSesionActivaFecha(null);
+    return actualizado;
+  }
+  async function generarCalendarioAnual(anio, datos, sobrescribir) {
+    return aplicarCalendario(await generarCalendarioAnualEnApi(anio, datos, sobrescribir));
+  }
+  async function agregarAsueto(anio, asueto) {
+    return aplicarCalendario(await agregarAsuetoEnApi(anio, asueto));
+  }
+  async function quitarAsueto(anio, fecha) {
+    return aplicarCalendario(await quitarAsuetoEnApi(anio, fecha));
   }
   function cargarSesion(fecha) {
     setSesionActivaFecha(fecha);
@@ -183,7 +221,7 @@ export function ProyectoProvider({ children }) {
     sesionFinalizada, finalizarSesion,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
-    agregarSesiones,
+    CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,
   };

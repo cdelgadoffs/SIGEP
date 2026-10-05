@@ -2,12 +2,14 @@ import Topbar from '../components/widgets/Topbar.jsx';
 import CintaSesiones from '../components/widgets/CintaSesiones.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
+import Sidebar6 from '../components/base/Sidebar6.jsx';
+import ListaAsuetos from '../components/widgets/ListaAsuetos.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
 import { useUI, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
-import { encabezadoSesion } from '../utils/sesiones.js';
+import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
 import '../styles/pages/Inicio.css';
 
 export default function Inicio() {
@@ -15,9 +17,10 @@ export default function Inicio() {
     izquierdaSidebar1, izquierdaSidebar3,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
+    sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada } = useProyecto();
+  const { sesionSeleccionada, CALENDARIO } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3;
   const arriba = ALTO_TOPBAR + ALTO_CINTA;
@@ -46,6 +49,15 @@ export default function Inicio() {
       >
         <MenuPanelControl />
       </Sidebar5>
+      <Sidebar6
+        abierto={sidebar6Abierto}
+        izquierda={izquierdaSidebar6}
+        titulo="Días de asueto"
+        subtitulo={subtituloAsuetos(CALENDARIO)}
+        onCerrar={() => setSidebar6Abierto(false)}
+      >
+        <ListaAsuetos />
+      </Sidebar6>
       <PanelPrincipal izquierda={panelIzquierda} arriba={arriba}>
         <div className="pg-inicio">
           <h1 className="pg-inicio-titulo">Inicio</h1>
