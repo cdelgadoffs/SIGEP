@@ -1,4 +1,4 @@
-# Arquitectura de ComisionSubstanciadoraApp
+# Arquitectura de SIGEP
 
 Este documento es el estándar obligatorio de arquitectura para este proyecto. Cualquier trabajo futuro (en este chat o en uno nuevo) debe seguirlo al pie de la letra. Si una instrucción del usuario parece contradecirlo, aplica la regla obligatoria de abajo: el patrón se ha defendido activamente a lo largo de muchas sesiones y las excepciones son siempre deliberadas y documentadas, nunca accidentales.
 
@@ -20,7 +20,7 @@ Este proyecto usó antes un esquema de tres capas (`L1`/`L2`/`L3`, con metáfora
 
 `C:\Users\jcdelgadomo\Desktop\PlenoLOCAL` es el proyecto original del que esta app deriva. Se usa **únicamente como referencia de solo lectura**: para observar diseños visuales y comportamientos ya resueltos (CSS, estructura de componentes, flujos) y como **criterio de aceptación** de SIGEP (la línea principal de este repositorio es su reconstrucción ordenada según el estándar; termina cuando hace lo que hace PlenoLOCAL). **Nunca se escribe en PlenoLOCAL**: no se reestructura por dentro, se reconstruye aquí.
 
-La rama `sustanciadora` (y la etiqueta `sustanciadora-base`) conserva congelada la app de la Comisión Sustanciadora tal como estaba antes de empezar SIGEP; se retoma más adelante clonándola a su propio repositorio.
+La rama `Substanciadora` conserva congelada la app de la Comisión Sustanciadora tal como estaba al empezar SIGEP (commit `994e3cf`); no se trabaja en ella; se retoma más adelante clonándola a su propio repositorio.
 
 Al traer algo de PlenoLOCAL, nunca se copia tal cual su estructura de archivos ni su forma de organizar componentes — siempre se **traduce** a este patrón: se identifica qué parte es átomo/molde puro (`base`), qué parte combina piezas o negocio (`widget`), y qué parte es dato/acción (`context`). PlenoLOCAL no tiene esta separación de capas; esta app sí, y eso no se sacrifica por fidelidad visual.
 
