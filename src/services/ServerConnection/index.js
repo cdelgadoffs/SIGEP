@@ -11,6 +11,7 @@ export const obtenerCalendario = () => noImplementado();
 export const generarCalendarioAnual = () => noImplementado();
 export const agregarAsueto = () => noImplementado();
 export const quitarAsueto = () => noImplementado();
+export const establecerListaCerrada = () => noImplementado();
 export const celebrarSesion = () => noImplementado();
 export const listarPuntos = () => noImplementado();
 export const crearPunto = () => noImplementado();

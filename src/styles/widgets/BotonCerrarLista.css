@@ -1,0 +1,54 @@
+.widget-boton-cerrar-lista {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.widget-boton-cerrar-lista:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.widget-boton-cerrar-lista:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.widget-boton-cerrar-lista-cerrada {
+  background: #e6f7ed;
+  color: #1a7a4a;
+  border: 1px solid #1a7a4a;
+}
+.widget-boton-cerrar-lista-cerrada:hover:not(:disabled) {
+  background: #c8f0d9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+.widget-boton-cerrar-lista-abierta {
+  background: #fde8e8;
+  color: #b33c3c;
+  border: 1px solid #b33c3c;
+}
+.widget-boton-cerrar-lista-abierta:hover:not(:disabled) {
+  background: #f7d0d0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+.widget-boton-cerrar-lista-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-boton-cerrar-lista-error {
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: #c62828;
+}
+.widget-boton-cerrar-lista-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

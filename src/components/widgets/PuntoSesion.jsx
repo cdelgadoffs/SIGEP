@@ -10,7 +10,7 @@ import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
 import '../../styles/widgets/PuntoSesion.css';
 
 export default function PuntoSesion() {
-  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, descargarArchivo, cargando, error } = useProyecto();
+  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, descargarArchivo, cargando, error } = useProyecto();
   const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId } = useUI();
   const [errorAccion, setErrorAccion] = useState(null);
 
@@ -87,7 +87,7 @@ export default function PuntoSesion() {
             etiquetaAnterior="Punto anterior"
             etiquetaSiguiente="Punto siguiente"
           />
-          {!sesionFinalizada && !punto.fijo && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
+          {!sesionFinalizada && !listaCerrada && !punto.fijo && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
         </div>
       </Card>
     </div>

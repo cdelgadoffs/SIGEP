@@ -147,6 +147,7 @@ export function calcularEstados(sesiones) {
       estado,
       celebrada: !!s.celebrada,
       celebradaEn: s.celebradaEn || null,
+      listaCerrada: !!s.listaCerrada,
       version: s.version,
     };
   });
@@ -169,6 +170,14 @@ export function esPuntoFijo(id) {
 export function analizarPuntoFijo(id) {
   const [, sesionId, clave] = id.split(':');
   return { sesionId, clave };
+}
+
+export function exigirListaAbierta(sesion, seccion, catalogos) {
+  if (!sesion.listaCerrada) return;
+  const admite = seccion && (catalogos.secciones || []).find((s) => s.id === seccion)?.admiteConListaCerrada;
+  if (!admite) {
+    throw new ApiError('LISTA_CERRADA', 'La lista de puntos está cerrada. Ábrela para añadir, editar, eliminar o mover puntos.');
+  }
 }
 
 export function exigirNoFijo(id) {

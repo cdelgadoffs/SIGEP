@@ -12,7 +12,7 @@ const VISTAS_MENU_PRINCIPAL = [
 ];
 
 export default function MenuPrincipalSesion() {
-  const { SECCIONES_DOCUMENTO, PUNTOS, sesionFinalizada, cargando, error } = useProyecto();
+  const { SECCIONES_DOCUMENTO, PUNTOS, sesionFinalizada, listaCerrada, cargando, error } = useProyecto();
   const {
     vistaActual, setVistaActual,
     acordeonAbierto, setAcordeonAbierto,
@@ -24,6 +24,7 @@ export default function MenuPrincipalSesion() {
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
     badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado).length,
+    sinAgregar: listaCerrada && !s.admiteConListaCerrada,
   }));
 
   const avisoSecciones = seccionesConBadge.length > 0
@@ -61,6 +62,7 @@ export default function MenuPrincipalSesion() {
               badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS) : undefined}
               expandible={v.expandible}
               expandido={expandido}
+              deshabilitado={v.id === 'sesion' && !listaCerrada && !sesionFinalizada}
               onClick={() => seleccionarVista(v)}
             >
               {label}

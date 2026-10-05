@@ -22,6 +22,7 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
 | `celebradaEn` | string \| null | Timestamp. |
+| `listaCerrada` | bool | Hecho persistido: el registro de puntos de la sesión está cerrado (ver "Lista cerrada"). Empieza en `false`. |
 | `version` | int | |
 
 Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas por `id`):
@@ -89,6 +90,14 @@ El **orden del documento** de una sesión es: las secciones en el orden de su ca
 - Sí se pueden marcar como tratados (`marcarPunto`, `marcarPuntos`); el servidor guarda esa marca en la sesión. Un `encabezado` no se marca.
 - Los fijos nunca existen como registros en el almacén de puntos: se generan al leer.
 
+### Lista cerrada
+
+Cada sesión tiene un registro de puntos que el capturista puede **cerrar** (`listaCerrada: true`) para congelar el orden del día antes de celebrar. Reglas del servidor:
+
+- Con la lista cerrada **no se pueden crear, editar, eliminar ni mover puntos** (`LISTA_CERRADA`). La excepción son las secciones del catálogo con el atributo `admiteConListaCerrada: true` (hoy `asuntos-generales`), donde **sí se pueden crear** puntos; editarlos, eliminarlos y moverlos sigue prohibido. Adjuntar y quitar archivos, y marcar puntos como tratados, siguen permitidos.
+- La lista se puede **reabrir** mientras la sesión no esté celebrada. Una sesión celebrada es inmutable (`SESION_CELEBRADA`).
+- **No se puede celebrar una sesión con la lista abierta** (`LISTA_ABIERTA`).
+
 ### Orden
 - `Punto.orden`: entero (1…n) dentro de cada (`sesionId`, `seccion`). Al crear un punto queda **al final** de su sección. `listarPuntos` devuelve ordenado por `orden`.
 - No tiene que ser contiguo tras eliminar; `reordenarPuntos` lo reescribe a 1…n.
@@ -106,7 +115,7 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `requiereAcuerdo: bool` | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
+| `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
 | `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
 
 Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interfaz (menú, textos, íconos).
@@ -118,7 +127,8 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `listarCatalogos()` | — | `{ secciones: Item[], remitentes: Item[] }` | — |
 | `listarSesiones()` | — | `Sesion[]` (con derivados, ordenadas por `id`) | — |
 | `crearSesiones(fechas)` | `string[]` de fechas `YYYY-MM-DD` | `Sesion[]` (la lista completa actualizada) | `NO_AUTORIZADO`, `VALIDACION` |
-| `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
+| `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_ABIERTA` |
+| `establecerListaCerrada(id, cerrada)` | id de sesión, bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `listarPuntos(sesionId)` | id de sesión | `Punto[]` en el orden del documento, con `numero`, **incluyendo los puntos fijos y con los confidenciales ocultos según el usuario** (ver "Permisos") | — |
 | `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `editarPunto(id, version, cambios)` | id, `version` que el cliente tiene, campos a cambiar | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
@@ -155,6 +165,8 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 - `marcarPunto(id, tratado)` fija `tratado` (bool) del punto y devuelve el `Punto` actualizado. Es **idempotente** (repetir el mismo valor no cambia nada ni sube `version`) y no exige `version`: solo guarda un valor, no hay edición concurrente que proteger. Errores: `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` (si `tratado` no es booleano). Solo cuando cambia el valor se incrementa `version` y se actualiza `modificadoEn`.
 - `marcarPuntos` fija `tratado` en **todos** los puntos de la sesión que el usuario puede ver, en una sola operación **atómica** (o se aplican todos o ninguno). Es idempotente: solo cambian de `version` y `modificadoEn` los puntos cuyo valor cambió.
 - `editarPunto` **no** modifica `tratado`.
+- `crearPunto` (salvo en una sección que `admiteConListaCerrada`), `editarPunto`, `eliminarPunto` y `reordenarPuntos` rechazan con `LISTA_CERRADA` si la sesión tiene la lista cerrada.
+- `establecerListaCerrada` es **idempotente** (fijar el mismo valor no cambia nada).
 - **Todo `Punto` que devuelve el API lleva su `numero`.** Como crear, eliminar, mover o cambiar de sección **renumera** a otros puntos, el cliente vuelve a pedir `listarPuntos` después de esas operaciones; `marcarPunto`, `adjuntarArchivos` y `eliminarArchivo` no renumeran y devuelven el punto ya con su `numero`.
 - Las operaciones que modifican un punto (`editarPunto`, `eliminarPunto`, `adjuntarArchivos`, `eliminarArchivo`) rechazan un **punto fijo** con `VALIDACION`. `marcarPunto` y `marcarPuntos` sí lo marcan (salvo los `encabezado`).
 - `crearPunto` acepta `archivos` (binarios) opcionales y los valida con las mismas reglas de `adjuntarArchivos`. El formato antiguo `[{ nombre }]` se rechaza con `ARCHIVO_INVALIDO`.
@@ -177,6 +189,8 @@ Notas de comportamiento:
 | `VALIDACION` | Datos inválidos (fecha, sección, remitente, campos obligatorios, longitudes). |
 | `CONFLICTO` | `version` desactualizada. |
 | `SESION_CELEBRADA` | La operación no aplica a una sesión ya celebrada. |
+| `LISTA_CERRADA` | La sesión tiene la lista de puntos cerrada y la operación no está permitida con ella cerrada. |
+| `LISTA_ABIERTA` | Se intentó celebrar una sesión con la lista de puntos abierta. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
 | `CALENDARIO_EXISTE` | Ya hay un calendario de ese año y no se pidió sobrescribirlo. |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |

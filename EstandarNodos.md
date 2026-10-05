@@ -209,6 +209,7 @@ Huecos que un proyecto con identidad, documentos e integraciones va a tocar. Cad
 - **B.** Un servicio del cliente que llama el contexto (`services/Documentos.js`).
 - **C.** El API genera el documento (operación del contrato) y el cliente solo lo descarga.
 - **Recomendación: A** para documentos que se arman con datos que el cliente ya tiene; **C** si el documento es oficial o necesita datos que solo el servidor conoce.
+- **Estado: se aplicó A** en el primer documento (el orden del día de una sesión): `utils/ordenDia.js` con la librería cargada por `import()` dinámico, invocado por un widget. Lo que dependa de un catálogo (por ejemplo qué secciones llevan título) es atributo del catálogo, no código.
 
 ### 14.3 Integraciones externas (correo, almacenamiento en la nube)
 - **A.** Siempre detrás del API: el backend habla con el tercero y el cliente solo ve operaciones del contrato; `LocalAPI` las simula.

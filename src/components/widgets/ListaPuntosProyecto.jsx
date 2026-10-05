@@ -101,7 +101,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
 }
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
-  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, descargarArchivo, reordenarPuntos, cargando, error } = useProyecto();
+  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, descargarArchivo, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
@@ -142,11 +142,12 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   }
   const renderOpciones = (punto, deLaSeccion, seccionId) => {
     if (sesionFinalizada || punto.fijo) return null;
+    const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar'] : opcionesOcultas;
     const delUsuario = deLaSeccion.filter((p) => !p.fijo);
     const indice = delUsuario.findIndex((p) => p.id === punto.id);
     return (
       <>
-        {delUsuario.length > 1 && !opcionesOcultas.includes('mover') && (
+        {delUsuario.length > 1 && !ocultas.includes('mover') && (
           <OpcionesNavegacion
             orientacion="vertical"
             onAnterior={() => mover(seccionId, delUsuario, indice, -1)}
@@ -157,7 +158,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
             etiquetaSiguiente="Bajar punto"
           />
         )}
-        <OpcionesAUD punto={punto} ocultar={opcionesOcultas}>
+        <OpcionesAUD punto={punto} ocultar={ocultas}>
           {opcionesExtra && opcionesExtra(punto)}
         </OpcionesAUD>
       </>

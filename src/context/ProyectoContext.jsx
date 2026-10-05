@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  listarCatalogos, listarSesiones, celebrarSesion,
+  listarCatalogos, listarSesiones, celebrarSesion, establecerListaCerrada as establecerListaCerradaEnApi,
   obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi,
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
@@ -155,6 +155,10 @@ export function ProyectoProvider({ children }) {
   function cargarSesion(fecha) {
     setSesionActivaFecha(fecha);
   }
+  async function establecerListaCerrada(cerrada) {
+    await establecerListaCerradaEnApi(sesionActivaFecha, cerrada);
+    aplicarSesiones(await listarSesiones());
+  }
   async function finalizarSesion() {
     await celebrarSesion(sesionActivaFecha);
     aplicarSesiones(await listarSesiones());
@@ -217,6 +221,7 @@ export function ProyectoProvider({ children }) {
 
   const sesionSeleccionada = fechasSesiones.find((f) => f.id === sesionActivaFecha);
   const sesionFinalizada = !!sesionSeleccionada?.celebrada;
+  const listaCerrada = !!sesionSeleccionada?.listaCerrada;
 
   const value = {
     sesionSeleccionada,
@@ -224,6 +229,7 @@ export function ProyectoProvider({ children }) {
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
     sesionFinalizada, finalizarSesion,
+    listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, agregarAsueto, quitarAsueto,

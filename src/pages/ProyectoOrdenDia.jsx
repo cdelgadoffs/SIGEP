@@ -9,6 +9,8 @@ import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
+import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
+import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
@@ -25,7 +27,7 @@ export default function ProyectoOrdenDia() {
     sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada, CALENDARIO } = useProyecto();
+  const { sesionSeleccionada, sesionFinalizada, listaCerrada, CALENDARIO } = useProyecto();
   const { vistaCompletaProyecto, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3 + (sidebar3Abierto ? ANCHO_SIDEBAR3 : 0);
@@ -50,6 +52,12 @@ export default function ProyectoOrdenDia() {
         arriba={arribaSidebar}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
+        pie={sesionSeleccionada && !sesionFinalizada && !sidebar3Abierto ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <BotonCerrarLista />
+            {listaCerrada && <BotonDescargar />}
+          </div>
+        ) : null}
       >
         <MenuPrincipalSesion />
       </Sidebar1>

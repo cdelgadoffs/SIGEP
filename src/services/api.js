@@ -7,6 +7,7 @@ export const {
   listarSesiones,
   crearSesiones,
   celebrarSesion,
+  establecerListaCerrada,
   obtenerCalendario,
   generarCalendarioAnual,
   agregarAsueto,

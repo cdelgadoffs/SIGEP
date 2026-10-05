@@ -32,7 +32,7 @@ function tieneContenido(f) {
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, PUNTOS, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { SECCIONES_DOCUMENTO, REMITENTES, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
   const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId } = useUI();
   const [form, setForm] = useState(() => estadoVacio(seccionNuevoPunto));
   const [restaurado, setRestaurado] = useState(false);
@@ -98,7 +98,9 @@ export default function FormularioPunto() {
     return () => clearTimeout(temporizador);
   }, [form, restaurado]);
 
-  const opcionesSeccion = SECCIONES_DOCUMENTO.map((s) => ({ id: s.id, label: s.nombre }));
+  const opcionesSeccion = SECCIONES_DOCUMENTO
+    .filter((s) => !listaCerrada || s.admiteConListaCerrada)
+    .map((s) => ({ id: s.id, label: s.nombre }));
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
   const remitenteActual = REMITENTES.some((r) => r.id === form.remitente) ? form.remitente : (REMITENTES[0]?.id || '');

@@ -68,3 +68,9 @@
 .base-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.28);
 }
+
+.base-sidebar1-pie {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  border-top: 1px solid #e0e0e0;
+}

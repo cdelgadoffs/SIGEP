@@ -11,7 +11,7 @@ export default function SubMenuDD({ items, activoId, onSeleccionar, onAgregar, i
           variante="submenu"
           activo={item.id === activoId}
           badge={item.badge}
-          accion={onAgregar && (
+          accion={onAgregar && !item.sinAgregar && (
             <BotonAgregar onClick={() => onAgregar(item.id)}>{iconoAgregar}</BotonAgregar>
           )}
           onClick={() => onSeleccionar && onSeleccionar(item.id)}

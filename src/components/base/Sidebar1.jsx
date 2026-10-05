@@ -1,7 +1,7 @@
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import '../../styles/base/Sidebar1.css';
 
-export default function Sidebar1({ izquierda = 0, arriba = 52, ancho, titulo, subtitulo, accionesHeader, children }) {
+export default function Sidebar1({ izquierda = 0, arriba = 52, ancho, titulo, subtitulo, accionesHeader, pie, children }) {
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   return (
     <aside className="base-sidebar1" style={{ left: izquierda, top: arriba, height: `calc(100vh - ${arriba}px)`, ...(ancho && { width: ancho }) }}>
@@ -22,6 +22,7 @@ export default function Sidebar1({ izquierda = 0, arriba = 52, ancho, titulo, su
           />
         )}
       </div>
+      {pie && <div className="base-sidebar1-pie">{pie}</div>}
     </aside>
   );
 }
