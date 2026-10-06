@@ -9,7 +9,7 @@ import {
   camposPunto, validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
-  decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
+  combinarCambios, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -255,12 +255,13 @@ export async function editarPunto(id, version, cambios) {
   if (actual.version !== version) {
     throw new ApiError('CONFLICTO', 'El punto cambió desde que lo cargaste. Recarga e intenta de nuevo.');
   }
-  const combinado = { ...actual, ...camposPunto(cambios) };
+  const combinado = combinarCambios(actual, cambios);
   const catalogos = await listarCatalogos();
   validarPunto(combinado, catalogos);
   const cambiaSeccion = combinado.seccion !== actual.seccion;
+  const { contenido: _contenido, acuerdo: _acuerdo, ...almacenado } = actual;
   const punto = {
-    ...actual,
+    ...almacenado,
     ...normalizarPunto(combinado, catalogos),
     orden: cambiaSeccion ? siguienteOrden(await obtenerTodos(STORE_PUNTOS), actual.sesionId, combinado.seccion) : actual.orden,
     ...(cambiaSeccion ? { votacion: null } : {}),
@@ -321,9 +322,9 @@ export async function marcarPuntos(sesionId, tratado) {
   await exigirSesionAbierta(sesionId);
   const lista = await armarPuntos(sesionId);
   const ahora = new Date().toISOString();
-  const cambiados = lista
-    .filter((p) => !p.fijo && !!p.tratado !== tratado)
-    .map(({ numero, ...p }) => ({ ...p, tratado, version: p.version + 1, modificadoEn: ahora }));
+  const cambiados = (await obtenerTodos(STORE_PUNTOS))
+    .filter((p) => p.sesionId === sesionId && !!p.tratado !== tratado)
+    .map((p) => ({ ...p, tratado, version: p.version + 1, modificadoEn: ahora }));
   const clavesFijas = lista.filter((p) => p.fijo && !p.encabezado).map((p) => analizarPuntoFijo(p.id).clave);
   const sesion = await obtener(STORE_SESIONES, sesionId);
   const hayFijosPorCambiar = clavesFijas.some((c) => !!sesion.fijosTratados?.[c] !== tratado);

@@ -39,7 +39,7 @@ Un estándar con excepciones deja de ser verificable: la regla manda sobre la co
 
 ## 2. La regla mecánica: `base` vs `widget`
 
-**Un archivo es `base` solo si lo único que importa es: (1) su propio CSS, (2) React (hooks nativos como `useState`, `useEffect`, `useRef`, y `react-dom` para portales) y (3) hooks propios puros de `hooks/`. Si importa cualquier otra cosa — otro componente, un hook de contexto, `utils/`, `services/` — es `widget`.**
+**Un archivo es `base` solo si lo único que importa es: (1) su propio CSS, (2) React (hooks nativos como `useState`, `useEffect`, `useRef`, y `react-dom` para portales) y (3) hooks propios puros de `hooks/`. Si importa cualquier otra cosa — otro componente, un hook de contexto, `utils/`, `services/`, una librería de terceros (salvo `react` y `react-dom`) — es `widget`.**
 
 - No se pondera ni se acumula: con que dispare una condición de widget, es widget.
 - Hooks nativos de React para estado puramente local de UI **no** cuentan.
@@ -82,6 +82,7 @@ Un estándar con excepciones deja de ser verificable: la regla manda sobre la co
 - **Quien monta un `base` es quien wirea sus props estructurales** (`abierto`, `onCerrar`…). Un widget puede además disparar una acción de negocio sobre ese mismo estado compartido: son dos responsabilidades independientes.
 - **"Sal al gusto":** un ajuste de estilo presentacional y de un solo uso sobre un componente reutilizable se aplica como `style` inline en un wrapper dentro de la page — nunca se modifica el CSS del componente compartido ni se crea un CSS nuevo para una sola declaración.
 - No hay excepciones de carpeta: los paneles que un switcher genérico aloja (ej. los ítems del panel de control) son widgets normales; el switcher los registra en una tabla (`Panel`, y `AccionHeader` opcional para el botón del header, que es otro widget).
+- **Funciones de soporte (panel de configuración):** las acciones y datos que **no son parte del flujo de trabajo pero que este necesita para desarrollarse** (calendario, integrantes del quórum, firmantes, catálogos administrables…) se agrupan en un panel lateral de configuración, separado de las pages de trabajo. Criterio: si algo se configura una vez (o rara vez) y el flujo solo lo consume, va en el panel de configuración; si es una acción del flujo, va en las pages de trabajo. Cada ítem es un widget normal; viven juntos en una subcarpeta propia (`components/widgets/panelcontrol/`, con su CSS en `styles/widgets/panelcontrol/`) **solo para ubicarlos rápido**, sin reglas distintas. Un switcher genérico los registra en una tabla `{ id, label, Panel, AccionHeader opcional }` y monta el activo según un estado de la interfaz; las pages solo montan el panel con ese switcher y **nunca ensamblan el contenido de los ítems**. Agregar un ítem es crear su widget y sumar una fila a la tabla.
 
 ## 6. `context/`
 

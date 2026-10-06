@@ -1,7 +1,8 @@
 import { CATALOGOS_SEMILLA } from './semilla.js';
+import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 17;
+const DB_VERSION = 18;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -37,6 +38,25 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 18) {
+        const tx = req.transaction;
+        const catalogos = tx.objectStore(STORE_CATALOGOS);
+        ['plantillasActa', 'tiposBloqueActa', 'textosActa'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
+        tx.objectStore(STORE_PUNTOS).openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          const { contenido, acuerdo, ...resto } = cursor.value;
+          if (!resto.contenidoDoc) {
+            cursor.update({
+              ...resto,
+              contenidoDoc: docDesdeTexto(contenido),
+              acuerdoDoc: docDesdeTexto(acuerdo),
+              ...hojaPorOmision(CATALOGOS_SEMILLA),
+            });
+          }
+          cursor.continue();
+        };
       }
       if (evento.oldVersion < 17) {
         const tx = req.transaction;

@@ -1,6 +1,6 @@
 import { ApiError } from '../ApiError.js';
 
-const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial'];
+const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa'];
 const MAX_TEXTO = 20000;
 const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
@@ -235,7 +235,10 @@ export function ordenarPuntosDocumento(puntos, secciones) {
 
 export function ocultarConfidencial(p) {
   if (!p.confidencial) return p;
-  return { ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [], votacion: null, acuerdoLineas: [], textoVotacion: null };
+  return {
+    ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [], votacion: null, acuerdoLineas: [], textoVotacion: null,
+    contenidoDoc: null, acuerdoDoc: null, introDoc: null, puenteDoc: null, bloquesActa: [],
+  };
 }
 
 export function camposPunto(datos) {
@@ -250,17 +253,30 @@ function buscarSeccion(catalogos, id) {
   return (catalogos.secciones || []).find((s) => s.id === id);
 }
 
+function textoDeEntrada(p, campo) {
+  const doc = p[campo + 'Doc'];
+  if (doc !== undefined && doc !== null) return textoPlanoDeDoc(validarDocumento(doc));
+  return typeof p[campo] === 'string' ? p[campo] : '';
+}
+
+export function combinarCambios(actual, cambios) {
+  const combinado = { ...actual, ...camposPunto(cambios) };
+  ['contenido', 'acuerdo'].forEach((campo) => {
+    if (campo in cambios && !(campo + 'Doc' in cambios)) delete combinado[campo + 'Doc'];
+  });
+  return combinado;
+}
+
 export function validarPunto(p, catalogos) {
   const seccion = buscarSeccion(catalogos, p.seccion);
   if (!seccion) throw new ApiError('VALIDACION', 'Sección inválida.');
   if (!(catalogos.remitentes || []).some((r) => r.id === p.remitente)) {
     throw new ApiError('VALIDACION', 'Remitente inválido.');
   }
-  if (typeof p.contenido !== 'string' || p.contenido.trim().length === 0) {
-    throw new ApiError('VALIDACION', 'El contenido es obligatorio.');
-  }
-  if (p.contenido.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El contenido es demasiado largo.');
-  const acuerdo = typeof p.acuerdo === 'string' ? p.acuerdo : '';
+  const contenido = textoDeEntrada(p, 'contenido');
+  if (contenido.trim().length === 0) throw new ApiError('VALIDACION', 'El contenido es obligatorio.');
+  if (contenido.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El contenido es demasiado largo.');
+  const acuerdo = textoDeEntrada(p, 'acuerdo');
   if (seccion.requiereAcuerdo && acuerdo.trim().length === 0) {
     throw new ApiError('VALIDACION', 'El acuerdo es obligatorio.');
   }
@@ -342,6 +358,11 @@ function prefijoOrdinal(indice, total) {
   return ORDINALES[indice] ?? `DÉCIMO ${ORDINALES[indice - 10] ?? ''}`.trim();
 }
 
+export function lineasDeAcuerdoDoc(doc) {
+  const textos = parrafosDeNivelSuperior(doc).map((t) => t.replace(/\n/g, ' '));
+  return textos.map((texto, i) => ({ prefijo: prefijoOrdinal(i, textos.length), texto: texto.replace(PREFIJO_ACUERDO, '').trim() }));
+}
+
 export function lineasDeAcuerdo(acuerdo) {
   const lineas = (acuerdo || '').split('\n').map((l) => l.trim()).filter(Boolean);
   return lineas.map((linea, i) => ({ prefijo: prefijoOrdinal(i, lineas.length), texto: linea.replace(PREFIJO_ACUERDO, '').trim() }));
@@ -386,7 +407,9 @@ export function decorarPunto(p, catalogos) {
   if (p.fijo) return { ...p, acuerdoLineas: [] };
   const seccion = (catalogos.secciones || []).find((s) => s.id === p.seccion);
   const esInforme = !!seccion && !seccion.requiereAcuerdo;
-  const acuerdoLineas = esInforme ? [] : lineasDeAcuerdo(p.acuerdo);
+  const contenido = p.contenidoDoc ? textoPlanoDeDoc(p.contenidoDoc) : (p.contenido ?? '');
+  const acuerdo = p.acuerdoDoc ? textoPlanoDeDoc(p.acuerdoDoc) : (p.acuerdo ?? '');
+  const acuerdoLineas = esInforme ? [] : (p.acuerdoDoc ? lineasDeAcuerdoDoc(p.acuerdoDoc) : lineasDeAcuerdo(acuerdo));
   let textoVotacion;
   if (typeof p.votacion?.textoManual === 'string') textoVotacion = p.votacion.textoManual;
   else {
@@ -396,17 +419,162 @@ export function decorarPunto(p, catalogos) {
       textoVotacion = '';
     }
   }
-  return { ...p, acuerdoLineas, textoVotacion };
+  return { ...p, contenido, acuerdo, acuerdoLineas, textoVotacion };
+}
+
+const NODOS = new Set(['doc', 'paragraph', 'text', 'hardBreak', 'orderedList', 'listItem', 'table', 'tableRow', 'tableHeader', 'tableCell']);
+const MARCAS = new Set(['bold', 'italic', 'oculto', 'fontSize']);
+const ATRIBUTOS_NODO = {
+  paragraph: ['textAlign'],
+  orderedList: ['start', 'type'],
+  tableHeader: ['colspan', 'rowspan', 'colwidth', 'align'],
+  tableCell: ['colspan', 'rowspan', 'colwidth', 'align'],
+};
+const ALINEACIONES = ['left', 'center', 'right', 'justify'];
+const MAX_PROFUNDIDAD_DOC = 12;
+const MAX_TAMANO_DOC = 200000;
+const MAX_BLOQUES = 20;
+
+function invalido(mensaje) {
+  return new ApiError('VALIDACION', mensaje);
+}
+
+function validarMarca(m) {
+  if (!m || typeof m !== 'object' || !MARCAS.has(m.type)) throw invalido('El documento tiene una marca de formato no permitida.');
+  if (m.type === 'fontSize') {
+    const tamano = m.attrs?.size;
+    if (typeof tamano !== 'string' || !/^\d{1,3}(\.\d+)?px$/.test(tamano)) throw invalido('Tamaño de letra inválido.');
+  }
+}
+
+function validarNodo(n, profundidad) {
+  if (!n || typeof n !== 'object' || !NODOS.has(n.type)) throw invalido('El documento tiene un elemento no permitido.');
+  if (profundidad > MAX_PROFUNDIDAD_DOC) throw invalido('El documento es demasiado profundo.');
+  if (n.attrs) {
+    const permitidos = ATRIBUTOS_NODO[n.type] || [];
+    Object.keys(n.attrs).forEach((k) => {
+      if (!permitidos.includes(k)) throw invalido(`El documento tiene un atributo no permitido (${n.type}.${k}).`);
+    });
+    if (n.type === 'paragraph' && n.attrs.textAlign != null && !ALINEACIONES.includes(n.attrs.textAlign)) {
+      throw invalido('Alineación inválida.');
+    }
+    if ((n.type === 'tableHeader' || n.type === 'tableCell') && n.attrs.align != null && !ALINEACIONES.includes(n.attrs.align)) {
+      throw invalido('Alineación inválida.');
+    }
+  }
+  if (n.type === 'text') {
+    if (typeof n.text !== 'string') throw invalido('Texto inválido en el documento.');
+    (n.marks || []).forEach(validarMarca);
+    return;
+  }
+  if (n.content !== undefined && !Array.isArray(n.content)) throw invalido('Contenido inválido en el documento.');
+  (n.content || []).forEach((hijo) => validarNodo(hijo, profundidad + 1));
+}
+
+export function validarDocumento(doc) {
+  if (!doc || typeof doc !== 'object' || doc.type !== 'doc') throw invalido('Documento inválido.');
+  if (JSON.stringify(doc).length > MAX_TAMANO_DOC) throw invalido('El documento es demasiado grande.');
+  validarNodo(doc, 0);
+  return doc;
+}
+
+function textoDeNodo(n) {
+  if (n.type === 'text') return n.text || '';
+  if (n.type === 'hardBreak') return '\n';
+  const hijos = (n.content || []).map(textoDeNodo);
+  if (n.type === 'tableRow') return hijos.join('\t');
+  if (n.type === 'paragraph') return hijos.join('');
+  return hijos.filter((t) => t !== '').join('\n');
+}
+
+export function textoPlanoDeDoc(doc) {
+  return doc ? textoDeNodo(doc) : '';
+}
+
+export function parrafosDeNivelSuperior(doc) {
+  return ((doc && doc.content) || [])
+    .filter((n) => n.type === 'paragraph')
+    .map(textoDeNodo)
+    .filter((t) => t.trim() !== '');
+}
+
+export function docVacio() {
+  return { type: 'doc', content: [{ type: 'paragraph' }] };
+}
+
+export function docDesdeTexto(texto) {
+  const lineas = String(texto || '').split('\n').filter((l) => l.trim() !== '');
+  if (lineas.length === 0) return docVacio();
+  return { type: 'doc', content: lineas.map((l) => ({ type: 'paragraph', content: [{ type: 'text', text: l }] })) };
+}
+
+function docIntro(catalogos) {
+  const intro = (catalogos.textosActa || []).find((t) => t.id === 'intro');
+  if (!intro) return docVacio();
+  const contenido = [];
+  if (intro.negrita) contenido.push({ type: 'text', text: intro.negrita, marks: [{ type: 'bold' }] });
+  if (intro.texto) contenido.push({ type: 'text', text: intro.texto });
+  return { type: 'doc', content: [{ type: 'paragraph', content: contenido }] };
+}
+
+function docTextoActa(catalogos, id) {
+  const texto = (catalogos.textosActa || []).find((t) => t.id === id);
+  return texto ? docDesdeTexto(texto.texto) : docVacio();
+}
+
+function bloquesDePlantilla(plantilla) {
+  return (plantilla?.bloques || []).map((tipo) => ({ id: crypto.randomUUID(), tipo, doc: docVacio() }));
+}
+
+export function hojaPorOmision(catalogos) {
+  const plantilla = (catalogos.plantillasActa || [])[0];
+  return {
+    plantilla: plantilla?.id ?? 'introduccion',
+    introDoc: docIntro(catalogos),
+    puenteDoc: docTextoActa(catalogos, 'puente'),
+    bloquesActa: bloquesDePlantilla(plantilla),
+  };
+}
+
+function normalizarBloques(bloques, catalogos) {
+  if (!Array.isArray(bloques) || bloques.length > MAX_BLOQUES) throw invalido('Lista de bloques inválida.');
+  const vistos = new Set();
+  return bloques.map((b) => {
+    if (!b || typeof b.id !== 'string' || !b.id || b.id.length > 64 || vistos.has(b.id)) throw invalido('Bloque inválido.');
+    vistos.add(b.id);
+    const tipo = (catalogos.tiposBloqueActa || []).find((t) => t.id === b.tipo);
+    if (!tipo) throw invalido('Tipo de bloque inválido.');
+    const bloque = { id: b.id, tipo: tipo.id, doc: validarDocumento(b.doc ?? docVacio()) };
+    if (tipo.titulo === null) {
+      const titulo = typeof b.titulo === 'string' ? b.titulo.trim() : '';
+      if (!titulo || titulo.length > 200) throw invalido('El título del bloque es obligatorio (máx. 200 caracteres).');
+      bloque.titulo = titulo;
+    }
+    return bloque;
+  });
+}
+
+function docDeEntrada(p, campo) {
+  const doc = p[campo + 'Doc'];
+  if (doc !== undefined && doc !== null) return validarDocumento(doc);
+  return docDesdeTexto(typeof p[campo] === 'string' ? p[campo].trim() : '');
 }
 
 export function normalizarPunto(p, catalogos) {
   const seccion = buscarSeccion(catalogos, p.seccion);
+  const omision = hojaPorOmision(catalogos);
+  const plantilla = p.plantilla ?? omision.plantilla;
+  if (!(catalogos.plantillasActa || []).some((x) => x.id === plantilla)) throw invalido('Plantilla inválida.');
   return {
     seccion: p.seccion,
     remitente: p.remitente,
-    contenido: p.contenido.trim(),
-    acuerdo: seccion.requiereAcuerdo ? (p.acuerdo || '').trim() : '',
+    contenidoDoc: docDeEntrada(p, 'contenido'),
+    acuerdoDoc: seccion.requiereAcuerdo ? docDeEntrada(p, 'acuerdo') : docVacio(),
     confidencial: p.confidencial,
+    plantilla,
+    introDoc: p.introDoc != null ? validarDocumento(p.introDoc) : omision.introDoc,
+    puenteDoc: p.puenteDoc != null ? validarDocumento(p.puenteDoc) : omision.puenteDoc,
+    bloquesActa: p.bloquesActa != null ? normalizarBloques(p.bloquesActa, catalogos) : omision.bloquesActa,
   };
 }
 

@@ -4,6 +4,7 @@ import BotonS from '../base/BotonS.jsx';
 import BotonExpandible from '../base/BotonExpandible.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { URL_LOGO } from '../../utils/logo.js';
 import '../../styles/widgets/Topbar.css';
 
 export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesConfiguracion = [], onSeleccionarConfiguracion }) {
@@ -16,7 +17,7 @@ export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesCon
         <button type="button" className="widget-topbar-menu" aria-label="Alternar panel" onClick={toggleSidebar5}>☰</button>
         <img
           className="widget-topbar-logo"
-          src="https://raw.githubusercontent.com/cdelgadoffs/CGD/535876195bedc1b602f98438ee3a42ff11cbb817/logo.png"
+          src={URL_LOGO}
           alt="Logo institucional"
         />
       </div>

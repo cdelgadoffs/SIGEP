@@ -106,3 +106,23 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+.widget-formulario-punto-editor .widget-editor-texto-contenido {
+  box-sizing: border-box;
+  min-height: 90px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.widget-formulario-punto-editor .widget-editor-texto-contenido:focus {
+  border-color: #1a56db;
+  box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.15);
+}
+.widget-formulario-punto-editor-contenido .widget-editor-texto-contenido {
+  font-weight: 700;
+}

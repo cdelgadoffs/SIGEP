@@ -1,0 +1,63 @@
+.widget-editor-texto-contenido {
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.widget-editor-texto-contenido p {
+  margin: 0;
+}
+.widget-editor-texto-contenido p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #aaa;
+  pointer-events: none;
+  height: 0;
+}
+.widget-editor-texto-contenido p.is-empty:not(.is-editor-empty) {
+  min-height: 0.5em;
+  line-height: 0.5em;
+}
+.widget-editor-texto-contenido strong {
+  font-weight: 700;
+}
+.widget-editor-texto-contenido ol {
+  margin: 4px 0;
+  padding-left: 22px;
+}
+.widget-editor-texto-contenido .marca-oculta {
+  color: #d32f2f;
+  font-weight: 700;
+}
+.widget-editor-texto-contenido .texto-ordinal {
+  font-weight: 700;
+  user-select: none;
+}
+.widget-editor-texto-contenido .acta-tabla {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
+  table-layout: fixed;
+}
+.widget-editor-texto-contenido .acta-celda {
+  border: 1px solid #999;
+  padding: 1px 2px;
+  position: relative;
+  text-align: center;
+}
+.widget-editor-texto-contenido .acta-celda p {
+  text-align: center;
+}
+.widget-editor-texto-contenido th.acta-celda {
+  background: #d9d9d9;
+  font-weight: 700;
+}
+.widget-editor-texto-contenido .acta-celda.selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 99, 218, 0.25);
+  pointer-events: none;
+}

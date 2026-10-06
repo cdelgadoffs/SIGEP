@@ -48,8 +48,13 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 | `sesionId` | string | Sesión a la que pertenece. Obligatorio. |
 | `seccion` | string | `id` de un elemento del catálogo `secciones`. |
 | `remitente` | string | `id` de un elemento del catálogo `remitentes`. |
-| `contenido` | string | Obligatorio, máx. 20 000 caracteres. |
-| `acuerdo` | string | Obligatorio si la sección tiene `requiereAcuerdo: true`; si no, se guarda vacío. Máx. 20 000. |
+| `contenidoDoc` | `Documento` | Texto con formato del punto de acuerdo o del informe. Obligatorio: su texto plano no puede estar vacío (ver "Documento"). |
+| `acuerdoDoc` | `Documento` | Texto con formato del acuerdo. Obligatorio (texto plano no vacío) si la sección tiene `requiereAcuerdo: true`; si no, se guarda vacío. |
+| `contenido` | string | **Derivado.** Texto plano de `contenidoDoc` (un párrafo por línea). Máx. 20 000 caracteres. Es lo que leen las listas, el orden del día y los textos derivados. |
+| `acuerdo` | string | **Derivado.** Texto plano de `acuerdoDoc` (un párrafo por línea). Máx. 20 000. |
+| `plantilla` | string | `id` del catálogo `plantillasActa`. Por omisión, la primera. |
+| `introDoc`, `puenteDoc` | `Documento` | Fundamento y frase puente de la hoja del punto (se usan según la plantilla). Por omisión, los textos `intro` y `puente` del catálogo `textosActa`. |
+| `bloquesActa` | `BloqueActa[]` | Secciones adicionales de la hoja: `{ id, tipo, titulo?, doc }`. `tipo` es un `id` de `tiposBloqueActa`; `titulo` solo en `personalizada`. Por omisión, los bloques de la plantilla (con `doc` vacío). |
 | `confidencial` | bool | |
 | `archivos` | `Archivo[]` | Metadatos de los archivos adjuntos (ver "Archivo"). |
 | `orden` | int | Posición dentro de su (sesión, sección), 1…n (ver "Orden"). |
@@ -59,6 +64,17 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 | `encabezado` | bool | **Derivado.** Solo en puntos fijos que funcionan como título de una sección (cuentan en la numeración, pero no son puntos a tratar). |
 | `version` | int | |
 | `creadoPor`, `creadoEn`, `modificadoEn` | string | Autoría y fechas, del servidor. |
+
+### Documento (texto con formato)
+
+Un `Documento` es un **documento ProseMirror/TipTap en JSON** (`{ type: 'doc', content: [...] }`), no un texto con marcas. Es la forma estable de guardar texto con formato: estructurada, validable y sin analizar cadenas.
+
+- **Nodos permitidos:** `doc`, `paragraph` (atributo opcional `textAlign`: `left`, `center`, `right`, `justify`), `text`, `hardBreak`, `orderedList`, `listItem`, `table`, `tableRow`, `tableHeader`, `tableCell` (atributos `colspan`, `rowspan`, `colwidth`, `align`). **Marcas permitidas:** `bold`, `italic`, `oculto` (texto marcado para ocultar en la versión pública) y `fontSize` (atributo `size`, ej. `"18px"`). Cualquier otro nodo, marca o atributo → `VALIDACION`.
+- **Límites:** profundidad máxima 12; tamaño serializado máximo 200 000 caracteres; texto plano máximo 20 000.
+- **Texto plano derivado:** los párrafos de nivel superior, de las listas y de las celdas se unen con `\n` (las celdas de una fila, con tabulador); `hardBreak` es un `\n`.
+- **Ítems del acuerdo:** para `acuerdoLineas` y para los prefijos ÚNICO/PRIMERO…, cada **párrafo de nivel superior con texto** es un ítem (las listas y las tablas no cuentan como ítems). El ítem *k* de `acuerdoLineas` corresponde al *k*-ésimo párrafo de nivel superior con texto.
+- **Entrada tolerante:** `crearPunto` y `editarPunto` aceptan `contenido` / `acuerdo` en texto plano en lugar de `contenidoDoc` / `acuerdoDoc` (un párrafo por línea); si llegan ambos, gana el documento. El servidor siempre guarda y devuelve documentos.
+- **Migración:** los puntos anteriores (con `contenido` / `acuerdo` en texto) se convierten a documentos y se completan los campos de la hoja con sus valores por omisión.
 
 ### Archivo
 | Campo | Tipo | Notas |
@@ -147,6 +163,9 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 | `tiposVoto` | `frase: string` (texto del voto en el resultado), `votosRequeridos: number` (si existe, el voto exige ese número de integrantes del quórum), `sinVotacion: bool` (no aplica tipo de votación), `admitePrecision: bool` | `unanimidad` (admite precisión), `mayoria-4` (1 voto), `mayoria-3` (2 votos), `retirar` (sin votación) |
 | `tiposVotacion` | `admitePrecision: bool` | `economica`, `concurrente` (admite precisión) |
 | `estadosVoto` | — | `aprueba`, `acuerda` |
+| `plantillasActa` | `bloques: string[]` (ids de `tiposBloqueActa` que trae por omisión), `orden: string[]` (secciones de la hoja, en orden: `intro`, `bloques`, `puente`, `contenido`, `tituloAcuerdo`, `acuerdo`) | `introduccion` (`intro, bloques, puente, contenido, acuerdo`; bloque `considerando`), `proyecto` (`contenido, bloques, tituloAcuerdo, acuerdo`; bloques `antecedente`, `considerando`), `personalizada` (`bloques, contenido, acuerdo`; sin bloques) |
+| `tiposBloqueActa` | `titulo: string \| null` (encabezado en mayúsculas; `null` en `personalizada`, que lleva el suyo) | `considerando` ("CONSIDERANDO"), `antecedente` ("ANTECEDENTES"), `personalizada` |
+| `textosActa` | `texto: string`, `negrita?: string` (primer tramo en negritas) | `intro` (fundamento del Pleno), `puente` ("Por lo anterior, se emite el siguiente:"), `contenido` (texto con que arranca un punto de acuerdo nuevo), `contenidoInforme` ("Informe") |
 | `tiposConocimiento` | `texto` (frase completa) o `textoBase` + `admiteComplemento: bool` | Para informes: `simple`, `extendido` |
 | `generos` | `articulo: string` (`el`, `la`) | `masculino`, `femenino` |
 | `grados` | `titulo: { [genero]: string }` (ej. `{ masculino: 'licenciado', femenino: 'licenciada' }`) | `licenciatura`, `maestria`, `doctorado` |
@@ -210,6 +229,7 @@ Lectura para cualquier usuario autenticado; escritura solo del capturista.
 - `marcarPunto(id, tratado)` fija `tratado` (bool) del punto y devuelve el `Punto` actualizado. Es **idempotente** (repetir el mismo valor no cambia nada ni sube `version`) y no exige `version`: solo guarda un valor, no hay edición concurrente que proteger. Errores: `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` (si `tratado` no es booleano). Solo cuando cambia el valor se incrementa `version` y se actualiza `modificadoEn`.
 - `marcarPuntos` fija `tratado` en **todos** los puntos de la sesión que el usuario puede ver, en una sola operación **atómica** (o se aplican todos o ninguno). Es idempotente: solo cambian de `version` y `modificadoEn` los puntos cuyo valor cambió.
 - `editarPunto` **no** modifica `tratado`.
+- `crearPunto` / `editarPunto` aceptan, además de los campos de siempre, `contenidoDoc`, `acuerdoDoc`, `plantilla`, `introDoc`, `puenteDoc` y `bloquesActa` (ver "Documento"). Cambiar de sección reinicia la votación; cambiar de plantilla no borra los bloques que el cliente envía.
 - `crearPunto` (salvo en una sección que `admiteConListaCerrada`), `editarPunto`, `eliminarPunto` y `reordenarPuntos` rechazan con `LISTA_CERRADA` si la sesión tiene la lista cerrada.
 - `establecerListaCerrada` es **idempotente** (fijar el mismo valor no cambia nada).
 - **Todo `Punto` que devuelve el API lleva su `numero`.** Como crear, eliminar, mover o cambiar de sección **renumera** a otros puntos, el cliente vuelve a pedir `listarPuntos` después de esas operaciones; `marcarPunto`, `adjuntarArchivos` y `eliminarArchivo` no renumeran y devuelven el punto ya con su `numero`.

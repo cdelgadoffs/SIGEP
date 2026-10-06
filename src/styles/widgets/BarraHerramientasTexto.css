@@ -1,0 +1,45 @@
+.widget-barra-texto-separador {
+  width: 1px;
+  height: 20px;
+  background: #bbb;
+  margin: 0 2px;
+}
+.widget-barra-texto-tabla-envoltorio {
+  position: relative;
+}
+.widget-barra-texto-tabla {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  z-index: 20;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.widget-barra-texto-tabla-rejilla {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.widget-barra-texto-tabla-fila {
+  display: flex;
+  gap: 2px;
+}
+.widget-barra-texto-tabla-celda {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #ccc;
+  background: #fafafa;
+}
+.widget-barra-texto-tabla-celda-activa {
+  background: #9fc0ff;
+  border-color: #5a8fef;
+}
+.widget-barra-texto-tabla-etiqueta {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #555;
+  text-align: center;
+}

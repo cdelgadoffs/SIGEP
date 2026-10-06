@@ -1,26 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import ListaExpandible from '../base/ListaExpandible.jsx';
-import Textarea from '../base/Textarea.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import BotonS from '../base/BotonS.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
 import Modal from '../base/Modal.jsx';
+import EditorTexto from './EditorTexto.jsx';
+import VistaPreviaFlotante from './VistaPreviaFlotante.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { useUI } from '../../context/UIContext.jsx';
+import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../../context/UIContext.jsx';
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
+import { docDesdeTexto, docVacio, esDocVacio } from '../../utils/documento.js';
+import { contenidoPorOmision, hojaPorOmision } from '../../utils/plantillasActa.js';
+import { tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/FormularioPunto.css';
 
-function estadoVacio(seccion) {
+function estadoVacio(seccion, esInforme, plantillas, textosActa) {
   return {
     seccion: seccion || '',
     categoria: '',
     remitente: '',
-    contenido: '',
-    acuerdo: '',
+    contenidoDoc: contenidoPorOmision(textosActa, esInforme),
+    acuerdoDoc: docVacio(),
     confidencial: false,
     archivos: [],
+    ...hojaPorOmision(plantillas, textosActa),
   };
 }
 
@@ -28,14 +33,22 @@ function claveBorrador(seccion) {
   return `formularioPunto:${seccion}`;
 }
 
-function tieneContenido(f) {
-  return f.contenido.trim().length > 0 || f.acuerdo.trim().length > 0 || f.confidencial;
+function aDocumentos(borrador) {
+  const { contenido, acuerdo, ...resto } = borrador;
+  return {
+    ...resto,
+    ...(typeof contenido === 'string' ? { contenidoDoc: docDesdeTexto(contenido) } : null),
+    ...(typeof acuerdo === 'string' ? { acuerdoDoc: docDesdeTexto(acuerdo) } : null),
+  };
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId } = useUI();
-  const [form, setForm] = useState(() => estadoVacio(seccionNuevoPunto));
+  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3 } = useUI();
+  const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
+  const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA);
+  const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
+  const [aporte, setAporte] = useState(false);
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
@@ -61,23 +74,32 @@ export default function FormularioPunto() {
           seccion: original.seccion,
           categoria: '',
           remitente: original.remitente,
-          contenido: original.contenido,
-          acuerdo: original.acuerdo,
+          contenidoDoc: original.contenidoDoc ?? docDesdeTexto(original.contenido),
+          acuerdoDoc: original.acuerdoDoc ?? docDesdeTexto(original.acuerdo),
           confidencial: original.confidencial,
           archivos: original.archivos,
+          plantilla: original.plantilla,
+          introDoc: original.introDoc,
+          puenteDoc: original.puenteDoc,
+          bloquesActa: original.bloquesActa,
         });
+        setAporte(true);
       }
       return;
     }
     let vigente = true;
     const seccion = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
-    setForm(estadoVacio(seccion));
+    setForm(formularioVacio(seccion));
+    setAporte(false);
     obtenerBorrador(claveBorrador(seccion))
       .catch(() => null)
       .then((borrador) => {
         if (!vigente) return;
         claveGuardadaRef.current = borrador ? claveBorrador(seccion) : null;
-        if (borrador) setForm({ ...estadoVacio(seccion), ...borrador, seccion });
+        if (borrador) {
+          setForm({ ...formularioVacio(seccion), ...aDocumentos(borrador), seccion });
+          setAporte(true);
+        }
         setRestaurado(true);
       });
     return () => { vigente = false; };
@@ -89,7 +111,7 @@ export default function FormularioPunto() {
     const temporizador = setTimeout(() => {
       const anterior = claveGuardadaRef.current;
       if (anterior && anterior !== clave) eliminarBorrador(anterior);
-      if (tieneContenido(form)) {
+      if (aporte) {
         guardarBorrador(clave, { ...form, archivos: [] });
         claveGuardadaRef.current = clave;
       } else {
@@ -98,7 +120,7 @@ export default function FormularioPunto() {
       }
     }, 300);
     return () => clearTimeout(temporizador);
-  }, [form, restaurado]);
+  }, [form, restaurado, aporte]);
 
   const opcionesSeccion = SECCIONES_DOCUMENTO
     .filter((s) => !listaCerrada || s.admiteConListaCerrada)
@@ -119,6 +141,15 @@ export default function FormularioPunto() {
 
   function actualizar(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
+  }
+
+  function cambiarCampos(cambios) {
+    setForm((f) => ({ ...f, ...cambios }));
+  }
+
+  function cambiarDoc(campo, doc) {
+    setAporte(true);
+    actualizar(campo, doc);
   }
 
   function adjuntarArchivos(e) {
@@ -161,7 +192,8 @@ export default function FormularioPunto() {
   }
 
   function borrar() {
-    setForm(estadoVacio(form.seccion));
+    setForm(formularioVacio(form.seccion));
+    setAporte(false);
   }
 
   async function confirmar() {
@@ -171,16 +203,21 @@ export default function FormularioPunto() {
       const datos = {
         seccion: form.seccion,
         remitente: remitenteActual,
-        contenido: form.contenido.trim(),
-        acuerdo: esInforme ? '' : form.acuerdo.trim(),
+        contenidoDoc: form.contenidoDoc,
+        acuerdoDoc: esInforme ? docVacio() : form.acuerdoDoc,
         confidencial: form.confidencial,
+        plantilla: form.plantilla,
+        introDoc: form.introDoc,
+        puenteDoc: form.puenteDoc,
+        bloquesActa: form.bloquesActa,
       };
       if (editando) {
         await editarPunto(punto.id, punto.version, datos);
         cerrarSidebar3();
       } else {
         await agregarPunto({ ...datos, archivos: form.archivos });
-        setForm(estadoVacio(form.seccion));
+        setForm(formularioVacio(form.seccion));
+        setAporte(false);
       }
     } catch (e) {
       setError(e.mensaje || (editando ? 'No se pudo guardar el punto.' : 'No se pudo añadir el punto.'));
@@ -189,7 +226,7 @@ export default function FormularioPunto() {
     }
   }
 
-  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && form.contenido.trim().length > 0 && (esInforme || form.acuerdo.trim().length > 0);
+  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && !esDocVacio(form.contenidoDoc) && (esInforme || !esDocVacio(form.acuerdoDoc));
 
   return (
     <div className="widget-formulario-punto-wrap">
@@ -266,25 +303,34 @@ export default function FormularioPunto() {
         </div>
       )}
 
-      <div className="widget-formulario-punto-campo">
+      <div className="widget-formulario-punto-campo widget-formulario-punto-editor widget-formulario-punto-editor-contenido">
         <label className="widget-formulario-punto-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</label>
-        <Textarea
-          value={form.contenido}
-          onChange={(v) => actualizar('contenido', v)}
+        <EditorTexto
+          value={form.contenidoDoc}
+          onChange={(doc) => cambiarDoc('contenidoDoc', doc)}
           placeholder={esInforme ? 'Informe' : '...por el que/cual se...'}
+          autoFocus={!editando}
+          resetToken={form.seccion}
+          ariaLabel={esInforme ? 'Informe' : 'Punto de acuerdo'}
         />
       </div>
 
       {!esInforme && (
-        <div className="widget-formulario-punto-campo">
+        <div className="widget-formulario-punto-campo widget-formulario-punto-editor">
           <label className="widget-formulario-punto-label">Acuerdo</label>
-          <Textarea value={form.acuerdo} onChange={(v) => actualizar('acuerdo', v)} placeholder="Acuerdos" />
+          <EditorTexto
+            value={form.acuerdoDoc}
+            onChange={(doc) => cambiarDoc('acuerdoDoc', doc)}
+            placeholder="Acuerdos"
+            ordinal="acuerdo"
+            ariaLabel="Acuerdo"
+          />
         </div>
       )}
 
       <Checkbox
         checked={form.confidencial}
-        onChange={(v) => actualizar('confidencial', v)}
+        onChange={(v) => { setAporte(true); actualizar('confidencial', v); }}
         label="Marcar como confidencial"
       />
 
@@ -312,6 +358,18 @@ export default function FormularioPunto() {
           <BotonS variant="claro" onClick={quitarArchivo}>Quitar</BotonS>
         </div>
       </Modal>
+      <VistaPreviaFlotante
+        abierto={sidebar3Abierto && !esInforme && aporte}
+        izquierda={izquierdaSidebar3 + ANCHO_SIDEBAR3}
+        arriba={ALTO_TOPBAR + ALTO_CINTA - 1}
+        form={form}
+        onCambiar={cambiarCampos}
+        onAporte={() => setAporte(true)}
+        plantillas={PLANTILLAS_ACTA}
+        tiposBloque={TIPOS_BLOQUE_ACTA}
+        codigo={editando ? tituloPunto(punto.numero) : undefined}
+        fecha={sesionActivaFecha ?? ''}
+      />
       {thumb.visible && (
         <div
           className="widget-formulario-punto-scrollbar-thumb"
