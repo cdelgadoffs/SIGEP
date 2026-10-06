@@ -4,7 +4,7 @@ export const CATALOGOS_SEMILLA = {
     { id: 'proyectos-de-acuerdo', nombre: 'Proyectos de acuerdo', requiereAcuerdo: true },
     { id: 'tomas-de-nota-licencias', nombre: 'Tomas de nota/Licencias', requiereAcuerdo: true, plantillaPorOmision: 'proyecto' },
     { id: 'informes', nombre: 'Informes', requiereAcuerdo: false },
-    { id: 'asuntos-generales', nombre: 'Asuntos generales', requiereAcuerdo: true, admiteConListaCerrada: true, sinTituloEnDocumento: true, permiteCambiarSeccion: true },
+    { id: 'asuntos-generales', nombre: 'Asuntos generales', requiereAcuerdo: true, admiteConListaCerrada: true, sinTituloEnDocumento: true, permiteCambiarSeccion: true, excluidaDelActa: true },
   ],
   tiposSesion: [
     { id: 'ordinaria', nombre: 'Ordinaria' },

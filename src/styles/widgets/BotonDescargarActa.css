@@ -1,0 +1,12 @@
+.widget-boton-descargar-acta .base-boton-s {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.widget-boton-descargar-acta-mensaje {
+  margin: 0;
+  font-size: 13.5px;
+  color: #c62828;
+}

@@ -23,6 +23,7 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
 | `celebradaEn` | string \| null | Timestamp. |
+| `asistentes` | `{ integranteId, nombre, tratamiento, presidente, presente }[]` \| null | Hecho persistido al celebrar (ver "Asistencia a la sesión"); `null` si no está celebrada. |
 | `horaInicio` | string \| null | Hecho persistido: timestamp (ISO) en que comenzó la celebración (`comenzarSesion`). |
 | `horaFin` | string \| null | Hecho persistido: timestamp (ISO) en que terminó la celebración; la fija `celebrarSesion`. |
 | `enCurso` | bool | **Derivado.** `horaInicio` fijada y sesión aún no celebrada. |
@@ -170,7 +171,7 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `plantillaPorOmision: string` (opcional; `id` de `plantillasActa` con que arranca un punto nuevo de esa sección; solo `tomas-de-nota-licencias` la lleva, con `proyecto`; sin ella, la primera plantilla), `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `permiteCambiarSeccion: bool` (solo `asuntos-generales`: el formulario ofrece elegir la sección al crear), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
+| `secciones` | `plantillaPorOmision: string` (opcional; `id` de `plantillasActa` con que arranca un punto nuevo de esa sección; solo `tomas-de-nota-licencias` la lleva, con `proyecto`; sin ella, la primera plantilla), `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `permiteCambiarSeccion: bool` (solo `asuntos-generales`: el formulario ofrece elegir la sección al crear), `excluidaDelActa: bool` (solo `asuntos-generales`: sus puntos no entran al acta), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
 | `categorias` | — | `pleno`, `direcciones` (Direcciones generales), `comisiones` |
 | `remitentes` | `categoria: string` (id de `categorias`) | Pleno; DGEJ, DEGETD, DGTI, DGJJ, DGIPDI, DGRH (direcciones); Administración, Creación de nuevos órganos, Adscripción, Carrera judicial, Presupuesto (comisiones). La categoría de un punto no se guarda: se deduce de su remitente |
 | `tiposVoto` | `frase: string` (texto del voto en el resultado), `votosRequeridos: number` (si existe, el voto exige ese número de integrantes del quórum), `sinVotacion: bool` (no aplica tipo de votación), `admitePrecision: bool` | `unanimidad` (admite precisión), `mayoria-4` (1 voto), `mayoria-3` (2 votos), `retirar` (sin votación) |
@@ -234,6 +235,7 @@ La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada int
 | `registrarAsistencia(sesionId, integranteId, presente)` | sesión, integrante, bool | `Asistencia[]` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 
 - Una sesión **celebrada** no admite cambios de asistencia (`SESION_CELEBRADA`). `registrarAsistencia` es idempotente.
+- **Se congela al celebrar:** `celebrarSesion` guarda en la sesión una copia de los asistentes (`asistentes`: `{ integranteId, nombre, tratamiento, presidente, presente }` por cada integrante del momento) y la sesión celebrada la entrega tal cual (`null` en las celebradas antes de este cambio y en las no celebradas). `listarAsistencia` de una celebrada lee de esa copia, así el acta no cambia si luego se edita o elimina un integrante.
 - El conteo (presentes / total) no se entrega: lo calcula quien lo muestra.
 - Al eliminar un integrante, se quita de `ausentes` de las sesiones no celebradas.
 

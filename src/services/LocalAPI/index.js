@@ -228,8 +228,12 @@ export async function celebrarSesion(id) {
   if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de celebrar la sesión.');
   if (!sesion.horaInicio) throw new ApiError('SESION_NO_COMENZADA', 'Debes comenzar la sesión antes de celebrarla.');
   const ahora = new Date().toISOString();
+  const ausentes = sesion.ausentes ?? [];
+  const asistentes = (await listarIntegrantes()).map((i) => ({
+    integranteId: i.id, nombre: i.nombre, tratamiento: i.tratamiento, presidente: !!i.presidente, presente: !ausentes.includes(i.id),
+  }));
   await guardar(STORE_SESIONES, {
-    ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, version: sesion.version + 1,
+    ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, asistentes, version: sesion.version + 1,
   });
   const lista = await listarSesiones();
   return lista.find((s) => s.id === id);
@@ -591,6 +595,7 @@ function asistenciaDe(sesion, integrantes) {
 export async function listarAsistencia(sesionId) {
   const sesion = await obtener(STORE_SESIONES, sesionId);
   if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
+  if (sesion.asistentes) return sesion.asistentes.map(({ integranteId, presente }) => ({ integranteId, presente }));
   return asistenciaDe(sesion, await listarIntegrantes());
 }
 

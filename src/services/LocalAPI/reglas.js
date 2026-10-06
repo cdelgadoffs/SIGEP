@@ -156,6 +156,7 @@ export function calcularEstados(sesiones) {
       horaFin: s.horaFin || null,
       enCurso: !!s.horaInicio && !s.celebrada,
       listaCerrada: !!s.listaCerrada,
+      asistentes: s.celebrada ? s.asistentes ?? null : null,
       version: s.version,
     };
   });
