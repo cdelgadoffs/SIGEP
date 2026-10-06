@@ -526,8 +526,9 @@ function bloquesDePlantilla(plantilla) {
   return (plantilla?.bloques || []).map((tipo) => ({ id: crypto.randomUUID(), tipo, doc: docVacio() }));
 }
 
-export function hojaPorOmision(catalogos) {
-  const plantilla = (catalogos.plantillasActa || [])[0];
+export function hojaPorOmision(catalogos, plantillaId) {
+  const plantillas = catalogos.plantillasActa || [];
+  const plantilla = plantillas.find((x) => x.id === plantillaId) || plantillas[0];
   return {
     plantilla: plantilla?.id ?? 'introduccion',
     introDoc: docIntro(catalogos),
@@ -562,7 +563,7 @@ function docDeEntrada(p, campo) {
 
 export function normalizarPunto(p, catalogos) {
   const seccion = buscarSeccion(catalogos, p.seccion);
-  const omision = hojaPorOmision(catalogos);
+  const omision = hojaPorOmision(catalogos, p.plantilla ?? seccion.plantillaPorOmision);
   const plantilla = p.plantilla ?? omision.plantilla;
   if (!(catalogos.plantillasActa || []).some((x) => x.id === plantilla)) throw invalido('Plantilla inválida.');
   return {

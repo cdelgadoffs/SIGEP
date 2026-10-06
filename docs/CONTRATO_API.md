@@ -52,7 +52,7 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 | `acuerdoDoc` | `Documento` | Texto con formato del acuerdo. Obligatorio (texto plano no vacío) si la sección tiene `requiereAcuerdo: true`; si no, se guarda vacío. |
 | `contenido` | string | **Derivado.** Texto plano de `contenidoDoc` (un párrafo por línea). Máx. 20 000 caracteres. Es lo que leen las listas, el orden del día y los textos derivados. |
 | `acuerdo` | string | **Derivado.** Texto plano de `acuerdoDoc` (un párrafo por línea). Máx. 20 000. |
-| `plantilla` | string | `id` del catálogo `plantillasActa`. Por omisión, la primera. |
+| `plantilla` | string | `id` del catálogo `plantillasActa`. Por omisión, la `plantillaPorOmision` de su sección o, sin ella, la primera. |
 | `introDoc`, `puenteDoc` | `Documento` | Fundamento y frase puente de la hoja del punto (se usan según la plantilla). Por omisión, los textos `intro` y `puente` del catálogo `textosActa`. |
 | `bloquesActa` | `BloqueActa[]` | Secciones adicionales de la hoja: `{ id, tipo, titulo?, doc }`. `tipo` es un `id` de `tiposBloqueActa`; `titulo` solo en `personalizada`. Por omisión, los bloques de la plantilla (con `doc` vacío). |
 | `confidencial` | bool | |
@@ -157,7 +157,7 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `permiteCambiarSeccion: bool` (solo `asuntos-generales`: el formulario ofrece elegir la sección al crear), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
+| `secciones` | `plantillaPorOmision: string` (opcional; `id` de `plantillasActa` con que arranca un punto nuevo de esa sección; solo `tomas-de-nota-licencias` la lleva, con `proyecto`; sin ella, la primera plantilla), `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `permiteCambiarSeccion: bool` (solo `asuntos-generales`: el formulario ofrece elegir la sección al crear), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
 | `categorias` | — | `pleno`, `direcciones` (Direcciones generales), `comisiones` |
 | `remitentes` | `categoria: string` (id de `categorias`) | Pleno; DGEJ, DEGETD, DGTI, DGJJ, DGIPDI, DGRH (direcciones); Administración, Creación de nuevos órganos, Adscripción, Carrera judicial, Presupuesto (comisiones). La categoría de un punto no se guarda: se deduce de su remitente |
 | `tiposVoto` | `frase: string` (texto del voto en el resultado), `votosRequeridos: number` (si existe, el voto exige ese número de integrantes del quórum), `sinVotacion: bool` (no aplica tipo de votación), `admitePrecision: bool` | `unanimidad` (admite precisión), `mayoria-4` (1 voto), `mayoria-3` (2 votos), `retirar` (sin votación) |

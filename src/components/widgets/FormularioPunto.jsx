@@ -16,7 +16,7 @@ import { contenidoPorOmision, hojaPorOmision } from '../../utils/plantillasActa.
 import { tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/FormularioPunto.css';
 
-function estadoVacio(seccion, esInforme, plantillas, textosActa) {
+function estadoVacio(seccion, esInforme, plantillas, textosActa, plantillaId) {
   return {
     seccion: seccion || '',
     categoria: '',
@@ -25,7 +25,7 @@ function estadoVacio(seccion, esInforme, plantillas, textosActa) {
     acuerdoDoc: docVacio(),
     confidencial: false,
     archivos: [],
-    ...hojaPorOmision(plantillas, textosActa),
+    ...hojaPorOmision(plantillas, textosActa, plantillaId),
   };
 }
 
@@ -46,9 +46,12 @@ export default function FormularioPunto() {
   const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
   const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3 } = useUI();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
-  const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA);
+  const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision);
   const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
   const [aporte, setAporte] = useState(false);
+  const [previaVisible, setPreviaVisible] = useState(false);
+  const [reinicioEditor, setReinicioEditor] = useState(0);
+  const reiniciarEditor = () => setReinicioEditor((n) => n + 1);
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
@@ -84,6 +87,7 @@ export default function FormularioPunto() {
           bloquesActa: original.bloquesActa,
         });
         setAporte(true);
+        setPreviaVisible(false);
       }
       return;
     }
@@ -91,6 +95,8 @@ export default function FormularioPunto() {
     const seccion = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
     setForm(formularioVacio(seccion));
     setAporte(false);
+    setPreviaVisible(false);
+    reiniciarEditor();
     obtenerBorrador(claveBorrador(seccion))
       .catch(() => null)
       .then((borrador) => {
@@ -99,6 +105,7 @@ export default function FormularioPunto() {
         if (borrador) {
           setForm({ ...formularioVacio(seccion), ...aDocumentos(borrador), seccion });
           setAporte(true);
+          reiniciarEditor();
         }
         setRestaurado(true);
       });
@@ -149,6 +156,7 @@ export default function FormularioPunto() {
 
   function cambiarDoc(campo, doc) {
     setAporte(true);
+    setPreviaVisible(true);
     actualizar(campo, doc);
   }
 
@@ -194,6 +202,8 @@ export default function FormularioPunto() {
   function borrar() {
     setForm(formularioVacio(form.seccion));
     setAporte(false);
+    setPreviaVisible(false);
+    reiniciarEditor();
   }
 
   async function confirmar() {
@@ -218,6 +228,8 @@ export default function FormularioPunto() {
         await agregarPunto({ ...datos, archivos: form.archivos });
         setForm(formularioVacio(form.seccion));
         setAporte(false);
+        setPreviaVisible(false);
+        reiniciarEditor();
       }
     } catch (e) {
       setError(e.mensaje || (editando ? 'No se pudo guardar el punto.' : 'No se pudo añadir el punto.'));
@@ -309,8 +321,8 @@ export default function FormularioPunto() {
           value={form.contenidoDoc}
           onChange={(doc) => cambiarDoc('contenidoDoc', doc)}
           placeholder={esInforme ? 'Informe' : '...por el que/cual se...'}
-          autoFocus={!editando}
-          resetToken={form.seccion}
+          autoFocus={sidebar3Abierto && !editando}
+          resetToken={reinicioEditor}
           ariaLabel={esInforme ? 'Informe' : 'Punto de acuerdo'}
         />
       </div>
@@ -359,12 +371,12 @@ export default function FormularioPunto() {
         </div>
       </Modal>
       <VistaPreviaFlotante
-        abierto={sidebar3Abierto && !esInforme && aporte}
+        abierto={sidebar3Abierto && !esInforme && previaVisible}
         izquierda={izquierdaSidebar3 + ANCHO_SIDEBAR3}
         arriba={ALTO_TOPBAR + ALTO_CINTA - 1}
         form={form}
         onCambiar={cambiarCampos}
-        onAporte={() => setAporte(true)}
+        onAporte={() => { setAporte(true); setPreviaVisible(true); }}
         plantillas={PLANTILLAS_ACTA}
         tiposBloque={TIPOS_BLOQUE_ACTA}
         codigo={editando ? tituloPunto(punto.numero) : undefined}

@@ -17,8 +17,8 @@ function bloquesVacios(plantilla) {
   return (plantilla?.bloques || []).map((tipo) => ({ id: nuevoIdBloque(), tipo, doc: docVacio() }));
 }
 
-export function hojaPorOmision(plantillasActa, textosActa) {
-  const plantilla = (plantillasActa || [])[0];
+export function hojaPorOmision(plantillasActa, textosActa, plantillaId) {
+  const plantilla = (plantillasActa || []).find((x) => x.id === plantillaId) || (plantillasActa || [])[0];
   const intro = textoActa(textosActa, 'intro');
   const introContenido = [];
   if (intro?.negrita) introContenido.push({ type: 'text', text: intro.negrita, marks: [{ type: 'bold' }] });
