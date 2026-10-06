@@ -27,7 +27,7 @@ const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFe
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 const porNumero = (lista) => [...lista].sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0));
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], integrantes: [], tiposConocimiento: [] };
+const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], generos: [], grados: [], tiposConocimiento: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
@@ -229,12 +229,12 @@ export function ProyectoProvider({ children }) {
   const value = {
     sesionSeleccionada,
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes, CATEGORIAS: catalogos.categorias,
-    TIPOS_VOTO: catalogos.tiposVoto, TIPOS_VOTACION: catalogos.tiposVotacion, ESTADOS_VOTO: catalogos.estadosVoto, INTEGRANTES: catalogos.integrantes, TIPOS_CONOCIMIENTO: catalogos.tiposConocimiento,
+    TIPOS_VOTO: catalogos.tiposVoto, TIPOS_VOTACION: catalogos.tiposVotacion, ESTADOS_VOTO: catalogos.estadosVoto, TIPOS_CONOCIMIENTO: catalogos.tiposConocimiento, GENEROS: catalogos.generos, GRADOS: catalogos.grados,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
     sesionFinalizada, finalizarSesion,
     listaCerrada, establecerListaCerrada,
-    PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
+    PUNTOS: puntos, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,

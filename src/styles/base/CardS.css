@@ -80,3 +80,11 @@
   color: #555;
   cursor: default;
 }
+
+.base-card-s-acciones {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}

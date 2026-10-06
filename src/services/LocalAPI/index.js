@@ -1,6 +1,6 @@
 import { ApiError } from '../ApiError.js';
 import {
-  STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS,
+  STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS, STORE_INTEGRANTES, STORE_SECRETARIO,
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
@@ -9,6 +9,7 @@ import {
   camposPunto, validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
+  decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -32,6 +33,11 @@ function siguienteOrden(todos, sesionId, seccion) {
 export async function listarCatalogos() {
   const filas = await obtenerTodos(STORE_CATALOGOS);
   return Object.fromEntries(filas.map((f) => [f.nombre, f.items]));
+}
+
+async function catalogosConIntegrantes() {
+  const catalogos = await listarCatalogos();
+  return { ...catalogos, integrantes: await listarIntegrantes() };
 }
 
 export async function listarSesiones() {
@@ -189,7 +195,7 @@ async function armarPuntos(sesionId) {
   const sesiones = await obtenerTodos(STORE_SESIONES);
   const sesion = sesiones.find((s) => s.id === sesionId);
   if (!sesion) return [];
-  const catalogos = await listarCatalogos();
+  const catalogos = await catalogosConIntegrantes();
   const almacenados = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === sesionId);
   const fijos = generarPuntosFijos(sesion, sesiones, catalogos.puntosFijos);
   return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []).map((punto) => decorarPunto(punto, catalogos));
@@ -297,7 +303,7 @@ export async function registrarVotacion(id, votacion) {
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
-  const catalogos = await listarCatalogos();
+  const catalogos = await catalogosConIntegrantes();
   const seccion = (catalogos.secciones || []).find((x) => x.id === actual.seccion);
   if (!actual.tratado) {
     throw new ApiError('VALIDACION', 'El punto debe estar marcado como tratado para registrar su votación.');
@@ -428,4 +434,90 @@ export async function reordenarPuntos(sesionId, seccion, ids) {
   });
   await escribirVarios({ poner: cambiados.map((valor) => ({ store: STORE_PUNTOS, valor })) });
   return (await armarPuntos(sesionId)).filter((p) => p.seccion === seccion);
+}
+
+export async function listarIntegrantes() {
+  const catalogos = await listarCatalogos();
+  const lista = await obtenerTodos(STORE_INTEGRANTES);
+  return lista
+    .sort((a, b) => (a.creadoEn !== b.creadoEn ? (a.creadoEn < b.creadoEn ? -1 : 1) : a.id < b.id ? -1 : 1))
+    .map((i) => decorarIntegrante(i, catalogos));
+}
+
+export async function crearIntegrante(datos) {
+  exigirEscritura();
+  const catalogos = await listarCatalogos();
+  const existentes = await obtenerTodos(STORE_INTEGRANTES);
+  const campos = validarIntegrante(datos, catalogos, existentes);
+  exigirEspacioEnQuorum(existentes);
+  const ahora = new Date().toISOString();
+  const nuevo = { id: crypto.randomUUID(), ...campos, version: 1, creadoEn: ahora, modificadoEn: ahora };
+  const otros = campos.presidente
+    ? existentes.filter((x) => x.presidente).map((x) => ({ ...x, presidente: false, version: x.version + 1, modificadoEn: ahora }))
+    : [];
+  await escribirVarios({ poner: [...otros, nuevo].map((valor) => ({ store: STORE_INTEGRANTES, valor })) });
+  return decorarIntegrante(nuevo, catalogos);
+}
+
+export async function editarIntegrante(id, version, cambios) {
+  exigirEscritura();
+  const catalogos = await listarCatalogos();
+  const existentes = await obtenerTodos(STORE_INTEGRANTES);
+  const actual = existentes.find((x) => x.id === id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El integrante no existe.');
+  if (actual.version !== version) {
+    throw new ApiError('CONFLICTO', 'El integrante cambió desde que lo cargaste. Recarga e intenta de nuevo.');
+  }
+  const campos = validarIntegrante({ ...actual, ...cambios }, catalogos, existentes, id);
+  const ahora = new Date().toISOString();
+  const editado = { ...actual, ...campos, version: actual.version + 1, modificadoEn: ahora };
+  const otros = campos.presidente
+    ? existentes.filter((x) => x.id !== id && x.presidente).map((x) => ({ ...x, presidente: false, version: x.version + 1, modificadoEn: ahora }))
+    : [];
+  await escribirVarios({ poner: [...otros, editado].map((valor) => ({ store: STORE_INTEGRANTES, valor })) });
+  return decorarIntegrante(editado, catalogos);
+}
+
+export async function eliminarIntegrante(id) {
+  exigirEscritura();
+  const actual = await obtener(STORE_INTEGRANTES, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El integrante no existe.');
+  const sesiones = await obtenerTodos(STORE_SESIONES);
+  const celebradas = new Set(sesiones.filter((s) => s.celebrada).map((s) => s.id));
+  const puntos = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.votacion?.quorum?.includes(id));
+  if (puntos.some((p) => celebradas.has(p.sesionId))) {
+    throw new ApiError('EN_USO', 'El integrante figura en la votación de una sesión ya celebrada y no se puede eliminar.');
+  }
+  const ahora = new Date().toISOString();
+  await escribirVarios({
+    poner: puntos.map((p) => ({
+      store: STORE_PUNTOS,
+      valor: { ...p, votacion: { ...p.votacion, quorum: p.votacion.quorum.filter((q) => q !== id) }, version: p.version + 1, modificadoEn: ahora },
+    })),
+    borrar: [{ store: STORE_INTEGRANTES, id }],
+  });
+}
+
+const ID_SECRETARIO = 'seple';
+
+export async function obtenerSecretarioEjecutivo() {
+  const actual = await obtener(STORE_SECRETARIO, ID_SECRETARIO);
+  if (!actual) return null;
+  const { id, ...secretario } = actual;
+  return secretario;
+}
+
+export async function guardarSecretarioEjecutivo(datos) {
+  exigirEscritura();
+  const catalogos = await listarCatalogos();
+  const campos = validarSecretario(datos, catalogos);
+  const actual = await obtener(STORE_SECRETARIO, ID_SECRETARIO);
+  const nuevo = { id: ID_SECRETARIO, ...campos, version: (actual?.version ?? 0) + 1, modificadoEn: new Date().toISOString() };
+  await guardar(STORE_SECRETARIO, nuevo);
+  return obtenerSecretarioEjecutivo();
+}
+
+export async function eliminarSecretarioEjecutivo() {
+  exigirEscritura();
+  await escribirVarios({ borrar: [{ store: STORE_SECRETARIO, id: ID_SECRETARIO }] });
 }

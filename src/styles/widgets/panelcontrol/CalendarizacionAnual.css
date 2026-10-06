@@ -1,0 +1,9 @@
+.widget-calendarizacion-anual {
+  margin: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.widget-calendarizacion-anual-volver {
+  align-self: flex-start;
+}

@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import ListaExpandible from '../base/ListaExpandible.jsx';
-import CampoFecha from '../base/CampoFecha.jsx';
-import Checkbox from '../base/Checkbox.jsx';
-import BotonS from '../base/BotonS.jsx';
-import BadgeDinamico from '../base/BadgeDinamico.jsx';
-import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { useUI } from '../../context/UIContext.jsx';
-import { etiquetaFecha, sumarDiasISO, diaDeSemana } from '../../utils/fechas.js';
-import '../../styles/widgets/FormularioCalendario.css';
+import ListaExpandible from '../../base/ListaExpandible.jsx';
+import CampoFecha from '../../base/CampoFecha.jsx';
+import Checkbox from '../../base/Checkbox.jsx';
+import BotonS from '../../base/BotonS.jsx';
+import BadgeDinamico from '../../base/BadgeDinamico.jsx';
+import { useProyecto } from '../../../context/ProyectoContext.jsx';
+import { useUI } from '../../../context/UIContext.jsx';
+import { etiquetaFecha, sumarDiasISO, diaDeSemana } from '../../../utils/fechas.js';
+import '../../../styles/widgets/panelcontrol/FormularioCalendario.css';
 
 const DIAS = [
   { id: 1, label: 'Lunes' },

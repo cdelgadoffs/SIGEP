@@ -72,6 +72,11 @@
   color: #1565c0;
   border-color: #64b5f6;
 }
+.widget-selector-votacion-tono-neutro {
+  background: #eceff1;
+  color: #455a64;
+  border-color: #cfd8dc;
+}
 .widget-selector-votacion-boton-inactivo {
   background: #e0e0e0;
   color: #888;

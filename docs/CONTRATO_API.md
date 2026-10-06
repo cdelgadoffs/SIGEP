@@ -74,6 +74,32 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 - Tipos permitidos: PDF, Word (`.doc`, `.docx`), Excel (`.xls`, `.xlsx`) e imágenes (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`). Cualquier otro → `ARCHIVO_INVALIDO`.
 - El contenido binario nunca viaja dentro del `Punto`: se obtiene con `descargarArchivo`. El caché del cliente guarda solo los metadatos.
 
+### Integrante
+
+Persona que integra el Pleno (el quórum). Máximo **5**. No es una sesión ni un punto: es un dato del órgano.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | string | Asignado por el servidor (UUID). |
+| `nombre` | string | Obligatorio, máx. 200. |
+| `email` | string | Obligatorio, formato válido, **único** entre integrantes (sin distinguir mayúsculas). |
+| `genero` | string | `id` del catálogo `generos`. |
+| `grado` | string | `id` del catálogo `grados`. |
+| `presidente` | bool | A lo sumo **uno** en todo el Pleno: marcar a un integrante como presidente se lo quita al anterior, en la misma operación. |
+| `tratamiento` | string | **Derivado.** Artículo del género + título del grado según el género (`el licenciado`, `la maestra`…). Nunca se guarda. |
+| `version`, `creadoEn`, `modificadoEn` | | Control de versiones y fechas, del servidor. |
+
+### Secretario ejecutivo del Pleno (SEPLE)
+
+Registro **único** (puede no existir). No cuenta en el quórum ni en los votos.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `nombre` | string | Obligatorio, máx. 200. |
+| `email` | string | Opcional; si se indica, formato válido. |
+| `genero` | string | `id` del catálogo `generos`. |
+| `version`, `modificadoEn` | | Del servidor. |
+
 ### Numeración y puntos fijos
 
 El **orden del documento** de una sesión es: las secciones en el orden de su catálogo; dentro de cada sección, primero los puntos fijos (en el orden de su catálogo) y después los puntos del capturista por `orden`. El `numero` de cada punto es su posición en ese orden (1…N), **contando también los confidenciales y los fijos**. Se calcula al leer: nunca se guarda, y cambia solo si el orden cambia (crear, eliminar, mover, cambiar de sección). El cliente lo presenta como `PLE/001`.
@@ -119,10 +145,11 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 | `categorias` | — | `pleno`, `direcciones` (Direcciones generales), `comisiones` |
 | `remitentes` | `categoria: string` (id de `categorias`) | Pleno; DGEJ, DEGETD, DGTI, DGJJ, DGIPDI, DGRH (direcciones); Administración, Creación de nuevos órganos, Adscripción, Carrera judicial, Presupuesto (comisiones). La categoría de un punto no se guarda: se deduce de su remitente |
 | `tiposVoto` | `frase: string` (texto del voto en el resultado), `votosRequeridos: number` (si existe, el voto exige ese número de integrantes del quórum), `sinVotacion: bool` (no aplica tipo de votación), `admitePrecision: bool` | `unanimidad` (admite precisión), `mayoria-4` (1 voto), `mayoria-3` (2 votos), `retirar` (sin votación) |
-| `tiposVotacion` | `tono: 'verde' \| 'rojo' \| 'azul'` (sugerencia de presentación), `admitePrecision: bool` | `economica`, `concurrente` (admite precisión) |
-| `estadosVoto` | `tono` | `aprueba`, `acuerda` |
+| `tiposVotacion` | `admitePrecision: bool` | `economica`, `concurrente` (admite precisión) |
+| `estadosVoto` | — | `aprueba`, `acuerda` |
 | `tiposConocimiento` | `texto` (frase completa) o `textoBase` + `admiteComplemento: bool` | Para informes: `simple`, `extendido` |
-| `integrantes` | `tratamiento: string` (ej. "el licenciado") | Quienes pueden integrar el quórum de una votación (placeholder `integrante-1`…`integrante-5`) |
+| `generos` | `articulo: string` (`el`, `la`) | `masculino`, `femenino` |
+| `grados` | `titulo: { [genero]: string }` (ej. `{ masculino: 'licenciado', femenino: 'licenciada' }`) | `licenciatura`, `maestria`, `doctorado` |
 
 La precisión de un voto aplica solo cuando el tipo de voto **y** el tipo de votación elegidos admiten precisión (hoy: unanimidad + concurrente). 
 ### Votación de un punto
@@ -133,6 +160,23 @@ La precisión de un voto aplica solo cuando el tipo de voto **y** el tipo de vot
 - Los campos omitidos toman la primera opción del catálogo. Cada id debe existir. El quórum no repite integrantes y su tamaño es como máximo `votosRequeridos` del tipo de voto (0 si no tiene); puede estar incompleto.
 - La `precision` solo se conserva si el tipo de voto **y** el de votación admiten precisión; el `complemento` solo si el tipo de conocimiento admite complemento.
 - **Campos derivados al leer (no se guardan):** `acuerdoLineas` (`[{ prefijo, texto }]`, prefijos ÚNICO/PRIMERO/SEGUNDO…) y `textoVotacion` (texto oficial de la votación: el `textoManual` si existe, si no el generado con las reglas de PlenoLOCAL; con acuerdo único se fusiona al final del texto; los puntos fijos usan el `textoVoto` del catálogo `puntosFijos`). Un punto confidencial llega a los lectores con `votacion: null`, `textoVotacion: null` y `acuerdoLineas: []`.
+
+### Operaciones del órgano (integrantes y SEPLE)
+
+Lectura para cualquier usuario autenticado; escritura solo del capturista.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `listarIntegrantes()` | — | `Integrante[]` (en orden de alta) | — |
+| `crearIntegrante(datos)` | `{ nombre, email, genero, grado, presidente }` | `Integrante` | `NO_AUTORIZADO`, `VALIDACION`, `DUPLICADO`, `LIMITE_ALCANZADO` |
+| `editarIntegrante(id, version, cambios)` | id, versión, campos a cambiar | `Integrante` | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `CONFLICTO`, `VALIDACION`, `DUPLICADO` |
+| `eliminarIntegrante(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `EN_USO` |
+| `obtenerSecretarioEjecutivo()` | — | `SecretarioEjecutivo` \| `null` | — |
+| `guardarSecretarioEjecutivo(datos)` | `{ nombre, email, genero }` | `SecretarioEjecutivo` (lo crea o lo reemplaza) | `NO_AUTORIZADO`, `VALIDACION` |
+| `eliminarSecretarioEjecutivo()` | — | — | `NO_AUTORIZADO` |
+
+- Marcar `presidente: true` (al crear o editar) deja `presidente: false` en los demás, de forma atómica. Editar el presidente sin marcarlo lo deja sin presidente.
+- Los integrantes son los únicos que pueden figurar en el `quorum` de una votación (ver "Votación de un punto"). Al **editar** un integrante, el texto de las votaciones que lo mencionan cambia solo (se deriva al leer). Al **eliminarlo**, se quita del quórum de las votaciones de las sesiones aún no celebradas; si figura en la votación de una sesión **ya celebrada** no se puede eliminar (`EN_USO`), para no alterar un acta.
 
 ### Operaciones de calendario
 
@@ -194,6 +238,9 @@ Notas de comportamiento:
 | `LISTA_ABIERTA` | Se intentó celebrar una sesión con la lista de puntos abierta. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
 | `CALENDARIO_EXISTE` | Ya hay un calendario de ese año y no se pidió sobrescribirlo. |
+| `DUPLICADO` | Ya existe un integrante con ese correo. |
+| `LIMITE_ALCANZADO` | Ya hay 5 integrantes. |
+| `EN_USO` | El integrante figura en la votación de una sesión celebrada. |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
 
 ## Permisos

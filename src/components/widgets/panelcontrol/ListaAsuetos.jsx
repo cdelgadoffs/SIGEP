@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import CardS from '../base/CardS.jsx';
-import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { etiquetaFecha } from '../../utils/fechas.js';
-import '../../styles/widgets/ListaAsuetos.css';
+import CardS from '../../base/CardS.jsx';
+import { useProyecto } from '../../../context/ProyectoContext.jsx';
+import { etiquetaFecha } from '../../../utils/fechas.js';
+import '../../../styles/widgets/panelcontrol/ListaAsuetos.css';
 
 export default function ListaAsuetos() {
   const { CALENDARIO, ANIO_CALENDARIO, quitarAsueto } = useProyecto();

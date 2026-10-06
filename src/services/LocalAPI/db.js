@@ -1,13 +1,15 @@
 import { CATALOGOS_SEMILLA } from './semilla.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 15;
+const DB_VERSION = 17;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
 export const STORE_CATALOGOS = 'catalogos';
 export const STORE_ARCHIVOS = 'archivos';
 export const STORE_CALENDARIOS = 'calendarios';
+export const STORE_INTEGRANTES = 'integrantes';
+export const STORE_SECRETARIO = 'secretarioEjecutivo';
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -26,9 +28,33 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CALENDARIOS)) {
         db.createObjectStore(STORE_CALENDARIOS, { keyPath: 'anio' });
       }
+      if (!db.objectStoreNames.contains(STORE_INTEGRANTES)) {
+        db.createObjectStore(STORE_INTEGRANTES, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(STORE_SECRETARIO)) {
+        db.createObjectStore(STORE_SECRETARIO, { keyPath: 'id' });
+      }
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 17) {
+        const tx = req.transaction;
+        const catalogos = tx.objectStore(STORE_CATALOGOS);
+        ['generos', 'grados'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
+        catalogos.delete('integrantes');
+        tx.objectStore(STORE_PUNTOS).openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          if (cursor.value.votacion?.quorum?.length) {
+            cursor.update({ ...cursor.value, votacion: { ...cursor.value.votacion, quorum: [] } });
+          }
+          cursor.continue();
+        };
+      }
+      if (evento.oldVersion < 16) {
+        const catalogos = req.transaction.objectStore(STORE_CATALOGOS);
+        ['tiposVotacion', 'estadosVoto'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
       }
       if (evento.oldVersion < 15) {
         const tx = req.transaction;
@@ -44,7 +70,7 @@ function abrirDB() {
       }
       if (evento.oldVersion < 14) {
         const catalogos = req.transaction.objectStore(STORE_CATALOGOS);
-        ['tiposVoto', 'tiposConocimiento', 'integrantes', 'puntosFijos'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
+        ['tiposVoto', 'tiposConocimiento', 'puntosFijos'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
       }
       if (evento.oldVersion < 13) {
         const catalogos = req.transaction.objectStore(STORE_CATALOGOS);
@@ -54,9 +80,6 @@ function abrirDB() {
             if (!existentes.includes(nombre)) catalogos.put({ nombre, items });
           });
         };
-      }
-      if (evento.oldVersion < 12) {
-        req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'integrantes', items: CATALOGOS_SEMILLA.integrantes });
       }
       if (evento.oldVersion < 11) {
         const catalogos = req.transaction.objectStore(STORE_CATALOGOS);

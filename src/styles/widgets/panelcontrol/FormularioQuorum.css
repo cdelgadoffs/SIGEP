@@ -1,0 +1,43 @@
+.widget-formulario-quorum {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.widget-formulario-quorum-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.widget-formulario-quorum-fila {
+  display: flex;
+  gap: 10px;
+}
+.widget-formulario-quorum-etiqueta {
+  font-size: 11px;
+  color: #999;
+}
+.widget-formulario-quorum-selector {
+  background: #232323;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #eee;
+  font-size: 12.5px;
+}
+.widget-formulario-quorum-presidente .base-checkbox-label {
+  color: #ddd;
+}
+.widget-formulario-quorum-acciones {
+  display: flex;
+  gap: 8px;
+}
+.widget-formulario-quorum-error {
+  font-size: 12.5px;
+  color: #e57373;
+}
+.widget-formulario-quorum-aviso {
+  font-size: 12px;
+  color: #e0b25c;
+}

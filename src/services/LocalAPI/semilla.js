@@ -26,23 +26,25 @@ export const CATALOGOS_SEMILLA = {
     { id: 'retirar', nombre: 'acuerda retirar', frase: 'acuerda retirar', sinVotacion: true },
   ],
   tiposVotacion: [
-    { id: 'economica', nombre: 'votación económica', tono: 'verde' },
-    { id: 'concurrente', nombre: 'votación concurrente', tono: 'rojo', admitePrecision: true },
+    { id: 'economica', nombre: 'votación económica' },
+    { id: 'concurrente', nombre: 'votación concurrente', admitePrecision: true },
   ],
   tiposConocimiento: [
     { id: 'simple', nombre: 'El Pleno toma conocimiento del informe presentado.', texto: 'El Pleno toma conocimiento del informe presentado.' },
     { id: 'extendido', nombre: 'El Pleno toma conocimiento de...', textoBase: 'El Pleno toma conocimiento de', admiteComplemento: true },
   ],
   estadosVoto: [
-    { id: 'aprueba', nombre: 'aprueba', tono: 'verde' },
-    { id: 'acuerda', nombre: 'acuerda', tono: 'azul' },
+    { id: 'aprueba', nombre: 'aprueba' },
+    { id: 'acuerda', nombre: 'acuerda' },
   ],
-  integrantes: [
-    { id: 'integrante-1', nombre: 'Integrante 1', tratamiento: 'el licenciado' },
-    { id: 'integrante-2', nombre: 'Integrante 2', tratamiento: 'la maestra' },
-    { id: 'integrante-3', nombre: 'Integrante 3', tratamiento: 'el doctor' },
-    { id: 'integrante-4', nombre: 'Integrante 4', tratamiento: 'la licenciada' },
-    { id: 'integrante-5', nombre: 'Integrante 5', tratamiento: 'el maestro' },
+  generos: [
+    { id: 'masculino', nombre: 'Masculino', articulo: 'el' },
+    { id: 'femenino', nombre: 'Femenino', articulo: 'la' },
+  ],
+  grados: [
+    { id: 'licenciatura', nombre: 'Licenciatura', titulo: { masculino: 'licenciado', femenino: 'licenciada' } },
+    { id: 'maestria', nombre: 'Maestría', titulo: { masculino: 'maestro', femenino: 'maestra' } },
+    { id: 'doctorado', nombre: 'Doctorado', titulo: { masculino: 'doctor', femenino: 'doctora' } },
   ],
   categorias: [
     { id: 'pleno', nombre: 'Pleno' },

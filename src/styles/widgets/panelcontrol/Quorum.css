@@ -1,0 +1,9 @@
+.widget-quorum {
+  margin: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.widget-quorum-volver {
+  align-self: flex-start;
+}

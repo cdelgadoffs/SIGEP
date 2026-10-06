@@ -3,6 +3,9 @@ import Textarea from '../base/Textarea.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import '../../styles/widgets/SelectorVotacion.css';
 
+const TONOS = { economica: 'verde', concurrente: 'rojo', aprueba: 'verde', acuerda: 'azul' };
+const tonoDe = (id) => TONOS[id] || 'neutro';
+
 function siguiente(lista, id) {
   const i = lista.findIndex((o) => o.id === id);
   return lista[(i + 1) % lista.length];
@@ -74,7 +77,7 @@ export default function SelectorVotacion({
         ) : (
           <button
             type="button"
-            className={'widget-selector-votacion-boton ' + (votoActual.sinVotacion ? 'widget-selector-votacion-boton-inactivo' : 'widget-selector-votacion-tono-' + votacionActual.tono)}
+            className={'widget-selector-votacion-boton ' + (votoActual.sinVotacion ? 'widget-selector-votacion-boton-inactivo' : 'widget-selector-votacion-tono-' + tonoDe(votacionActual.id))}
             disabled={disabled || votoActual.sinVotacion}
             onClick={() => emitir({ votacion: siguiente(tiposVotacion, votacionActual.id).id })}
           >
@@ -87,7 +90,7 @@ export default function SelectorVotacion({
         <label className="widget-selector-votacion-etiqueta widget-selector-votacion-oculta">Estado</label>
         <button
           type="button"
-          className={'widget-selector-votacion-boton widget-selector-votacion-tono-' + estadoActual.tono}
+          className={'widget-selector-votacion-boton widget-selector-votacion-tono-' + tonoDe(estadoActual.id)}
           disabled={disabled}
           onClick={() => emitir({ estado: siguiente(estadosVoto, estadoActual.id).id })}
         >

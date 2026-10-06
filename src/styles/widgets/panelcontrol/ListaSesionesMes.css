@@ -1,0 +1,29 @@
+.widget-lista-sesiones-mes {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.widget-lista-sesiones-mes-selector {
+  background: #232323;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #eee;
+  font-size: 12.5px;
+}
+.widget-lista-sesiones-mes-resumen {
+  margin: 0;
+  color: #aaa;
+  font-size: 12.5px;
+}
+.widget-lista-sesiones-mes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.widget-lista-sesiones-mes-vacio {
+  margin: 0;
+  color: #777;
+  font-size: 12.5px;
+  font-style: italic;
+}

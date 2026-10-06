@@ -81,7 +81,7 @@ Un estándar con excepciones deja de ser verificable: la regla manda sobre la co
   - **No** recorre, filtra ni transforma datos de negocio, no arma tarjetas ni listas, y no llama acciones de negocio. Si necesitara procesar datos para mostrarlos, esa parte es un widget. Los textos de presentación derivados de un dato crudo se arman en la page con una función de `utils/`; el contexto solo expone el dato.
 - **Quien monta un `base` es quien wirea sus props estructurales** (`abierto`, `onCerrar`…). Un widget puede además disparar una acción de negocio sobre ese mismo estado compartido: son dos responsabilidades independientes.
 - **"Sal al gusto":** un ajuste de estilo presentacional y de un solo uso sobre un componente reutilizable se aplica como `style` inline en un wrapper dentro de la page — nunca se modifica el CSS del componente compartido ni se crea un CSS nuevo para una sola declaración.
-- *Excepción documentable:* una carpeta de "widgets de panel" dentro de `pages/` puede existir si un switcher genérico necesita referenciarlos con una forma específica (`export default` = contenido, `export function BotonX` = acción de header). Es una excepción acotada a esa carpeta, no una redefinición de "page".
+- No hay excepciones de carpeta: los paneles que un switcher genérico aloja (ej. los ítems del panel de control) son widgets normales; el switcher los registra en una tabla (`Panel`, y `AccionHeader` opcional para el botón del header, que es otro widget).
 
 ## 6. `context/`
 

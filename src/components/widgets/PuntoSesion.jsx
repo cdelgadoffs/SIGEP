@@ -5,12 +5,14 @@ import OpcionesAUD from './OpcionesAUD.jsx';
 import SelectorVotacion from './SelectorVotacion.jsx';
 import SelectorInforme from './SelectorInforme.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
+import { useOrgano } from '../../context/OrganoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { puntosOrdenados, puntoActivo } from '../../utils/puntos.js';
 import '../../styles/widgets/PuntoSesion.css';
 
 export default function PuntoSesion() {
-  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, registrarVotacion, TIPOS_VOTO, TIPOS_VOTACION, ESTADOS_VOTO, INTEGRANTES, TIPOS_CONOCIMIENTO, cargando, error } = useProyecto();
+  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, registrarVotacion, TIPOS_VOTO, TIPOS_VOTACION, ESTADOS_VOTO, TIPOS_CONOCIMIENTO, cargando, error } = useProyecto();
+  const { INTEGRANTES } = useOrgano();
   const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId } = useUI();
   const [errorAccion, setErrorAccion] = useState(null);
   const [votacionLocal, setVotacionLocal] = useState(null);

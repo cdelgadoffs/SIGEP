@@ -409,3 +409,53 @@ export function normalizarPunto(p, catalogos) {
     confidencial: p.confidencial,
   };
 }
+
+const MAX_INTEGRANTES = 5;
+const MAX_NOMBRE = 200;
+const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function decorarIntegrante(i, catalogos) {
+  const genero = (catalogos.generos || []).find((g) => g.id === i.genero);
+  const grado = (catalogos.grados || []).find((g) => g.id === i.grado);
+  const titulo = grado?.titulo?.[i.genero];
+  return { ...i, tratamiento: [genero?.articulo, titulo].filter(Boolean).join(' ') };
+}
+
+function exigirTexto(valor, etiqueta) {
+  const texto = typeof valor === 'string' ? valor.trim() : '';
+  if (!texto) throw new ApiError('VALIDACION', `${etiqueta} es obligatorio.`);
+  if (texto.length > MAX_NOMBRE) throw new ApiError('VALIDACION', `${etiqueta} es demasiado largo.`);
+  return texto;
+}
+
+function exigirEnCatalogo(lista, id, mensaje) {
+  if (!(lista || []).some((o) => o.id === id)) throw new ApiError('VALIDACION', mensaje);
+  return id;
+}
+
+export function validarIntegrante(datos, catalogos, existentes, idActual = null) {
+  const nombre = exigirTexto(datos.nombre, 'El nombre');
+  const email = exigirTexto(datos.email, 'El correo');
+  if (!FORMATO_EMAIL.test(email)) throw new ApiError('VALIDACION', 'El correo no tiene un formato válido.');
+  if (existentes.some((x) => x.id !== idActual && x.email.toLowerCase() === email.toLowerCase())) {
+    throw new ApiError('DUPLICADO', 'Ya existe un integrante con ese correo.');
+  }
+  const genero = exigirEnCatalogo(catalogos.generos, datos.genero, 'Género inválido.');
+  const grado = exigirEnCatalogo(catalogos.grados, datos.grado, 'Grado académico inválido.');
+  if (typeof datos.presidente !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de presidente inválido.');
+  return { nombre, email, genero, grado, presidente: datos.presidente };
+}
+
+export function exigirEspacioEnQuorum(existentes) {
+  if (existentes.length >= MAX_INTEGRANTES) {
+    throw new ApiError('LIMITE_ALCANZADO', `El Pleno admite como máximo ${MAX_INTEGRANTES} integrantes.`);
+  }
+}
+
+export function validarSecretario(datos, catalogos) {
+  const nombre = exigirTexto(datos.nombre, 'El nombre');
+  const email = typeof datos.email === 'string' ? datos.email.trim() : '';
+  if (email && !FORMATO_EMAIL.test(email)) throw new ApiError('VALIDACION', 'El correo no tiene un formato válido.');
+  const genero = exigirEnCatalogo(catalogos.generos, datos.genero, 'Género inválido.');
+  return { nombre, email, genero };
+}

@@ -1,11 +1,14 @@
-import BotonSeleccionablePanel from '../base/BotonSeleccionablePanel.jsx';
-import CalendarizacionAnual, { BotonNuevoCalendarioAnual } from '../../pages/panelcontrol/CalendarizacionAnual.jsx';
-import Quorum from '../../pages/panelcontrol/Quorum.jsx';
-import { useUI } from '../../context/UIContext.jsx';
+import BotonSeleccionablePanel from '../../base/BotonSeleccionablePanel.jsx';
+import CalendarizacionAnual from './CalendarizacionAnual.jsx';
+import BotonNuevoCalendarioAnual from './BotonNuevoCalendarioAnual.jsx';
+import Quorum from './Quorum.jsx';
+import SEPLE from './SEPLE.jsx';
+import { useUI } from '../../../context/UIContext.jsx';
 
 const ITEMS_PANEL_CONTROL = [
   { id: 'calendarizacionAnual', label: 'Calendarización anual', Panel: CalendarizacionAnual, AccionHeader: BotonNuevoCalendarioAnual },
   { id: 'quorum', label: 'Quorum', Panel: Quorum },
+  { id: 'seple', label: 'SEPLE', Panel: SEPLE },
 ];
 
 export function AccionesHeaderPanelControl() {
