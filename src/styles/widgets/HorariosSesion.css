@@ -1,0 +1,36 @@
+.widget-horarios-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 22px 18px;
+}
+.widget-horarios-sesion-tarjeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
+.widget-horarios-sesion-inicio {
+  color: #2e7d32;
+  background: #e6f7ed;
+  border: 1px solid #a5d6a7;
+}
+.widget-horarios-sesion-fin {
+  color: #b91c1c;
+  background: #fde8e8;
+  border: 1px solid #ef9a9a;
+}
+.widget-horarios-sesion-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #c62828;
+}
+.widget-horarios-sesion-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+}

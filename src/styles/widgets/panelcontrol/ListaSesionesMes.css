@@ -27,3 +27,19 @@
   font-size: 12.5px;
   font-style: italic;
 }
+
+.widget-lista-sesiones-mes-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-lista-sesiones-mes-error {
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: #c62828;
+}
+.widget-lista-sesiones-mes-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

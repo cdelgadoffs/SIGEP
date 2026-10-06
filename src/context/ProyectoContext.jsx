@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  listarCatalogos, listarSesiones, celebrarSesion, establecerListaCerrada as establecerListaCerradaEnApi,
+  listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi,
   obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi,
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, registrarVotacion as registrarVotacionEnApi,
@@ -19,6 +19,7 @@ const ProyectoContext = createContext(null);
 const CACHE_CATALOGOS = 'catalogos';
 const CACHE_SESIONES = 'sesiones';
 const cachePuntos = (sesionId) => `puntos:${sesionId}`;
+const cacheAsistencia = (sesionId) => `asistencia:${sesionId}`;
 const cacheCalendario = (anio) => `calendario:${anio}`;
 
 const ANIO_CALENDARIO = new Date().getFullYear();
@@ -27,7 +28,7 @@ const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFe
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 const porNumero = (lista) => [...lista].sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0));
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], generos: [], grados: [], tiposConocimiento: [], plantillasActa: [], tiposBloqueActa: [], textosActa: [] };
+const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], generos: [], grados: [], tiposConocimiento: [], tiposSesion: [], plantillasActa: [], tiposBloqueActa: [], textosActa: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
@@ -35,6 +36,7 @@ export function ProyectoProvider({ children }) {
   const [puntos, setPuntos] = useState([]);
   const [catalogos, setCatalogos] = useState(CATALOGOS_VACIOS);
   const [calendario, setCalendario] = useState(null);
+  const [asistencia, setAsistencia] = useState([]);
   const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, calendario: { cargando: true }, puntos: {} });
 
   function marcarCarga(recurso, estado) {
@@ -130,6 +132,31 @@ export function ProyectoProvider({ children }) {
     return () => { vigente = false; };
   }, [sesionActivaFecha]);
 
+  useEffect(() => {
+    setAsistencia([]);
+    if (!sesionActivaFecha) {
+      marcarCarga('asistencia', {});
+      return;
+    }
+    marcarCarga('asistencia', { cargando: true });
+    let vigente = true;
+    let servidorListo = false;
+    const clave = cacheAsistencia(sesionActivaFecha);
+    obtenerCache(clave).then((c) => {
+      if (vigente && !servidorListo && Array.isArray(c)) setAsistencia(c);
+    });
+    listarAsistencia(sesionActivaFecha)
+      .then((lista) => {
+        if (!vigente) return;
+        servidorListo = true;
+        setAsistencia(lista);
+        guardarCache(clave, lista);
+        marcarCarga('asistencia', {});
+      })
+      .catch((e) => vigente && marcarCarga('asistencia', { error: e }));
+    return () => { vigente = false; };
+  }, [sesionActivaFecha]);
+
   function aplicarSesiones(sesiones) {
     const lista = conEtiqueta(sesiones);
     setFechasSesiones(lista);
@@ -155,8 +182,38 @@ export function ProyectoProvider({ children }) {
   function cargarSesion(fecha) {
     setSesionActivaFecha(fecha);
   }
+  function obtenerFechasExtraordinaria() {
+    return listarFechasExtraordinaria();
+  }
+  async function crearSesionExtraordinaria(fecha) {
+    await crearSesionExtraordinariaEnApi(fecha);
+    aplicarSesiones(await listarSesiones());
+    setSesionActivaFecha(fecha);
+  }
+  async function eliminarSesion(id) {
+    aplicarSesiones(await eliminarSesionEnApi(id));
+    if (id === sesionActivaFecha) setSesionActivaFecha(null);
+  }
+  function aplicarAsistencia(lista) {
+    setAsistencia(lista);
+    guardarCache(cacheAsistencia(sesionActivaFecha), lista);
+  }
+  async function refrescarAsistencia() {
+    if (sesionActivaFecha) aplicarAsistencia(await listarAsistencia(sesionActivaFecha));
+  }
+  async function registrarAsistencia(integranteId, presente) {
+    aplicarAsistencia(await registrarAsistenciaEnApi(sesionActivaFecha, integranteId, presente));
+  }
   async function establecerListaCerrada(cerrada) {
     await establecerListaCerradaEnApi(sesionActivaFecha, cerrada);
+    aplicarSesiones(await listarSesiones());
+  }
+  async function comenzarSesion() {
+    await comenzarSesionEnApi(sesionActivaFecha);
+    aplicarSesiones(await listarSesiones());
+  }
+  async function editarHorario(cambios) {
+    await editarHorarioEnApi(sesionActivaFecha, cambios);
     aplicarSesiones(await listarSesiones());
   }
   async function finalizarSesion() {
@@ -232,8 +289,10 @@ export function ProyectoProvider({ children }) {
     TIPOS_VOTO: catalogos.tiposVoto, TIPOS_VOTACION: catalogos.tiposVotacion, ESTADOS_VOTO: catalogos.estadosVoto, TIPOS_CONOCIMIENTO: catalogos.tiposConocimiento, GENEROS: catalogos.generos, GRADOS: catalogos.grados,
     PLANTILLAS_ACTA: catalogos.plantillasActa, TIPOS_BLOQUE_ACTA: catalogos.tiposBloqueActa, TEXTOS_ACTA: catalogos.textosActa,
     FECHAS_SESIONES: fechasSesiones,
-    sesionActivaFecha, cargarSesion,
-    sesionFinalizada, finalizarSesion,
+    ASISTENCIA: asistencia, registrarAsistencia, refrescarAsistencia,
+    sesionActivaFecha, cargarSesion, obtenerFechasExtraordinaria, crearSesionExtraordinaria, eliminarSesion,
+    TIPOS_SESION: catalogos.tiposSesion,
+    sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
     listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,

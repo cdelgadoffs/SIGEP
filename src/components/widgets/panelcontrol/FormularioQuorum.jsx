@@ -11,7 +11,7 @@ const MAXIMO_INTEGRANTES = 5;
 
 export default function FormularioQuorum({ integrante, onTerminar }) {
   const { INTEGRANTES, agregarIntegrante, editarIntegrante } = useOrgano();
-  const { GENEROS, GRADOS, refrescarPuntos } = useProyecto();
+  const { GENEROS, GRADOS, refrescarPuntos, refrescarAsistencia } = useProyecto();
   const editando = !!integrante;
   const [nombre, setNombre] = useState(integrante?.nombre ?? '');
   const [email, setEmail] = useState(integrante?.email ?? '');
@@ -44,7 +44,7 @@ export default function FormularioQuorum({ integrante, onTerminar }) {
         setGrado('');
         setPresidente(false);
       }
-      await refrescarPuntos().catch(() => {});
+      await Promise.all([refrescarPuntos(), refrescarAsistencia()]).catch(() => {});
       onTerminar();
     } catch (e) {
       setError(e.mensaje || 'No se pudo guardar al integrante.');

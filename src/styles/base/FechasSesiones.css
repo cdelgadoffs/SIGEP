@@ -58,3 +58,8 @@
 .base-badge-fecha-activa:hover {
   transform: scale(1.06);
 }
+
+.base-badge-fecha-pildora {
+  padding: 2px 10px;
+  border-radius: 999px;
+}

@@ -20,6 +20,7 @@ export default function CintaSesiones({ textoVacio }) {
   const fechasFiltradas = mesFiltro
     ? fechas.filter((f) => f.id.substring(0, 7) === mesFiltro)
     : fechas;
+  const fechasConForma = fechasFiltradas.map((f) => ({ ...f, pildora: f.tipo === 'extraordinaria' }));
 
   const proximaGlobal = fechas.find((f) => f.estado === 'proxima');
   const mostrarVolverProxima = proximaGlobal && proximaGlobal.id.substring(0, 7) !== mesFiltro;
@@ -60,7 +61,7 @@ export default function CintaSesiones({ textoVacio }) {
         opciones={opcionesMes}
         onSeleccionar={setMesSeleccionadoManual}
       />
-      <FechasSesiones fechas={fechasFiltradas} activaId={sesionActivaFecha} onSeleccionar={cargarSesion} textoVacio={textoSinSesiones} />
+      <FechasSesiones fechas={fechasConForma} activaId={sesionActivaFecha} onSeleccionar={cargarSesion} textoVacio={textoSinSesiones} />
     </div>
   );
 }

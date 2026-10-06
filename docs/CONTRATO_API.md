@@ -18,10 +18,14 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | Campo | Tipo | Notas |
 |---|---|---|
 | `id` | string | Fecha `YYYY-MM-DD`. Es la identidad natural: **una sesión por fecha**. |
-| `numeroSesion` | int \| null | Derivado. Consecutivo oficial **dentro de su año** (el de `id`): reinicia en 1 cada año. Avanza en `celebrada`, `proxima` y `pendiente`; una `no-celebrada` no tiene número (`null`) ni consume uno. |
+| `tipo` | string | `id` del catálogo `tiposSesion` (`ordinaria` · `extraordinaria`). Hecho persistido; las sesiones anteriores al campo se leen como `ordinaria`. Las ordinarias salen del calendario; las extraordinarias se crean una a una (`crearSesionExtraordinaria`). |
+| `numeroSesion` | int \| null | Derivado. Consecutivo oficial **dentro de su año** (el de `id`) **y de su tipo**: reinicia en 1 cada año y las extraordinarias llevan su propia cuenta, sin avanzar la de las ordinarias. Avanza en `celebrada`, `proxima` y `pendiente`; una `no-celebrada` no tiene número (`null`) ni consume uno. |
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
 | `celebradaEn` | string \| null | Timestamp. |
+| `horaInicio` | string \| null | Hecho persistido: timestamp (ISO) en que comenzó la celebración (`comenzarSesion`). |
+| `horaFin` | string \| null | Hecho persistido: timestamp (ISO) en que terminó la celebración; la fija `celebrarSesion`. |
+| `enCurso` | bool | **Derivado.** `horaInicio` fijada y sesión aún no celebrada. |
 | `listaCerrada` | bool | Hecho persistido: el registro de puntos de la sesión está cerrado (ver "Lista cerrada"). Empieza en `false`. |
 | `version` | int | |
 
@@ -128,6 +132,15 @@ El **orden del documento** de una sesión es: las secciones en el orden de su ca
 | `acta-anterior` | `actas` | "Aprobación, en su caso, del acta de la sesión ordinaria del {fecha}." | Solo si la sesión anterior ya fue celebrada (`{fecha}`: la de esa sesión, "7 de octubre de 2026") |
 | `asuntos-generales` | `asuntos-generales` | "Asuntos generales." | Siempre (es `encabezado`) |
 
+Cada fila del catálogo lleva `tipos: string[]` (ids de `tiposSesion` en los que aplica; sin el atributo, todos). Hoy `orden-dia` aplica a ambos tipos; `acta-anterior` y `asuntos-generales`, solo a `ordinaria`: **una sesión extraordinaria solo lleva "Aprobación, en su caso, del orden del día."** Para `acta-anterior`, "la sesión anterior" es la **ordinaria** anterior (las extraordinarias no cuentan).
+
+**Actas de sesiones extraordinarias (`acta-auto-<fecha>`).** Además de las filas del catálogo, a cada sesión **ordinaria** se le agrega un punto fijo "Aprobación, en su caso, del acta de la sesión extraordinaria del {fecha}." por cada extraordinaria **celebrada** que cumpla, con `f` la fecha de la extraordinaria, `S` la de la sesión y `A` la de la ordinaria anterior (si no hay, `S` menos 7 días):
+- si `f + 1 día = S`: no se incluye (su acta aún no está lista);
+- si no, si `f + 1 día = A`: se incluye cuando `f < S` (su acta no alcanzó a la sesión anterior);
+- en cualquier otro caso se incluye cuando `A < f < S`.
+
+Son `fijo: true` de la sección `actas` (sin `encabezado`), con `id` `fijo:<sesionId>:acta-auto-<fecha>`; van después del punto `acta-anterior` (o del orden del día si ese no aplica), ordenados por fecha, y llevan el mismo `textoVoto` que `acta-anterior`. Se marcan como tratados como cualquier fijo.
+
 - El `id` de un punto fijo es `fijo:<sesionId>:<id del catálogo>`. Siempre ocupan el primer lugar de su sección y **no se pueden editar, eliminar, mover ni adjuntarles archivos** (`VALIDACION`).
 - Sí se pueden marcar como tratados (`marcarPunto`, `marcarPuntos`); el servidor guarda esa marca en la sesión. Un `encabezado` no se marca.
 - Los fijos nunca existen como registros en el almacén de puntos: se generan al leer.
@@ -166,6 +179,7 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 | `plantillasActa` | `bloques: string[]` (ids de `tiposBloqueActa` que trae por omisión), `orden: string[]` (secciones de la hoja, en orden: `intro`, `bloques`, `puente`, `contenido`, `tituloAcuerdo`, `acuerdo`) | `introduccion` (`intro, bloques, puente, contenido, acuerdo`; bloque `considerando`), `proyecto` (`contenido, bloques, tituloAcuerdo, acuerdo`; bloques `antecedente`, `considerando`), `personalizada` (`bloques, contenido, acuerdo`; sin bloques) |
 | `tiposBloqueActa` | `titulo: string \| null` (encabezado en mayúsculas; `null` en `personalizada`, que lleva el suyo) | `considerando` ("CONSIDERANDO"), `antecedente` ("ANTECEDENTES"), `personalizada` |
 | `textosActa` | `texto: string`, `negrita?: string` (primer tramo en negritas) | `intro` (fundamento del Pleno), `puente` ("Por lo anterior, se emite el siguiente:"), `contenido` (texto con que arranca un punto de acuerdo nuevo), `contenidoInforme` ("Informe") |
+| `tiposSesion` | — | `ordinaria`, `extraordinaria` |
 | `tiposConocimiento` | `texto` (frase completa) o `textoBase` + `admiteComplemento: bool` | Para informes: `simple`, `extendido` |
 | `generos` | `articulo: string` (`el`, `la`) | `masculino`, `femenino` |
 | `grados` | `titulo: { [genero]: string }` (ej. `{ masculino: 'licenciado', femenino: 'licenciada' }`) | `licenciatura`, `maestria`, `doctorado` |
@@ -197,6 +211,45 @@ Lectura para cualquier usuario autenticado; escritura solo del capturista.
 - Marcar `presidente: true` (al crear o editar) deja `presidente: false` en los demás, de forma atómica. Editar el presidente sin marcarlo lo deja sin presidente.
 - Los integrantes son los únicos que pueden figurar en el `quorum` de una votación (ver "Votación de un punto"). Al **editar** un integrante, el texto de las votaciones que lo mencionan cambia solo (se deriva al leer). Al **eliminarlo**, se quita del quórum de las votaciones de las sesiones aún no celebradas; si figura en la votación de una sesión **ya celebrada** no se puede eliminar (`EN_USO`), para no alterar un acta.
 
+### Horarios de la celebración
+
+Una sesión se celebra en tres pasos: **cerrar la lista**, **comenzar** y **celebrar** (finalizar). Reglas del servidor:
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `comenzarSesion(id)` | id de sesión | `Sesion` actualizada (`horaInicio` = ahora) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_ABIERTA` |
+| `editarHorario(id, cambios)` | id, `{ horaInicio?: "HH:MM", horaFin?: "HH:MM" }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
+
+- `comenzarSesion` exige la lista cerrada y es idempotente (si ya comenzó, no cambia la hora). No aplica a una sesión celebrada.
+- `celebrarSesion` exige que la sesión haya comenzado (`SESION_NO_COMENZADA`) y además de `celebrada` fija `horaFin` = ahora.
+- `editarHorario` corrige la **hora del día** de una marca ya existente, **conservando su fecha**: no se puede editar `horaFin` sin que exista, ni `horaInicio` sin haber comenzado (`VALIDACION`); el formato es `HH:MM` (`VALIDACION`); y la hora de inicio no puede ser posterior a la de fin (`HORARIO_INVALIDO`). Se permite también con la sesión ya celebrada (excepción documentada a su inmutabilidad): PlenoLOCAL deja corregir las horas siempre.
+
+### Asistencia a la sesión
+
+La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada integrante). El servidor guarda en la sesión solo las **ausencias** (`ausentes`: ids de integrantes marcados como no presentes; lista vacía por omisión): **todos los integrantes están presentes salvo que se marquen ausentes**, así que un integrante nuevo entra como presente, igual que en PlenoLOCAL.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `listarAsistencia(sesionId)` | id de sesión | `Asistencia[]`: `{ integranteId, presente }` por cada integrante actual, en su orden | `NO_ENCONTRADO` |
+| `registrarAsistencia(sesionId, integranteId, presente)` | sesión, integrante, bool | `Asistencia[]` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
+
+- Una sesión **celebrada** no admite cambios de asistencia (`SESION_CELEBRADA`). `registrarAsistencia` es idempotente.
+- El conteo (presentes / total) no se entrega: lo calcula quien lo muestra.
+- Al eliminar un integrante, se quita de `ausentes` de las sesiones no celebradas.
+
+### Sesiones extraordinarias
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `listarFechasExtraordinaria()` | — | `string[]` (fechas `YYYY-MM-DD` disponibles, ascendentes) | — |
+| `crearSesionExtraordinaria(fecha)` | fecha | `Sesion` creada (con derivados) | `NO_AUTORIZADO`, `VALIDACION`, `FECHA_NO_DISPONIBLE` |
+| `eliminarSesion(id)` | id de sesión | `Sesion[]` (lista completa, con derivados) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_ORDINARIA`, `SESION_CELEBRADA` |
+
+- **Fechas disponibles** (con el reloj del servidor, `hoy`): desde `hoy` —o desde el día siguiente si `hoy` es una sesión ordinaria— hasta el día anterior a la **siguiente sesión ordinaria**, o hasta `hoy` + 60 días si no hay ninguna. Se excluyen sábados y domingos, el día de sesión ordinaria del calendario de ese año (`diaSemana`, si el año tiene calendario) y toda fecha que ya tenga una sesión (una por fecha).
+- `crearSesionExtraordinaria` rechaza con `FECHA_NO_DISPONIBLE` cualquier fecha que no esté en esa lista. Crea la sesión con `tipo: 'extraordinaria'`, sin celebrar y con la lista abierta.
+- `eliminarSesion` solo aplica a **extraordinarias** (`SESION_ORDINARIA` si es ordinaria; las ordinarias se ajustan con vacaciones o asuetos) y no a las celebradas (`SESION_CELEBRADA`). Elimina también los puntos de la sesión y sus archivos, en una sola transacción.
+- Las extraordinarias no pertenecen al calendario: `agregarAsueto` / `quitarAsueto` rechazan (`VALIDACION`) una sesión extraordinaria como origen o destino, y `generarCalendarioAnual` con `sobrescribir` las trata como sesiones que no corresponden al calendario: **se eliminan las que no estén celebradas ni tengan puntos** (las demás se conservan).
+
 ### Operaciones de calendario
 
 | Operación | Entrada | Salida | Errores |
@@ -212,7 +265,7 @@ Lectura para cualquier usuario autenticado; escritura solo del capturista.
 - Al generar se aplican también los `asuetos` que el calendario ya tenía, salvo que cambie `diaSemana` (entonces se descartan, porque dependen del día).
 - Validación (`VALIDACION`): `anio` entero entre 2000 y 2100; `diaSemana` entero de 1 a 5; cada vacación con fechas válidas e `inicio <= fin`.
 - **Asuetos sin regenerar el calendario.** `agregarAsueto` exige que el año ya tenga calendario (`NO_ENCONTRADO` si no). Valida que `fecha` sea del año y caiga en `diaSemana`, que `destino` sea `fecha ± 1` y no caiga en vacaciones, y que no haya ya un asueto en esa `fecha`. La sesión de `fecha` debe existir, no estar celebrada (`SESION_CELEBRADA`) ni tener puntos (`VALIDACION`): se elimina y se crea la del `destino` (si no existía). `quitarAsueto` revierte: elimina la sesión del `destino` (que no debe estar celebrada ni tener puntos) y recrea la de `fecha` si no cae en vacaciones. Ambas son atómicas y suben la `version` del calendario.
-- `crearSesiones(fechas)` sigue en el contrato (para sesiones sueltas, como las extraordinarias), pero el cliente no la usa hoy.
+- `crearSesiones(fechas)` sigue en el contrato (crea sesiones **ordinarias** sueltas), pero el cliente no la usa; las extraordinarias se crean con `crearSesionExtraordinaria`.
 
 ### Operaciones de archivos, de orden y de celebración
 
@@ -241,7 +294,7 @@ Lectura para cualquier usuario autenticado; escritura solo del capturista.
 
 Notas de comportamiento:
 - `crearSesiones` es **idempotente**: las fechas que ya existen se ignoran (no resetea `celebrada`); devuelve siempre la lista completa porque los derivados de las demás sesiones pueden cambiar.
-- `celebrarSesion` devuelve solo la sesión celebrada; como `proxima` y `numeroSesion` de las demás pueden cambiar, el cliente vuelve a llamar `listarSesiones`.
+- `celebrarSesion` exige que la sesión haya comenzado (`SESION_NO_COMENZADA`) y fija `horaFin`; devuelve solo la sesión celebrada; como `proxima` y `numeroSesion` de las demás pueden cambiar, el cliente vuelve a llamar `listarSesiones`.
 - `editarPunto` con `version` distinta de la actual → `CONFLICTO` (el cliente debe recargar). Solo se modifican los campos permitidos del punto; el resultado se valida completo.
 - Una sesión **celebrada es inmutable**: no admite crear, editar ni eliminar puntos.
 
@@ -257,6 +310,10 @@ Notas de comportamiento:
 | `LISTA_CERRADA` | La sesión tiene la lista de puntos cerrada y la operación no está permitida con ella cerrada. |
 | `LISTA_ABIERTA` | Se intentó celebrar una sesión con la lista de puntos abierta. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
+| `SESION_NO_COMENZADA` | Se intentó celebrar una sesión que aún no ha comenzado. |
+| `HORARIO_INVALIDO` | La hora de inicio quedaría posterior a la de fin. |
+| `FECHA_NO_DISPONIBLE` | La fecha no está entre las disponibles para una sesión extraordinaria. |
+| `SESION_ORDINARIA` | La operación solo aplica a sesiones extraordinarias. |
 | `CALENDARIO_EXISTE` | Ya hay un calendario de ese año y no se pidió sobrescribirlo. |
 | `DUPLICADO` | Ya existe un integrante con ese correo. |
 | `LIMITE_ALCANZADO` | Ya hay 5 integrantes. |

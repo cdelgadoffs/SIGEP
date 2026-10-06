@@ -10,7 +10,7 @@ import '../../../styles/widgets/panelcontrol/ListaQuorum.css';
 
 export default function ListaQuorum({ onEditar }) {
   const { INTEGRANTES, eliminarIntegrante, cargando, error: errorCarga } = useOrgano();
-  const { GENEROS, GRADOS, refrescarPuntos } = useProyecto();
+  const { GENEROS, GRADOS, refrescarPuntos, refrescarAsistencia } = useProyecto();
   const [aEliminar, setAEliminar] = useState(null);
   const [errorEliminar, setErrorEliminar] = useState(null);
 
@@ -23,7 +23,7 @@ export default function ListaQuorum({ onEditar }) {
     setErrorEliminar(null);
     try {
       await eliminarIntegrante(aEliminar.id);
-      await refrescarPuntos().catch(() => {});
+      await Promise.all([refrescarPuntos(), refrescarAsistencia()]).catch(() => {});
       setAEliminar(null);
     } catch (e) {
       setErrorEliminar(e.mensaje || 'No se pudo eliminar al integrante.');

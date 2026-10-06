@@ -5,6 +5,21 @@ export function etiquetaFecha(id) {
   return `${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
 }
 
+const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+export function etiquetaFechaConDia(id) {
+  return `${DIAS[new Date(id + 'T00:00:00').getDay()]} ${etiquetaFecha(id)}`;
+}
+
+export function horaDeISO(iso) {
+  return new Date(iso).toTimeString().slice(0, 5);
+}
+
+export function fechaHoyISO() {
+  const hoy = new Date();
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+}
+
 export function etiquetaMes(mesISO) {
   const [anio, mes] = mesISO.split('-');
   return `${MESES[Number(mes) - 1]} ${anio}`;

@@ -9,6 +9,10 @@ import BotonMarcarTodos from '../components/widgets/BotonMarcarTodos.jsx';
 import ListaPuntosSesion from '../components/widgets/ListaPuntosSesion.jsx';
 import PuntoSesion from '../components/widgets/PuntoSesion.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
+import AsistenciaQuorum from '../components/widgets/AsistenciaQuorum.jsx';
+import HorariosSesion from '../components/widgets/HorariosSesion.jsx';
+import BotonComenzarSesion from '../components/widgets/BotonComenzarSesion.jsx';
+import BotonFinalizarSesion from '../components/widgets/BotonFinalizarSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR2 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
@@ -25,7 +29,7 @@ export default function Sesion() {
     sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada, CALENDARIO, PUNTOS } = useProyecto();
+  const { sesionSeleccionada, sesionFinalizada, CALENDARIO, PUNTOS } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const izquierdaSidebar2 = izquierdaSidebar1 + ANCHO_SIDEBAR1_SESION;
   const panelIzquierda = izquierdaSidebar2 + ANCHO_SIDEBAR2;
@@ -35,14 +39,18 @@ export default function Sesion() {
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}
+        mostrarNuevaExtraordinaria={false}
       />
       <Sidebar1
         izquierda={izquierdaSidebar1}
         ancho={ANCHO_SIDEBAR1_SESION}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
+        pie={sesionSeleccionada && !sesionFinalizada ? (sesionSeleccionada.horaInicio ? <BotonFinalizarSesion /> : <BotonComenzarSesion />) : null}
       >
         <MenuPrincipalSesion />
+        <AsistenciaQuorum />
+        <HorariosSesion />
       </Sidebar1>
       <Sidebar2
         izquierda={izquierdaSidebar2}

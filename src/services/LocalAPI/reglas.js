@@ -124,33 +124,74 @@ export function generarFechasAnuales({ anio, diaSemana, vacaciones, asuetos }) {
   return fechas.sort();
 }
 
+export function sumarDiasISO(id, dias) {
+  const fecha = new Date(id + 'T00:00:00');
+  fecha.setDate(fecha.getDate() + dias);
+  return fechaISO(fecha);
+}
+
+export const tipoDeSesion = (s) => s.tipo ?? 'ordinaria';
+
 export function calcularEstados(sesiones) {
   const hoyISO = fechaISO(new Date());
   const ordenadas = [...sesiones].sort((a, b) => (a.id < b.id ? -1 : 1));
   const proxima = ordenadas.find((s) => s.id >= hoyISO && !s.celebrada);
-  let anioActual = null;
-  let consecutivo = 0;
+  const contadores = {};
   return ordenadas.map((s) => {
-    const anio = s.id.slice(0, 4);
-    if (anio !== anioActual) {
-      anioActual = anio;
-      consecutivo = 0;
-    }
+    const tipo = tipoDeSesion(s);
+    const clave = `${s.id.slice(0, 4)}_${tipo}`;
     let estado = 'pendiente';
     if (s.celebrada) estado = 'celebrada';
     else if (proxima && s.id === proxima.id) estado = 'proxima';
     else if (s.id < hoyISO) estado = 'no-celebrada';
-    if (estado !== 'no-celebrada') consecutivo += 1;
+    if (estado !== 'no-celebrada') contadores[clave] = (contadores[clave] ?? 0) + 1;
     return {
       id: s.id,
-      numeroSesion: estado === 'no-celebrada' ? null : consecutivo,
+      tipo,
+      numeroSesion: estado === 'no-celebrada' ? null : contadores[clave],
       estado,
       celebrada: !!s.celebrada,
       celebradaEn: s.celebradaEn || null,
+      horaInicio: s.horaInicio || null,
+      horaFin: s.horaFin || null,
+      enCurso: !!s.horaInicio && !s.celebrada,
       listaCerrada: !!s.listaCerrada,
       version: s.version,
     };
   });
+}
+
+export function validarHoraDelDia(texto) {
+  if (typeof texto !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(texto)) {
+    throw new ApiError('VALIDACION', 'La hora debe tener el formato HH:MM (de 00:00 a 23:59).');
+  }
+}
+
+export function conHoraDelDia(iso, hhmm) {
+  const fecha = new Date(iso);
+  const [h, m] = hhmm.split(':').map(Number);
+  fecha.setHours(h, m, 0, 0);
+  return fecha.toISOString();
+}
+
+export function fechasDisponiblesExtraordinaria(sesiones, calendarios, hoy = fechaISO(new Date())) {
+  const ordinarias = sesiones.filter((s) => tipoDeSesion(s) === 'ordinaria').map((s) => s.id).sort();
+  let anterior = null;
+  let siguiente = null;
+  ordinarias.forEach((f) => {
+    if (f <= hoy) anterior = f;
+    if (f > hoy && !siguiente) siguiente = f;
+  });
+  const inicio = anterior && sumarDiasISO(anterior, 1) > hoy ? sumarDiasISO(anterior, 1) : hoy;
+  const fin = siguiente ? sumarDiasISO(siguiente, -1) : sumarDiasISO(hoy, 60);
+  const ocupadas = new Set(sesiones.map((s) => s.id));
+  const disponibles = [];
+  for (let cursor = inicio; cursor <= fin; cursor = sumarDiasISO(cursor, 1)) {
+    const diaSemana = new Date(cursor + 'T00:00:00').getDay();
+    const calendario = calendarios.find((c) => c.anio === Number(cursor.slice(0, 4)));
+    if (diaSemana !== 0 && diaSemana !== 6 && diaSemana !== calendario?.diaSemana && !ocupadas.has(cursor)) disponibles.push(cursor);
+  }
+  return disponibles;
 }
 
 const MESES_LARGOS = [
@@ -192,31 +233,63 @@ function cumpleCondicion(requiere, anterior) {
   return false;
 }
 
+function actasExtraordinariasPendientes(sesion, sesiones, anterior) {
+  const fechaAnterior = anterior ? anterior.id : sumarDiasISO(sesion.id, -7);
+  return sesiones
+    .filter((x) => tipoDeSesion(x) === 'extraordinaria' && x.celebrada)
+    .map((x) => x.id)
+    .filter((f) => {
+      if (sumarDiasISO(f, 1) === sesion.id) return false;
+      if (sumarDiasISO(f, 1) === fechaAnterior) return f < sesion.id;
+      return f > fechaAnterior && f < sesion.id;
+    })
+    .sort();
+}
+
 export function generarPuntosFijos(sesion, sesiones, catalogoFijos) {
-  const anterior = sesiones.filter((s) => s.id < sesion.id).sort((a, b) => (a.id < b.id ? -1 : 1)).pop();
+  const tipo = tipoDeSesion(sesion);
+  const anterior = sesiones
+    .filter((x) => tipoDeSesion(x) === 'ordinaria' && x.id < sesion.id)
+    .sort((a, b) => (a.id < b.id ? -1 : 1))
+    .pop();
   const fecha = anterior ? fechaLarga(anterior.id) : '';
-  return (catalogoFijos || [])
+  const catalogo = catalogoFijos || [];
+  const armar = (f, orden, clave, contenido) => ({
+    id: `fijo:${sesion.id}:${clave}`,
+    sesionId: sesion.id,
+    seccion: f.seccion,
+    remitente: f.remitente,
+    contenido,
+    acuerdo: '',
+    confidencial: false,
+    archivos: [],
+    orden,
+    tratado: !!sesion.fijosTratados?.[clave],
+    textoVotacion: f.textoVoto ?? null,
+    fijo: true,
+    encabezado: !!f.encabezado,
+    version: 1,
+    creadoPor: 'sistema',
+    creadoEn: sesion.creadaEn ?? '',
+    modificadoEn: sesion.creadaEn ?? '',
+  });
+  const delCatalogo = catalogo
     .map((f, i) => ({ f, i }))
+    .filter(({ f }) => !f.tipos || f.tipos.includes(tipo))
     .filter(({ f }) => cumpleCondicion(f.requiere, anterior))
-    .map(({ f, i }) => ({
-      id: `fijo:${sesion.id}:${f.id}`,
-      sesionId: sesion.id,
-      seccion: f.seccion,
-      remitente: f.remitente,
-      contenido: f.texto.replaceAll('{tipo}', 'ordinaria').replaceAll('{fecha}', fecha),
-      acuerdo: '',
-      confidencial: false,
-      archivos: [],
-      orden: i,
-      tratado: !!sesion.fijosTratados?.[f.id],
-      textoVotacion: f.textoVoto ?? null,
-      fijo: true,
-      encabezado: !!f.encabezado,
-      version: 1,
-      creadoPor: 'sistema',
-      creadoEn: sesion.creadaEn ?? '',
-      modificadoEn: sesion.creadaEn ?? '',
-    }));
+    .map(({ f, i }) => armar(f, i, f.id, f.texto.replaceAll('{tipo}', 'ordinaria').replaceAll('{fecha}', fecha)));
+  if (tipo !== 'ordinaria') return delCatalogo;
+  const indiceActa = catalogo.findIndex((f) => f.id === 'acta-anterior');
+  const moldeActa = catalogo[indiceActa] ?? catalogo.find((f) => f.id === 'orden-dia');
+  if (!moldeActa) return delCatalogo;
+  const base = indiceActa >= 0 ? indiceActa : Math.max(0, catalogo.findIndex((f) => f.id === 'orden-dia'));
+  const automaticas = actasExtraordinariasPendientes(sesion, sesiones, anterior).map((f, k) => armar(
+    { ...moldeActa, encabezado: false },
+    base + (k + 1) / 1000,
+    `acta-auto-${f}`,
+    `Aprobación, en su caso, del acta de la sesión extraordinaria del ${fechaLarga(f)}.`,
+  ));
+  return [...delCatalogo, ...automaticas];
 }
 
 export function ordenarPuntosDocumento(puntos, secciones) {

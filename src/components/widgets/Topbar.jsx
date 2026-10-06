@@ -2,12 +2,13 @@ import BuscadorGlobal from '../base/BuscadorGlobal.jsx';
 import FechaDia from '../base/FechaDia.jsx';
 import BotonS from '../base/BotonS.jsx';
 import BotonExpandible from '../base/BotonExpandible.jsx';
+import NuevaSesionExtraordinaria from './NuevaSesionExtraordinaria.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { URL_LOGO } from '../../utils/logo.js';
 import '../../styles/widgets/Topbar.css';
 
-export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesConfiguracion = [], onSeleccionarConfiguracion }) {
+export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesConfiguracion = [], onSeleccionarConfiguracion, mostrarNuevaExtraordinaria = true }) {
   const { toggleSidebar5 } = useUI();
   const { cerrarSesion } = useAuth();
 
@@ -23,6 +24,7 @@ export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesCon
       </div>
       <div className="widget-topbar-right">
         <BuscadorGlobal value={terminoBusqueda} onChange={onCambiarBusqueda} placeholder="Buscar punto..." />
+        {mostrarNuevaExtraordinaria && <NuevaSesionExtraordinaria />}
         <FechaDia />
         <BotonS onClick={cerrarSesion}>Salir</BotonS>
         <BotonExpandible

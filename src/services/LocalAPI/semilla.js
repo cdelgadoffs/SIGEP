@@ -6,18 +6,24 @@ export const CATALOGOS_SEMILLA = {
     { id: 'informes', nombre: 'Informes', requiereAcuerdo: false },
     { id: 'asuntos-generales', nombre: 'Asuntos generales', requiereAcuerdo: true, admiteConListaCerrada: true, sinTituloEnDocumento: true, permiteCambiarSeccion: true },
   ],
+  tiposSesion: [
+    { id: 'ordinaria', nombre: 'Ordinaria' },
+    { id: 'extraordinaria', nombre: 'Extraordinaria' },
+  ],
   puntosFijos: [
     {
       id: 'orden-dia', seccion: 'actas', remitente: 'pleno', texto: 'Aprobación, en su caso, del orden del día.',
+      tipos: ['ordinaria', 'extraordinaria'],
       textoVoto: 'El Pleno, en votación económica, por unanimidad, aprueba el orden del día.',
     },
     {
       id: 'acta-anterior', seccion: 'actas', remitente: 'pleno',
       texto: 'Aprobación, en su caso, del acta de la sesión {tipo} del {fecha}.',
       requiere: 'sesion-anterior-celebrada',
+      tipos: ['ordinaria'],
       textoVoto: 'El Pleno, en votación económica, por unanimidad, aprueba el acta e instruye la elaboración y publicación de la versión pública.',
     },
-    { id: 'asuntos-generales', seccion: 'asuntos-generales', remitente: 'pleno', texto: 'Asuntos generales.', encabezado: true },
+    { id: 'asuntos-generales', seccion: 'asuntos-generales', remitente: 'pleno', texto: 'Asuntos generales.', encabezado: true, tipos: ['ordinaria'] },
   ],
   tiposVoto: [
     { id: 'unanimidad', nombre: 'por unanimidad', frase: 'por unanimidad', admitePrecision: true },

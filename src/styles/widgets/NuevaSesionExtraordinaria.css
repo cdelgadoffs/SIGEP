@@ -1,0 +1,26 @@
+.widget-nueva-extraordinaria {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 300px;
+}
+.widget-nueva-extraordinaria-etiqueta {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+.widget-nueva-extraordinaria-selector .base-lista-expandible-toggle {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  color: #1a1a1a;
+}
+.widget-nueva-extraordinaria-error {
+  font-size: 12.5px;
+  color: #c62828;
+}
+.widget-nueva-extraordinaria-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

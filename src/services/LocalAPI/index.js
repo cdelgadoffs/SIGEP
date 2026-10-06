@@ -9,7 +9,7 @@ import {
   camposPunto, validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
-  combinarCambios, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
+  combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -52,7 +52,7 @@ export async function crearSesiones(fechas) {
   for (const id of new Set(fechas)) {
     if (existentes.has(id)) continue;
     await guardar(STORE_SESIONES, {
-      id, celebrada: false, celebradaEn: null, version: 1,
+      id, tipo: 'ordinaria', celebrada: false, celebradaEn: null, version: 1,
       creadaEn: ahora, creadaPor: usuarioActual().id,
     });
   }
@@ -69,7 +69,7 @@ async function puntosPorSesion() {
 }
 
 function nuevaSesion(id, ahora) {
-  return { id, celebrada: false, celebradaEn: null, version: 1, creadaEn: ahora, creadaPor: usuarioActual().id };
+  return { id, tipo: 'ordinaria', celebrada: false, celebradaEn: null, version: 1, creadaEn: ahora, creadaPor: usuarioActual().id };
 }
 
 function registroCalendario(calendario, existente, ahora) {
@@ -129,8 +129,12 @@ export async function agregarAsueto(anio, asueto) {
   const nuevo = validarAsueto(anio, calendario, asueto);
   const origen = await obtener(STORE_SESIONES, nuevo.fecha);
   if (!origen) throw new ApiError('VALIDACION', `No hay una sesión programada el ${nuevo.fecha}.`);
+  if (tipoDeSesion(origen) !== 'ordinaria') throw new ApiError('VALIDACION', 'Las sesiones extraordinarias no se reprograman con asuetos.');
   await exigirSesionLibre(nuevo.fecha, await puntosPorSesion(), `La sesión del ${nuevo.fecha} ya tiene puntos; no se puede reprogramar.`);
   const destinoExiste = await obtener(STORE_SESIONES, nuevo.destino);
+  if (destinoExiste && tipoDeSesion(destinoExiste) !== 'ordinaria') {
+    throw new ApiError('VALIDACION', `El ${nuevo.destino} ya tiene una sesión extraordinaria; elige otro día.`);
+  }
   const ahora = new Date().toISOString();
   const registro = registroCalendario({ ...calendario, asuetos: [...calendario.asuetos, nuevo] }, calendario, ahora);
   await escribirVarios({
@@ -153,6 +157,9 @@ export async function quitarAsueto(anio, fecha) {
     await puntosPorSesion(),
     `La sesión del ${asueto.destino} ya tiene puntos; no se puede devolver al ${fecha}.`,
   );
+  if (destino && tipoDeSesion(destino) !== 'ordinaria') {
+    throw new ApiError('VALIDACION', `La sesión del ${asueto.destino} es extraordinaria; no se puede devolver al ${fecha}.`);
+  }
   const origenExiste = await obtener(STORE_SESIONES, fecha);
   const ahora = new Date().toISOString();
   const restantes = calendario.asuetos.filter((a) => a.fecha !== fecha);
@@ -166,6 +173,41 @@ export async function quitarAsueto(anio, fecha) {
     borrar: destino ? [{ store: STORE_SESIONES, id: asueto.destino }] : [],
   });
   return { calendario: registro, sesiones: await listarSesiones() };
+}
+
+export async function listarFechasExtraordinaria() {
+  return fechasDisponiblesExtraordinaria(await obtenerTodos(STORE_SESIONES), await obtenerTodos(STORE_CALENDARIOS));
+}
+
+export async function crearSesionExtraordinaria(fecha) {
+  exigirEscritura();
+  validarFechasISO([fecha]);
+  if (!(await listarFechasExtraordinaria()).includes(fecha)) {
+    throw new ApiError('FECHA_NO_DISPONIBLE', 'Esa fecha no está disponible para una sesión extraordinaria.');
+  }
+  await guardar(STORE_SESIONES, { ...nuevaSesion(fecha, new Date().toISOString()), tipo: 'extraordinaria' });
+  return (await listarSesiones()).find((s) => s.id === fecha);
+}
+
+export async function eliminarSesion(id) {
+  exigirEscritura();
+  const sesion = await obtener(STORE_SESIONES, id);
+  if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
+  if (tipoDeSesion(sesion) !== 'extraordinaria') {
+    throw new ApiError('SESION_ORDINARIA', 'Las sesiones ordinarias no se pueden eliminar, solo ajustar con vacaciones o asuetos.');
+  }
+  if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada y no se puede eliminar.');
+  const puntos = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === id);
+  const idsPuntos = new Set(puntos.map((p) => p.id));
+  const archivos = (await obtenerTodos(STORE_ARCHIVOS)).filter((a) => idsPuntos.has(a.puntoId));
+  await escribirVarios({
+    borrar: [
+      { store: STORE_SESIONES, id },
+      ...puntos.map((p) => ({ store: STORE_PUNTOS, id: p.id })),
+      ...archivos.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
+    ],
+  });
+  return listarSesiones();
 }
 
 export async function establecerListaCerrada(id, cerrada) {
@@ -184,11 +226,46 @@ export async function celebrarSesion(id) {
   if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
   if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada.');
   if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de celebrar la sesión.');
+  if (!sesion.horaInicio) throw new ApiError('SESION_NO_COMENZADA', 'Debes comenzar la sesión antes de celebrarla.');
+  const ahora = new Date().toISOString();
   await guardar(STORE_SESIONES, {
-    ...sesion, celebrada: true, celebradaEn: new Date().toISOString(), version: sesion.version + 1,
+    ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, version: sesion.version + 1,
   });
   const lista = await listarSesiones();
   return lista.find((s) => s.id === id);
+}
+
+export async function comenzarSesion(id) {
+  exigirEscritura();
+  const sesion = await exigirSesionAbierta(id);
+  if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de comenzar la sesión.');
+  if (!sesion.horaInicio) {
+    await guardar(STORE_SESIONES, { ...sesion, horaInicio: new Date().toISOString(), version: sesion.version + 1 });
+  }
+  return (await listarSesiones()).find((s) => s.id === id);
+}
+
+export async function editarHorario(id, cambios) {
+  exigirEscritura();
+  const sesion = await obtener(STORE_SESIONES, id);
+  if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
+  const claves = ['horaInicio', 'horaFin'].filter((k) => cambios && k in cambios);
+  if (claves.length === 0) throw new ApiError('VALIDACION', 'Indica la hora de inicio o la de fin.');
+  const nuevo = { ...sesion };
+  claves.forEach((clave) => {
+    validarHoraDelDia(cambios[clave]);
+    if (!sesion[clave]) {
+      throw new ApiError('VALIDACION', clave === 'horaInicio' ? 'La sesión aún no ha comenzado.' : 'La sesión aún no ha terminado.');
+    }
+    nuevo[clave] = conHoraDelDia(sesion[clave], cambios[clave]);
+  });
+  if (nuevo.horaInicio && nuevo.horaFin && nuevo.horaInicio > nuevo.horaFin) {
+    throw new ApiError('HORARIO_INVALIDO', claves.includes('horaInicio')
+      ? 'La hora de inicio no puede ser posterior a la hora de fin.'
+      : 'La hora de fin no puede ser anterior a la hora de inicio.');
+  }
+  await guardar(STORE_SESIONES, { ...nuevo, version: sesion.version + 1 });
+  return (await listarSesiones()).find((s) => s.id === id);
 }
 
 async function armarPuntos(sesionId) {
@@ -490,13 +567,45 @@ export async function eliminarIntegrante(id) {
     throw new ApiError('EN_USO', 'El integrante figura en la votación de una sesión ya celebrada y no se puede eliminar.');
   }
   const ahora = new Date().toISOString();
+  const conAusencia = sesiones.filter((s) => !s.celebrada && s.ausentes?.includes(id));
   await escribirVarios({
-    poner: puntos.map((p) => ({
-      store: STORE_PUNTOS,
-      valor: { ...p, votacion: { ...p.votacion, quorum: p.votacion.quorum.filter((q) => q !== id) }, version: p.version + 1, modificadoEn: ahora },
-    })),
+    poner: [
+      ...puntos.map((p) => ({
+        store: STORE_PUNTOS,
+        valor: { ...p, votacion: { ...p.votacion, quorum: p.votacion.quorum.filter((q) => q !== id) }, version: p.version + 1, modificadoEn: ahora },
+      })),
+      ...conAusencia.map((s) => ({
+        store: STORE_SESIONES,
+        valor: { ...s, ausentes: s.ausentes.filter((a) => a !== id), version: s.version + 1 },
+      })),
+    ],
     borrar: [{ store: STORE_INTEGRANTES, id }],
   });
+}
+
+function asistenciaDe(sesion, integrantes) {
+  const ausentes = sesion.ausentes ?? [];
+  return integrantes.map((i) => ({ integranteId: i.id, presente: !ausentes.includes(i.id) }));
+}
+
+export async function listarAsistencia(sesionId) {
+  const sesion = await obtener(STORE_SESIONES, sesionId);
+  if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
+  return asistenciaDe(sesion, await listarIntegrantes());
+}
+
+export async function registrarAsistencia(sesionId, integranteId, presente) {
+  exigirEscritura();
+  if (typeof presente !== 'boolean') throw new ApiError('VALIDACION', 'El valor de "presente" debe ser verdadero o falso.');
+  const sesion = await exigirSesionAbierta(sesionId);
+  const integrantes = await listarIntegrantes();
+  if (!integrantes.some((i) => i.id === integranteId)) throw new ApiError('NO_ENCONTRADO', 'El integrante no existe.');
+  const ausentes = (sesion.ausentes ?? []).filter((a) => a !== integranteId);
+  const nuevos = presente ? ausentes : [...ausentes, integranteId];
+  if (nuevos.length !== (sesion.ausentes ?? []).length || nuevos.some((a, i) => a !== (sesion.ausentes ?? [])[i])) {
+    await guardar(STORE_SESIONES, { ...sesion, ausentes: nuevos, version: sesion.version + 1 });
+  }
+  return asistenciaDe({ ausentes: nuevos }, integrantes);
 }
 
 const ID_SECRETARIO = 'seple';

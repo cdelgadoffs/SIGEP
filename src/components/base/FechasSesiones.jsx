@@ -12,6 +12,7 @@ export default function FechasSesiones({ fechas = [], activaId, onSeleccionar, t
           className={
             'base-badge-fecha' +
             (f.estado ? ' base-badge-fecha-' + f.estado : '') +
+            (f.pildora ? ' base-badge-fecha-pildora' : '') +
             (f.id === activaId ? ' base-badge-fecha-activa' : '')
           }
           onClick={() => onSeleccionar && onSeleccionar(f.id)}

@@ -1,0 +1,18 @@
+.widget-boton-comenzar .base-boton-s {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.widget-boton-comenzar-aviso {
+  padding: 8px 4px;
+  font-size: 13px;
+  text-align: center;
+  color: #b91c1c;
+}
+.widget-boton-comenzar-mensaje {
+  margin: 0;
+  font-size: 13.5px;
+  color: #c62828;
+}

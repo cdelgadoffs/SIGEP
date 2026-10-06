@@ -4,6 +4,7 @@ import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { generarWordOrdenDia } from '../../utils/ordenDia.js';
 import { guardarEnDisco } from '../../utils/archivos.js';
+import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/BotonDescargar.css';
 
 export default function BotonDescargar() {
@@ -17,6 +18,7 @@ export default function BotonDescargar() {
     try {
       const { blob, nombreArchivo } = await generarWordOrdenDia({
         sesion: sesionSeleccionada,
+        tipoSesion: nombreTipoSesion(sesionSeleccionada.tipo),
         puntos: PUNTOS,
         secciones: SECCIONES_DOCUMENTO,
       });

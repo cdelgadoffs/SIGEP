@@ -1,0 +1,97 @@
+.widget-asistencia-quorum {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px;
+  border-top: 1px solid #e0e0e0;
+}
+.widget-asistencia-quorum-encabezado {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.widget-asistencia-quorum-titulo {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.widget-asistencia-quorum-conteo {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+}
+.widget-asistencia-quorum-conteo-completo {
+  color: #2e7d32;
+}
+.widget-asistencia-quorum-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.widget-asistencia-quorum-vacio {
+  font-size: 12px;
+  color: #999;
+}
+.widget-asistencia-quorum-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.widget-asistencia-quorum-fila-presente {
+  background: #f1f9f1;
+  border-color: #a5d6a7;
+}
+.widget-asistencia-quorum-fila-fija {
+  cursor: default;
+}
+.widget-asistencia-quorum-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #dbe5f5;
+  color: #3a5a8f;
+  font-size: 12px;
+  font-weight: 700;
+}
+.widget-asistencia-quorum-avatar-presidente {
+  background: #1a1a1a;
+  color: #fff;
+}
+.widget-asistencia-quorum-datos {
+  flex: 1;
+  min-width: 0;
+}
+.widget-asistencia-quorum-nombre {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-asistencia-quorum-grado {
+  font-size: 10.5px;
+  color: #999;
+}
+.widget-asistencia-quorum-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-asistencia-quorum-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+}
