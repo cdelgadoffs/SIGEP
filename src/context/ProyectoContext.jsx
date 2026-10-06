@@ -27,7 +27,7 @@ const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFe
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 const porNumero = (lista) => [...lista].sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0));
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], integrantes: [], tiposConocimiento: [] };
+const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], integrantes: [], tiposConocimiento: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
@@ -228,7 +228,7 @@ export function ProyectoProvider({ children }) {
 
   const value = {
     sesionSeleccionada,
-    SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes,
+    SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes, CATEGORIAS: catalogos.categorias,
     TIPOS_VOTO: catalogos.tiposVoto, TIPOS_VOTACION: catalogos.tiposVotacion, ESTADOS_VOTO: catalogos.estadosVoto, INTEGRANTES: catalogos.integrantes, TIPOS_CONOCIMIENTO: catalogos.tiposConocimiento,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,

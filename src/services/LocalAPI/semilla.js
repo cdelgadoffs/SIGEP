@@ -4,7 +4,7 @@ export const CATALOGOS_SEMILLA = {
     { id: 'proyectos-de-acuerdo', nombre: 'Proyectos de acuerdo', requiereAcuerdo: true },
     { id: 'tomas-de-nota-licencias', nombre: 'Tomas de nota/Licencias', requiereAcuerdo: true },
     { id: 'informes', nombre: 'Informes', requiereAcuerdo: false },
-    { id: 'asuntos-generales', nombre: 'Asuntos generales', requiereAcuerdo: true, admiteConListaCerrada: true, sinTituloEnDocumento: true },
+    { id: 'asuntos-generales', nombre: 'Asuntos generales', requiereAcuerdo: true, admiteConListaCerrada: true, sinTituloEnDocumento: true, permiteCambiarSeccion: true },
   ],
   puntosFijos: [
     {
@@ -44,9 +44,23 @@ export const CATALOGOS_SEMILLA = {
     { id: 'integrante-4', nombre: 'Integrante 4', tratamiento: 'la licenciada' },
     { id: 'integrante-5', nombre: 'Integrante 5', tratamiento: 'el maestro' },
   ],
-  remitentes: [
+  categorias: [
     { id: 'pleno', nombre: 'Pleno' },
-    { id: 'presidencia', nombre: 'Presidencia' },
-    { id: 'secretaria-general', nombre: 'Secretaría General' },
+    { id: 'direcciones', nombre: 'Direcciones generales' },
+    { id: 'comisiones', nombre: 'Comisiones' },
+  ],
+  remitentes: [
+    { id: 'pleno', nombre: 'Pleno', categoria: 'pleno' },
+    { id: 'dgej', nombre: 'DGEJ', categoria: 'direcciones' },
+    { id: 'degetd', nombre: 'DEGETD', categoria: 'direcciones' },
+    { id: 'dgti', nombre: 'DGTI', categoria: 'direcciones' },
+    { id: 'dgjj', nombre: 'DGJJ', categoria: 'direcciones' },
+    { id: 'dgipdi', nombre: 'DGIPDI', categoria: 'direcciones' },
+    { id: 'dgrh', nombre: 'DGRH', categoria: 'direcciones' },
+    { id: 'administracion', nombre: 'Administración', categoria: 'comisiones' },
+    { id: 'creacion-de-nuevos-organos', nombre: 'Creación de nuevos órganos', categoria: 'comisiones' },
+    { id: 'adscripcion', nombre: 'Adscripción', categoria: 'comisiones' },
+    { id: 'carrera-judicial', nombre: 'Carrera judicial', categoria: 'comisiones' },
+    { id: 'presupuesto', nombre: 'Presupuesto', categoria: 'comisiones' },
   ],
 };

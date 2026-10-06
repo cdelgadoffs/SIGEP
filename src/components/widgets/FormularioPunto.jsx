@@ -15,6 +15,7 @@ import '../../styles/widgets/FormularioPunto.css';
 function estadoVacio(seccion) {
   return {
     seccion: seccion || '',
+    categoria: '',
     remitente: '',
     contenido: '',
     acuerdo: '',
@@ -32,7 +33,7 @@ function tieneContenido(f) {
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
   const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId } = useUI();
   const [form, setForm] = useState(() => estadoVacio(seccionNuevoPunto));
   const [restaurado, setRestaurado] = useState(false);
@@ -58,6 +59,7 @@ export default function FormularioPunto() {
       if (original) {
         setForm({
           seccion: original.seccion,
+          categoria: '',
           remitente: original.remitente,
           contenido: original.contenido,
           acuerdo: original.acuerdo,
@@ -103,7 +105,17 @@ export default function FormularioPunto() {
     .map((s) => ({ id: s.id, label: s.nombre }));
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
-  const remitenteActual = REMITENTES.some((r) => r.id === form.remitente) ? form.remitente : (REMITENTES[0]?.id || '');
+  const categoriaActual = CATEGORIAS.find((c) => c.id === form.categoria)
+    || CATEGORIAS.find((c) => c.id === REMITENTES.find((r) => r.id === form.remitente)?.categoria)
+    || CATEGORIAS[0];
+  const remitentesDeCategoria = REMITENTES.filter((r) => r.categoria === categoriaActual?.id);
+  const remitenteActual = remitentesDeCategoria.some((r) => r.id === form.remitente) ? form.remitente : (remitentesDeCategoria[0]?.id || '');
+  const seccionOrigen = SECCIONES_DOCUMENTO.find((s) => s.id === seccionNuevoPunto);
+  const mostrarSeccion = editando || !!seccionOrigen?.permiteCambiarSeccion;
+
+  function cambiarCategoria(id) {
+    setForm((f) => ({ ...f, categoria: id, remitente: REMITENTES.find((r) => r.categoria === id)?.id || '' }));
+  }
 
   function actualizar(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -184,6 +196,27 @@ export default function FormularioPunto() {
       <div className="widget-formulario-punto" key={form.seccion} ref={contenedorRef} onScroll={onScroll}>
       <div className="widget-formulario-punto-fila">
         <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Categoría</label>
+          <ListaExpandible
+            valorActual={categoriaActual?.id}
+            etiquetaActual={categoriaActual?.nombre ?? ''}
+            opciones={CATEGORIAS.map((c) => ({ id: c.id, label: c.nombre }))}
+            onSeleccionar={cambiarCategoria}
+          />
+        </div>
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Remitente</label>
+          <ListaExpandible
+            valorActual={remitenteActual}
+            etiquetaActual={remitentesDeCategoria.find((r) => r.id === remitenteActual)?.nombre ?? ''}
+            opciones={remitentesDeCategoria.map((r) => ({ id: r.id, label: r.nombre }))}
+            onSeleccionar={(id) => actualizar('remitente', id)}
+          />
+        </div>
+      </div>
+
+      {mostrarSeccion && (
+        <div className="widget-formulario-punto-campo">
           <label className="widget-formulario-punto-label">Sección</label>
           <ListaExpandible
             valorActual={form.seccion}
@@ -192,16 +225,7 @@ export default function FormularioPunto() {
             onSeleccionar={(id) => actualizar('seccion', id)}
           />
         </div>
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Remitente</label>
-          <ListaExpandible
-            valorActual={remitenteActual}
-            etiquetaActual={REMITENTES.find((r) => r.id === remitenteActual)?.nombre ?? ''}
-            opciones={REMITENTES.map((r) => ({ id: r.id, label: r.nombre }))}
-            onSeleccionar={(id) => actualizar('remitente', id)}
-          />
-        </div>
-      </div>
+      )}
 
       {(!editando || punto.archivos.length > 0) && (
         <div className="widget-formulario-punto-campo">

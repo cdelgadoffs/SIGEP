@@ -1,7 +1,7 @@
 import { CATALOGOS_SEMILLA } from './semilla.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 14;
+const DB_VERSION = 15;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -29,6 +29,18 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 15) {
+        const tx = req.transaction;
+        const catalogos = tx.objectStore(STORE_CATALOGOS);
+        ['secciones', 'categorias', 'remitentes'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
+        const validos = CATALOGOS_SEMILLA.remitentes.map((r) => r.id);
+        tx.objectStore(STORE_PUNTOS).openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          if (!validos.includes(cursor.value.remitente)) cursor.update({ ...cursor.value, remitente: 'pleno' });
+          cursor.continue();
+        };
       }
       if (evento.oldVersion < 14) {
         const catalogos = req.transaction.objectStore(STORE_CATALOGOS);

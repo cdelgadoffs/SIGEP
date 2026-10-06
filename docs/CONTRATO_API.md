@@ -115,8 +115,9 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
-| `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
+| `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `permiteCambiarSeccion: bool` (solo `asuntos-generales`: el formulario ofrece elegir la sección al crear), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
+| `categorias` | — | `pleno`, `direcciones` (Direcciones generales), `comisiones` |
+| `remitentes` | `categoria: string` (id de `categorias`) | Pleno; DGEJ, DEGETD, DGTI, DGJJ, DGIPDI, DGRH (direcciones); Administración, Creación de nuevos órganos, Adscripción, Carrera judicial, Presupuesto (comisiones). La categoría de un punto no se guarda: se deduce de su remitente |
 | `tiposVoto` | `frase: string` (texto del voto en el resultado), `votosRequeridos: number` (si existe, el voto exige ese número de integrantes del quórum), `sinVotacion: bool` (no aplica tipo de votación), `admitePrecision: bool` | `unanimidad` (admite precisión), `mayoria-4` (1 voto), `mayoria-3` (2 votos), `retirar` (sin votación) |
 | `tiposVotacion` | `tono: 'verde' \| 'rojo' \| 'azul'` (sugerencia de presentación), `admitePrecision: bool` | `economica`, `concurrente` (admite precisión) |
 | `estadosVoto` | `tono` | `aprueba`, `acuerda` |
