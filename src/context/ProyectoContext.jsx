@@ -3,7 +3,7 @@ import {
   listarCatalogos, listarSesiones, celebrarSesion, establecerListaCerrada as establecerListaCerradaEnApi,
   obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi,
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
-  listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
+  listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
   descargarArchivo as descargarArchivoEnApi,
@@ -27,7 +27,7 @@ const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFe
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 const porNumero = (lista) => [...lista].sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0));
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [] };
+const CATALOGOS_VACIOS = { secciones: [], remitentes: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], integrantes: [], tiposConocimiento: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
@@ -45,7 +45,7 @@ export function ProyectoProvider({ children }) {
     let vigente = true;
     let servidorListo = false;
     obtenerCache(CACHE_CATALOGOS).then((c) => {
-      if (vigente && !servidorListo && c) setCatalogos(c);
+      if (vigente && !servidorListo && c) setCatalogos({ ...CATALOGOS_VACIOS, ...c });
     });
     listarCatalogos()
       .then((c) => {
@@ -203,6 +203,9 @@ export function ProyectoProvider({ children }) {
   async function marcarPunto(id, tratado) {
     reemplazarPunto(id, await marcarPuntoEnApi(id, tratado));
   }
+  async function registrarVotacion(id, votacion) {
+    reemplazarPunto(id, await registrarVotacionEnApi(id, votacion));
+  }
   async function marcarTodosPuntos(tratado) {
     aplicarPuntos((await marcarPuntosEnApi(sesionActivaFecha, tratado)).map(conSync));
   }
@@ -226,12 +229,13 @@ export function ProyectoProvider({ children }) {
   const value = {
     sesionSeleccionada,
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes,
+    TIPOS_VOTO: catalogos.tiposVoto, TIPOS_VOTACION: catalogos.tiposVotacion, ESTADOS_VOTO: catalogos.estadosVoto, INTEGRANTES: catalogos.integrantes, TIPOS_CONOCIMIENTO: catalogos.tiposConocimiento,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
     sesionFinalizada, finalizarSesion,
     listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
-    marcarPunto, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
+    marcarPunto, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,

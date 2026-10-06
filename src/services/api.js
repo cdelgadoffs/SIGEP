@@ -19,6 +19,7 @@ export const {
   reordenarPuntos,
   marcarPunto,
   marcarPuntos,
+  registrarVotacion,
   adjuntarArchivos,
   eliminarArchivo,
   descargarArchivo,

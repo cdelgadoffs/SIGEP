@@ -1,0 +1,108 @@
+.widget-selector-votacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+}
+.widget-selector-votacion-deshabilitado {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.widget-selector-votacion-campo {
+  flex: 1 1 30%;
+  min-width: 160px;
+}
+.widget-selector-votacion-campo-estado {
+  flex: 0 0 auto;
+}
+.widget-selector-votacion-ancho {
+  flex: 1 1 100%;
+}
+.widget-selector-votacion-etiqueta {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+.widget-selector-votacion-oculta {
+  visibility: hidden;
+}
+
+.widget-selector-votacion-boton,
+.widget-selector-votacion-quorum-badge {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.widget-selector-votacion-boton {
+  cursor: pointer;
+}
+.widget-selector-votacion-boton:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.widget-selector-votacion-boton:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.widget-selector-votacion-boton:disabled {
+  cursor: not-allowed;
+}
+
+.widget-selector-votacion-tono-verde {
+  background: #c8e6c9;
+  color: #2e7d32;
+  border-color: #a5d6a7;
+}
+.widget-selector-votacion-tono-rojo {
+  background: #ffcdd2;
+  color: #c62828;
+  border-color: #ef9a9a;
+}
+.widget-selector-votacion-tono-azul {
+  background: #bbdefb;
+  color: #1565c0;
+  border-color: #64b5f6;
+}
+.widget-selector-votacion-boton-inactivo {
+  background: #e0e0e0;
+  color: #888;
+  border-color: #ccc;
+  opacity: 0.7;
+}
+
+.widget-selector-votacion-quorum-badge {
+  background: #ffcdd2;
+  color: #c62828;
+  border-color: #ef9a9a;
+  cursor: default;
+}
+.widget-selector-votacion-quorum-badge.completo {
+  background: #c8e6c9;
+  color: #2e7d32;
+  border-color: #a5d6a7;
+}
+
+.widget-selector-votacion-quorum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.widget-selector-votacion-vacio {
+  font-size: 13px;
+  font-style: italic;
+  color: #aaa;
+}

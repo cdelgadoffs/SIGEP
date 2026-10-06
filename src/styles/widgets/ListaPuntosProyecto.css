@@ -72,9 +72,25 @@
   border-radius: 5px;
   border: 1px solid #1a56db;
 }
-.widget-lista-puntos-fila {
-  padding: 11px 18px;
+.widget-lista-puntos-columnas {
+  display: flex;
+  align-items: stretch;
   border-top: 1px solid #c9c9ca;
+}
+.widget-lista-puntos-columna {
+  padding: 11px 18px;
+  min-width: 0;
+}
+.widget-lista-puntos-columna + .widget-lista-puntos-columna {
+  border-left: 1px solid #c9c9ca;
+}
+.widget-lista-puntos-principal {
+  flex: 1 1 0;
+}
+.widget-lista-puntos-bloque-acuerdo {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #bdbdbd;
 }
 .widget-lista-puntos-label {
   display: block;
@@ -100,11 +116,11 @@
 }
 .widget-lista-puntos-archivos {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 11px 18px;
-  border-top: 1px solid #c9c9ca;
-  background: #fafbfc;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex: 0 0 auto;
+  max-width: 240px;
 }
 
 .widget-lista-puntos-opciones {
@@ -162,4 +178,10 @@
 .widget-lista-puntos-encabezado-codigo {
   color: #888;
   font-weight: 600;
+}
+
+.widget-lista-puntos-separador {
+  border: none;
+  border-top: 1px dashed #ccc;
+  margin: 6px 0;
 }

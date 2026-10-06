@@ -209,6 +209,7 @@ export function generarPuntosFijos(sesion, sesiones, catalogoFijos) {
       archivos: [],
       orden: i,
       tratado: !!sesion.fijosTratados?.[f.id],
+      textoVotacion: f.textoVoto ?? null,
       fijo: true,
       encabezado: !!f.encabezado,
       version: 1,
@@ -234,7 +235,7 @@ export function ordenarPuntosDocumento(puntos, secciones) {
 
 export function ocultarConfidencial(p) {
   if (!p.confidencial) return p;
-  return { ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [] };
+  return { ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [], votacion: null, acuerdoLineas: [], textoVotacion: null };
 }
 
 export function camposPunto(datos) {
@@ -294,6 +295,108 @@ export function prepararArchivos(puntoId, archivos) {
     id: r.id, nombre: r.nombre, tipo: r.tipo, tamano: r.tamano, creadoEn: r.creadoEn, creadoPor: r.creadoPor,
   }));
   return { registros, metadatos };
+}
+
+function elegir(lista, id, mensaje) {
+  const opcion = id === undefined ? lista[0] : lista.find((o) => o.id === id);
+  if (!opcion) throw new ApiError('VALIDACION', mensaje);
+  return opcion;
+}
+
+export function validarVotacion(v, catalogos, esInforme = false) {
+  if (v === null) return null;
+  if (typeof v !== 'object' || Array.isArray(v)) throw new ApiError('VALIDACION', 'Votación inválida.');
+  if (v.textoManual !== undefined && (typeof v.textoManual !== 'string' || v.textoManual.length > MAX_TEXTO)) {
+    throw new ApiError('VALIDACION', 'El texto de la votación es inválido o demasiado largo.');
+  }
+  const extra = v.textoManual !== undefined ? { textoManual: v.textoManual } : {};
+  if (esInforme) {
+    const tipo = elegir(catalogos.tiposConocimiento || [], v.conocimiento, 'Tipo de conocimiento inválido.');
+    const complemento = typeof v.complemento === 'string' ? v.complemento : '';
+    if (complemento.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El complemento es demasiado largo.');
+    return { conocimiento: tipo.id, complemento: tipo.admiteComplemento ? complemento : '', ...extra };
+  }
+  const voto = elegir(catalogos.tiposVoto || [], v.voto, 'Tipo de voto inválido.');
+  const votacion = elegir(catalogos.tiposVotacion || [], v.votacion, 'Tipo de votación inválido.');
+  const estado = elegir(catalogos.estadosVoto || [], v.estado, 'Estado de la votación inválido.');
+  const quorum = Array.isArray(v.quorum) ? v.quorum : [];
+  const integrantes = catalogos.integrantes || [];
+  if (new Set(quorum).size !== quorum.length || !quorum.every((id) => integrantes.some((i) => i.id === id))) {
+    throw new ApiError('VALIDACION', 'Quórum inválido.');
+  }
+  const requeridos = voto.votosRequeridos || 0;
+  if (quorum.length > requeridos) {
+    throw new ApiError('VALIDACION', `El voto elegido admite como máximo ${requeridos} integrante(s) en el quórum.`);
+  }
+  const precision = typeof v.precision === 'string' ? v.precision : '';
+  if (precision.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'La precisión es demasiado larga.');
+  const admitePrecision = !!voto.admitePrecision && !!votacion.admitePrecision;
+  return { voto: voto.id, votacion: votacion.id, estado: estado.id, quorum, precision: admitePrecision ? precision : '', ...extra };
+}
+
+const ORDINALES = ['PRIMERO', 'SEGUNDO', 'TERCERO', 'CUARTO', 'QUINTO', 'SEXTO', 'SÉPTIMO', 'OCTAVO', 'NOVENO', 'DÉCIMO'];
+const PREFIJO_ACUERDO = /^\*{0,2}(ÚNICO|PRIMERO|SEGUNDO|TERCERO|CUARTO|QUINTO|SEXTO|SÉPTIMO|OCTAVO|NOVENO|DÉCIMO[A-ZÁÉÍÓÚ\s]*)\*{0,2}\.\*{0,2}\s*/i;
+
+function prefijoOrdinal(indice, total) {
+  if (total === 1) return 'ÚNICO';
+  return ORDINALES[indice] ?? `DÉCIMO ${ORDINALES[indice - 10] ?? ''}`.trim();
+}
+
+export function lineasDeAcuerdo(acuerdo) {
+  const lineas = (acuerdo || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  return lineas.map((linea, i) => ({ prefijo: prefijoOrdinal(i, lineas.length), texto: linea.replace(PREFIJO_ACUERDO, '').trim() }));
+}
+
+const sinPunto = (t) => t.replace(/\.\s*$/, '');
+const enMinuscula = (t) => t.charAt(0).toLowerCase() + t.slice(1);
+
+function textoInforme(v, catalogos) {
+  const { conocimiento, complemento } = validarVotacion(v ?? {}, catalogos, true);
+  const tipo = (catalogos.tiposConocimiento || []).find((o) => o.id === conocimiento);
+  if (!tipo.admiteComplemento) return tipo.texto;
+  const extra = complemento.trim();
+  return extra ? `${tipo.textoBase} ${extra}.` : '';
+}
+
+function textoVotacionGenerado(v, lineas, catalogos) {
+  const norm = validarVotacion(v ?? {}, catalogos);
+  const voto = catalogos.tiposVoto.find((o) => o.id === norm.voto);
+  const votacion = catalogos.tiposVotacion.find((o) => o.id === norm.votacion);
+  const estado = catalogos.estadosVoto.find((o) => o.id === norm.estado);
+  const unico = lineas.length === 1 ? enMinuscula(sinPunto(lineas[0].texto)) : null;
+  if (voto.votosRequeridos) {
+    const nombres = norm.quorum
+      .map((id) => {
+        const i = (catalogos.integrantes || []).find((x) => x.id === id);
+        return i ? `${i.tratamiento} ${i.nombre}`.trim() : id;
+      })
+      .join(' y ') || '<<pendiente>>';
+    const base = `El Pleno, ${voto.frase}, con el voto en contra de ${nombres}, ${estado.nombre}`;
+    return unico ? `${base} ${unico}.` : `${base}:`;
+  }
+  let completo;
+  if (voto.sinVotacion) completo = `El Pleno, ${voto.frase}.`;
+  else if (voto.admitePrecision && votacion.admitePrecision && norm.precision) {
+    completo = `El Pleno, ${voto.frase} de votos, con la precisión de que ${norm.precision}, ${estado.nombre}.`;
+  } else completo = `El Pleno, en ${votacion.nombre}, ${voto.frase}, ${estado.nombre}.`;
+  return unico ? `${sinPunto(completo)}, ${unico}.` : completo;
+}
+
+export function decorarPunto(p, catalogos) {
+  if (p.fijo) return { ...p, acuerdoLineas: [] };
+  const seccion = (catalogos.secciones || []).find((s) => s.id === p.seccion);
+  const esInforme = !!seccion && !seccion.requiereAcuerdo;
+  const acuerdoLineas = esInforme ? [] : lineasDeAcuerdo(p.acuerdo);
+  let textoVotacion;
+  if (typeof p.votacion?.textoManual === 'string') textoVotacion = p.votacion.textoManual;
+  else {
+    try {
+      textoVotacion = esInforme ? textoInforme(p.votacion, catalogos) : textoVotacionGenerado(p.votacion, acuerdoLineas, catalogos);
+    } catch {
+      textoVotacion = '';
+    }
+  }
+  return { ...p, acuerdoLineas, textoVotacion };
 }
 
 export function normalizarPunto(p, catalogos) {

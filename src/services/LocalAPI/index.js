@@ -7,7 +7,7 @@ import {
   usuarioActual, exigirEscritura, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   camposPunto, validarPunto, normalizarPunto,
-  esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
+  esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
 } from './reglas.js';
 
@@ -192,7 +192,7 @@ async function armarPuntos(sesionId) {
   const catalogos = await listarCatalogos();
   const almacenados = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === sesionId);
   const fijos = generarPuntosFijos(sesion, sesiones, catalogos.puntosFijos);
-  return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []);
+  return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []).map((punto) => decorarPunto(punto, catalogos));
 }
 
 async function puntoArmado(sesionId, id) {
@@ -224,6 +224,7 @@ export async function crearPunto(sesionId, datos) {
     archivos: metadatos,
     orden,
     tratado: false,
+    votacion: null,
     version: 1,
     creadoPor: usuarioActual().id,
     creadoEn: ahora,
@@ -256,6 +257,7 @@ export async function editarPunto(id, version, cambios) {
     ...actual,
     ...normalizarPunto(combinado, catalogos),
     orden: cambiaSeccion ? siguienteOrden(await obtenerTodos(STORE_PUNTOS), actual.sesionId, combinado.seccion) : actual.orden,
+    ...(cambiaSeccion ? { votacion: null } : {}),
     version: actual.version + 1,
     modificadoEn: new Date().toISOString(),
   };
@@ -285,6 +287,24 @@ export async function marcarPunto(id, tratado) {
   await exigirSesionAbierta(actual.sesionId);
   if (!!actual.tratado !== tratado) {
     await guardar(STORE_PUNTOS, { ...actual, tratado, version: actual.version + 1, modificadoEn: new Date().toISOString() });
+  }
+  return puntoArmado(actual.sesionId, id);
+}
+
+export async function registrarVotacion(id, votacion) {
+  exigirEscritura();
+  exigirNoFijo(id);
+  const actual = await obtener(STORE_PUNTOS, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  await exigirSesionAbierta(actual.sesionId);
+  const catalogos = await listarCatalogos();
+  const seccion = (catalogos.secciones || []).find((x) => x.id === actual.seccion);
+  if (!actual.tratado) {
+    throw new ApiError('VALIDACION', 'El punto debe estar marcado como tratado para registrar su votación.');
+  }
+  const nueva = validarVotacion(votacion ?? null, catalogos, !seccion?.requiereAcuerdo);
+  if (JSON.stringify(nueva) !== JSON.stringify(actual.votacion ?? null)) {
+    await guardar(STORE_PUNTOS, { ...actual, votacion: nueva, version: actual.version + 1, modificadoEn: new Date().toISOString() });
   }
   return puntoArmado(actual.sesionId, id);
 }

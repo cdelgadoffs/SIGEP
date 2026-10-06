@@ -35,32 +35,41 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
             )}
           </div>
         </div>
-        <div className="widget-lista-puntos-fila">
-          <span className="widget-lista-puntos-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</span>
-          <div className="widget-lista-puntos-contenido">{punto.contenido || 'Sin contenido'}</div>
+        <div className="widget-lista-puntos-columnas">
+          <div className="widget-lista-puntos-columna widget-lista-puntos-principal">
+            <span className="widget-lista-puntos-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</span>
+            <div className="widget-lista-puntos-contenido">{punto.contenido || 'Sin contenido'}</div>
+            {!esInforme && !punto.fijo && (
+              <div className="widget-lista-puntos-bloque-acuerdo">
+                <span className="widget-lista-puntos-label">Acuerdo</span>
+                <div className="widget-lista-puntos-acuerdo">
+                  {punto.acuerdoLineas?.length > 0 ? punto.acuerdoLineas.map((l, i) => (
+                    <div key={i}>
+                      {i > 0 && <hr className="widget-lista-puntos-separador" />}
+                      <strong>{l.prefijo}.</strong> {l.texto}
+                    </div>
+                  )) : 'Sin acuerdo'}
+                </div>
+              </div>
+            )}
+          </div>
+          {punto.archivos.length > 0 && (
+            <div className="widget-lista-puntos-columna widget-lista-puntos-archivos">
+              {punto.archivos.map((a, i) => {
+                const { icono, tono } = estiloArchivo(a.nombre);
+                return (
+                  <BadgeDinamico
+                    key={a.id ?? i}
+                    texto={a.nombre}
+                    icono={icono}
+                    tono={tono}
+                    onClick={a.id ? () => onDescargar(a) : undefined}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
-        {!esInforme && !punto.fijo && (
-          <div className="widget-lista-puntos-fila">
-            <span className="widget-lista-puntos-label">Acuerdo</span>
-            <div className="widget-lista-puntos-acuerdo">{punto.acuerdo || 'Sin acuerdo'}</div>
-          </div>
-        )}
-        {punto.archivos.length > 0 && (
-          <div className="widget-lista-puntos-archivos">
-            {punto.archivos.map((a, i) => {
-              const { icono, tono } = estiloArchivo(a.nombre);
-              return (
-                <BadgeDinamico
-                  key={a.id ?? i}
-                  texto={a.nombre}
-                  icono={icono}
-                  tono={tono}
-                  onClick={a.id ? () => onDescargar(a) : undefined}
-                />
-              );
-            })}
-          </div>
-        )}
       </Card>
     </div>
   );

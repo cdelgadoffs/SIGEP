@@ -1,0 +1,19 @@
+.widget-selector-informe-deshabilitado {
+  opacity: 0.6;
+  pointer-events: none;
+}
+.widget-selector-informe-etiqueta {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+.widget-selector-informe-complemento {
+  margin-top: 6px;
+}
+.widget-selector-informe-vacio {
+  font-size: 13px;
+  font-style: italic;
+  color: #aaa;
+}

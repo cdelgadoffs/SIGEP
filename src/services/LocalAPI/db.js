@@ -1,7 +1,7 @@
 import { CATALOGOS_SEMILLA } from './semilla.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 10;
+const DB_VERSION = 14;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -29,6 +29,26 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 14) {
+        const catalogos = req.transaction.objectStore(STORE_CATALOGOS);
+        ['tiposVoto', 'tiposConocimiento', 'integrantes', 'puntosFijos'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
+      }
+      if (evento.oldVersion < 13) {
+        const catalogos = req.transaction.objectStore(STORE_CATALOGOS);
+        catalogos.getAllKeys().onsuccess = (e) => {
+          const existentes = e.target.result;
+          Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => {
+            if (!existentes.includes(nombre)) catalogos.put({ nombre, items });
+          });
+        };
+      }
+      if (evento.oldVersion < 12) {
+        req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'integrantes', items: CATALOGOS_SEMILLA.integrantes });
+      }
+      if (evento.oldVersion < 11) {
+        const catalogos = req.transaction.objectStore(STORE_CATALOGOS);
+        ['tiposVoto', 'tiposVotacion', 'estadosVoto'].forEach((nombre) => catalogos.put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
       }
       if (evento.oldVersion < 10) {
         req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'secciones', items: CATALOGOS_SEMILLA.secciones });

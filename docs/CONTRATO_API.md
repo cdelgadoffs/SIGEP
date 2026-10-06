@@ -117,22 +117,21 @@ El **orden** de cada catálogo es significativo: es el orden en que el cliente l
 |---|---|---|
 | `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (solo `asuntos-generales`), `sinTituloEnDocumento: bool` (`actas` y `asuntos-generales`: en el documento del orden del día no llevan encabezado de sección) | En este orden: `actas`, `proyectos-de-acuerdo`, `tomas-de-nota-licencias`, `informes` (false), `asuntos-generales` (todas las demás: true) |
 | `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
+| `tiposVoto` | `frase: string` (texto del voto en el resultado), `votosRequeridos: number` (si existe, el voto exige ese número de integrantes del quórum), `sinVotacion: bool` (no aplica tipo de votación), `admitePrecision: bool` | `unanimidad` (admite precisión), `mayoria-4` (1 voto), `mayoria-3` (2 votos), `retirar` (sin votación) |
+| `tiposVotacion` | `tono: 'verde' \| 'rojo' \| 'azul'` (sugerencia de presentación), `admitePrecision: bool` | `economica`, `concurrente` (admite precisión) |
+| `estadosVoto` | `tono` | `aprueba`, `acuerda` |
+| `tiposConocimiento` | `texto` (frase completa) o `textoBase` + `admiteComplemento: bool` | Para informes: `simple`, `extendido` |
+| `integrantes` | `tratamiento: string` (ej. "el licenciado") | Quienes pueden integrar el quórum de una votación (placeholder `integrante-1`…`integrante-5`) |
 
-Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interfaz (menú, textos, íconos).
+La precisión de un voto aplica solo cuando el tipo de voto **y** el tipo de votación elegidos admiten precisión (hoy: unanimidad + concurrente). 
+### Votación de un punto
 
-## Operaciones
+`Punto.votacion` es `null` o un objeto con ids de catálogo: para secciones con acuerdo, `{ voto, votacion, estado, quorum, precision }` (`quorum` es una lista de ids de `integrantes`); para informes, `{ conocimiento, complemento }`. Ambos admiten `textoManual` (texto que sustituye al generado). Operación `registrarVotacion(id, votacion)` (pasar `null` la borra), idempotente. Reglas del servidor:
 
-| Operación | Entrada | Salida | Errores |
-|---|---|---|---|
-| `listarCatalogos()` | — | `{ secciones: Item[], remitentes: Item[] }` | — |
-| `listarSesiones()` | — | `Sesion[]` (con derivados, ordenadas por `id`) | — |
-| `crearSesiones(fechas)` | `string[]` de fechas `YYYY-MM-DD` | `Sesion[]` (la lista completa actualizada) | `NO_AUTORIZADO`, `VALIDACION` |
-| `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_ABIERTA` |
-| `establecerListaCerrada(id, cerrada)` | id de sesión, bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
-| `listarPuntos(sesionId)` | id de sesión | `Punto[]` en el orden del documento, con `numero`, **incluyendo los puntos fijos y con los confidenciales ocultos según el usuario** (ver "Permisos") | — |
-| `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
-| `editarPunto(id, version, cambios)` | id, `version` que el cliente tiene, campos a cambiar | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
-| `eliminarPunto(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
+- El punto debe estar **tratado** (`VALIDACION` si no), no ser fijo ni encabezado, y la sesión no estar celebrada. No depende de la lista cerrada. Cambia `version` solo si el valor cambia. Cambiar la sección del punto reinicia su votación.
+- Los campos omitidos toman la primera opción del catálogo. Cada id debe existir. El quórum no repite integrantes y su tamaño es como máximo `votosRequeridos` del tipo de voto (0 si no tiene); puede estar incompleto.
+- La `precision` solo se conserva si el tipo de voto **y** el de votación admiten precisión; el `complemento` solo si el tipo de conocimiento admite complemento.
+- **Campos derivados al leer (no se guardan):** `acuerdoLineas` (`[{ prefijo, texto }]`, prefijos ÚNICO/PRIMERO/SEGUNDO…) y `textoVotacion` (texto oficial de la votación: el `textoManual` si existe, si no el generado con las reglas de PlenoLOCAL; con acuerdo único se fusiona al final del texto; los puntos fijos usan el `textoVoto` del catálogo `puntosFijos`). Un punto confidencial llega a los lectores con `votacion: null`, `textoVotacion: null` y `acuerdoLineas: []`.
 
 ### Operaciones de calendario
 
@@ -155,6 +154,7 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
+| `registrarVotacion(id, votacion)` | id de punto, `Votacion \| null` | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `marcarPunto(id, tratado)` | id de punto + bool | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `marcarPuntos(sesionId, tratado)` | id de sesión + bool | `Punto[]` de la sesión (ordenados, ya filtrados según el usuario) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `adjuntarArchivos(puntoId, archivos)` | id de punto + archivos (binarios) | `Punto` actualizado (`version` + 1) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `ARCHIVO_INVALIDO` |

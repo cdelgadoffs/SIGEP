@@ -73,39 +73,8 @@
   font-size: 12.5px;
   color: #666;
 }
-.widget-punto-sesion-columnas {
-  display: flex;
-  align-items: stretch;
-}
-.widget-punto-sesion-columna {
-  padding: 11px 18px;
-  min-width: 0;
-}
-.widget-punto-sesion-columna + .widget-punto-sesion-columna {
-  border-left: 1px solid #c9c9ca;
-}
 .widget-punto-sesion-principal {
-  flex: 1 1 0;
-}
-.widget-punto-sesion-bloque-acuerdo {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed #bdbdbd;
-}
-.widget-punto-sesion-archivos {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-  flex: 0 0 auto;
-  max-width: 240px;
-}
-.widget-punto-sesion-archivos .base-badge-dinamico {
-  font-size: 10px;
-  padding: 2px 8px;
-}
-.widget-punto-sesion-archivos .base-badge-dinamico i {
-  font-size: 12px;
+  padding: 11px 18px;
 }
 .widget-punto-sesion-tratado .base-card {
   border-color: #2e7d32;
@@ -114,11 +83,8 @@
   background: #e6f4ea;
   border-bottom-color: #a5d6a7;
 }
-.widget-punto-sesion-tratado .widget-punto-sesion-columna + .widget-punto-sesion-columna {
-  border-left-color: #cfe6d3;
-}
-.widget-punto-sesion-tratado .widget-punto-sesion-bloque-acuerdo {
-  border-top-color: #a5d6a7;
+.widget-punto-sesion-tratado .widget-punto-sesion-seccion {
+  border-top-color: #cfe6d3;
 }
 .widget-punto-sesion-tratado .widget-punto-sesion-navegacion {
   border-top-color: #cfe6d3;
@@ -135,4 +101,42 @@
   background: #fdecea;
   border-color: #f5c2c0;
   color: #c62828;
+}
+
+.widget-punto-sesion-seccion {
+  padding: 11px 18px;
+  border-top: 1px solid #c9c9ca;
+}
+.widget-punto-sesion-aviso {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: #999;
+}
+.widget-punto-sesion-resultado {
+  margin-top: 8px;
+  padding: 16px 20px;
+  font-size: 15.5px;
+  color: #444;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-left: 4px solid #ccc;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 1.4em;
+}
+.widget-punto-sesion-resultado:focus {
+  outline: none;
+  border-color: #90a4ae;
+  border-left-color: #90a4ae;
+}
+.widget-punto-sesion-resultado-vacio {
+  color: #999;
+  font-style: italic;
+}
+.widget-punto-sesion-separador {
+  border: none;
+  border-top: 1px dashed #ccc;
+  margin: 6px 0;
 }
