@@ -1,0 +1,83 @@
+.widget-lista-correos {
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  flex-shrink: 0;
+  min-height: 0;
+  background: #fff;
+  border-right: 1px solid #d9dce1;
+}
+.widget-lista-correos-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid #e3e5e9;
+}
+.widget-lista-correos-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-lista-correos-cuerpo {
+  flex: 1;
+  min-height: 0;
+}
+.widget-lista-correos-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 16px;
+  border-left: 4px solid transparent;
+  border-bottom: 1px solid #f0f1f3;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.widget-lista-correos-item:hover {
+  background: #f4f7ff;
+}
+.widget-lista-correos-item-activo {
+  background: #e8f0fe;
+  border-left-color: #1a56db;
+}
+.widget-lista-correos-fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.widget-lista-correos-para {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-lista-correos-fecha {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: #666;
+}
+.widget-lista-correos-asunto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: #1a56db;
+}
+.widget-lista-correos-vista {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #777;
+}
+.widget-lista-correos-vacio {
+  padding: 24px 16px;
+  font-size: 12.5px;
+  color: #999;
+  text-align: center;
+}

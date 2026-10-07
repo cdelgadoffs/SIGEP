@@ -1,0 +1,84 @@
+.widget-plantillas-correo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #d9dce1;
+  border-radius: 8px;
+}
+.widget-plantillas-correo-titulo {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-plantillas-correo .base-boton-s {
+  align-self: flex-start;
+}
+.widget-plantillas-correo-error {
+  font-size: 12px;
+  color: #c62828;
+}
+.widget-plantillas-correo-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.widget-plantillas-correo-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid #e3e5e9;
+  border-radius: 6px;
+}
+.widget-plantillas-correo-texto {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.widget-plantillas-correo-nombre {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #222;
+}
+.widget-plantillas-correo-asunto {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-plantillas-correo-fila .base-boton-icono {
+  width: 24px;
+  height: 24px;
+}
+.widget-plantillas-correo-fila .base-boton-icono:hover:not(:disabled) {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.widget-plantillas-correo-vacio {
+  font-size: 12px;
+  color: #999;
+}
+.widget-plantillas-correo-barra {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.widget-plantillas-correo-editor {
+  min-height: 120px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1a1a1a;
+}
+.widget-plantillas-correo-editor .widget-editor-texto-contenido {
+  min-height: 100px;
+}

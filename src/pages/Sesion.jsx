@@ -30,6 +30,7 @@ export default function Sesion() {
     izquierdaSidebar1,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
+    sidebar5Amplio,
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
     vistaPreviaAbierta,
@@ -78,6 +79,8 @@ export default function Sesion() {
       <Sidebar5
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
+        amplio={sidebar5Amplio}
+        claro={sidebar5Amplio}
         accionesHeader={<AccionesHeaderPanelControl />}
         onCerrar={cerrarSidebar5}
       >

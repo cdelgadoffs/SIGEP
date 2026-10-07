@@ -776,3 +776,88 @@ export function validarSecretario(datos, catalogos) {
   const genero = exigirEnCatalogo(catalogos.generos, datos.genero, 'Género inválido.');
   return { nombre, email, genero };
 }
+
+const MAX_ASUNTO = 300;
+const MAX_CUERPO = 20000;
+const MAX_EXTERNOS = 10;
+const MAX_BYTES_EXTERNOS = 25 * 1024 * 1024;
+
+function claveNombre(texto) {
+  return texto.toLowerCase();
+}
+
+function exigirCorreo(valor, etiqueta) {
+  const correo = typeof valor === 'string' ? valor.trim() : '';
+  if (!correo) throw new ApiError('VALIDACION', `${etiqueta} es obligatorio.`);
+  if (!FORMATO_EMAIL.test(correo)) throw new ApiError('VALIDACION', `${etiqueta} no tiene un formato válido.`);
+  return correo;
+}
+
+function normalizarListaCorreos(valor, etiqueta) {
+  if (!Array.isArray(valor)) throw new ApiError('VALIDACION', `${etiqueta} debe ser una lista de correos.`);
+  const vistos = new Set();
+  const salida = [];
+  valor.forEach((c) => {
+    const correo = exigirCorreo(c, `Cada correo de ${etiqueta}`);
+    if (vistos.has(claveNombre(correo))) return;
+    vistos.add(claveNombre(correo));
+    salida.push(correo);
+  });
+  return salida;
+}
+
+export function validarContactoCorreo(datos, existentes) {
+  const nombre = exigirTexto(datos.nombre, 'El nombre');
+  const correo = exigirCorreo(datos.correo, 'El correo');
+  if (existentes.some((x) => claveNombre(x.correo) === claveNombre(correo))) {
+    throw new ApiError('DUPLICADO', 'Ya existe un contacto con ese correo.');
+  }
+  return { nombre, correo };
+}
+
+export function validarPlantillaCorreo(datos, existentes) {
+  const nombre = exigirTexto(datos.nombre, 'El nombre');
+  const asunto = exigirTexto(datos.asunto, 'El asunto');
+  const cuerpoDoc = docDeEntrada(datos, 'cuerpo');
+  if (textoPlanoDeDoc(cuerpoDoc).length > MAX_CUERPO) throw new ApiError('VALIDACION', 'El cuerpo es demasiado largo.');
+  if (existentes.some((x) => claveNombre(x.nombre) === claveNombre(nombre))) {
+    throw new ApiError('DUPLICADO', 'Ya existe una plantilla con ese nombre.');
+  }
+  return { nombre, asunto, cuerpoDoc };
+}
+
+export function validarListaCorreo(datos, existentes) {
+  const nombre = exigirTexto(datos.nombre, 'El nombre');
+  const correos = normalizarListaCorreos(datos.correos, 'La lista');
+  if (correos.length === 0) throw new ApiError('VALIDACION', 'La lista necesita al menos un correo.');
+  if (existentes.some((x) => claveNombre(x.nombre) === claveNombre(nombre))) {
+    throw new ApiError('DUPLICADO', 'Ya existe una lista con ese nombre.');
+  }
+  return { nombre, correos };
+}
+
+export function validarCorreoRemitente(remitenteId, correo, catalogos) {
+  exigirEnCatalogo(catalogos.remitentes, remitenteId, 'Remitente inválido.');
+  const limpio = typeof correo === 'string' ? correo.trim() : '';
+  if (limpio && !FORMATO_EMAIL.test(limpio)) throw new ApiError('VALIDACION', 'El correo no tiene un formato válido.');
+  return limpio;
+}
+
+export function validarEnvioCorreo(datos) {
+  const para = normalizarListaCorreos(datos.para ?? [], 'Los destinatarios');
+  const cc = normalizarListaCorreos(datos.cc ?? [], 'La copia');
+  const cco = normalizarListaCorreos(datos.cco ?? [], 'La copia oculta');
+  if (para.length === 0) throw new ApiError('VALIDACION', 'Indica al menos un destinatario.');
+  const asunto = typeof datos.asunto === 'string' ? datos.asunto.trim() : '';
+  if (!asunto) throw new ApiError('VALIDACION', 'El asunto es obligatorio.');
+  if (asunto.length > MAX_ASUNTO) throw new ApiError('VALIDACION', 'El asunto es demasiado largo.');
+  const cuerpoDoc = docDeEntrada(datos, 'cuerpo');
+  if (textoPlanoDeDoc(cuerpoDoc).length > MAX_CUERPO) throw new ApiError('VALIDACION', 'El cuerpo es demasiado largo.');
+  const archivosPunto = Array.isArray(datos.archivosPunto) ? [...new Set(datos.archivosPunto)] : [];
+  const archivosExternos = Array.isArray(datos.archivosExternos) ? datos.archivosExternos : [];
+  if (archivosExternos.length > MAX_EXTERNOS) throw new ApiError('ARCHIVO_INVALIDO', `Máximo ${MAX_EXTERNOS} archivos externos.`);
+  if (archivosExternos.reduce((t, f) => t + (f?.size ?? 0), 0) > MAX_BYTES_EXTERNOS) {
+    throw new ApiError('ARCHIVO_INVALIDO', 'Los archivos externos superan los 25 MB en total.');
+  }
+  return { para, cc, cco, asunto, cuerpoDoc, archivosPunto, archivosExternos };
+}

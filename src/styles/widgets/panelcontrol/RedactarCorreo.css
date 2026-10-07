@@ -1,0 +1,124 @@
+.widget-redactar-correo {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #fff;
+}
+.widget-redactar-correo-cinta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e3e5e9;
+}
+.widget-redactar-correo-enviar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #1a56db;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.widget-redactar-correo-enviar:hover:not(:disabled) {
+  background: #1747b8;
+}
+.widget-redactar-correo-enviar:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.widget-redactar-correo-menu {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  color: #1a1a1a;
+  font-size: 12.5px;
+}
+.widget-redactar-correo-menu .base-lista-expandible-toggle {
+  padding: 5px 10px;
+}
+.widget-redactar-correo-menu i {
+  margin-right: 2px;
+}
+.widget-redactar-correo-espacio {
+  flex: 1;
+}
+.widget-redactar-correo-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px 6px;
+}
+.widget-redactar-correo-cco {
+  align-self: center;
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  color: #555;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.widget-redactar-correo-cco:hover {
+  color: #1a56db;
+}
+.widget-redactar-correo-asunto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+  border-bottom: 1px solid #c8ccd2;
+}
+.widget-redactar-correo-asunto:focus-within {
+  border-bottom-color: #1a56db;
+}
+.widget-redactar-correo-asunto-entrada {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 15px;
+}
+.widget-redactar-correo-asunto-entrada::placeholder {
+  color: #999;
+}
+.widget-redactar-correo-guardado {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #888;
+}
+.widget-redactar-correo-adjuntos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+.widget-redactar-correo-error {
+  font-size: 12.5px;
+  color: #c62828;
+}
+.widget-redactar-correo-cuerpo {
+  flex: 1;
+  min-height: 0;
+}
+.widget-redactar-correo-editor {
+  padding: 14px 20px 24px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+}
+.widget-redactar-correo-editor .widget-editor-texto-contenido {
+  min-height: 50vh;
+}

@@ -19,3 +19,14 @@
 .base-campo-texto:disabled {
   opacity: 0.5;
 }
+.base-campo-texto-claro {
+  background: #fff;
+  border-color: #ccc;
+  color: #1a1a1a;
+}
+.base-campo-texto-claro::placeholder {
+  color: #999;
+}
+.base-campo-texto-claro:focus {
+  border-color: #1a56db;
+}

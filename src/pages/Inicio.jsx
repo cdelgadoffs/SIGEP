@@ -21,6 +21,7 @@ export default function Inicio() {
     izquierdaSidebar1,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
+    sidebar5Amplio,
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
@@ -51,6 +52,8 @@ export default function Inicio() {
       <Sidebar5
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
+        amplio={sidebar5Amplio}
+        claro={sidebar5Amplio}
         accionesHeader={<AccionesHeaderPanelControl />}
         onCerrar={cerrarSidebar5}
       >

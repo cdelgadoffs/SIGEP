@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import '../../styles/base/ListaExpandible.css';
 
 export default function ListaExpandible({ valorActual, etiquetaActual, opciones, onSeleccionar }) {
@@ -35,7 +36,7 @@ export default function ListaExpandible({ valorActual, etiquetaActual, opciones,
   function toggle() {
     if (!abierto && botonRef.current) {
       const rect = botonRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      setPos({ top: rect.bottom + 6, left: rect.left, width: rect.width });
     }
     setAbierto((v) => !v);
   }
@@ -50,7 +51,7 @@ export default function ListaExpandible({ valorActual, etiquetaActual, opciones,
         {etiquetaActual}
         <span className="base-lista-expandible-chevron">▾</span>
       </div>
-      {abierto && (
+      {abierto && createPortal(
         <div
           ref={menuRef}
           className="base-lista-expandible-menu"
@@ -65,7 +66,8 @@ export default function ListaExpandible({ valorActual, etiquetaActual, opciones,
               {op.label}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

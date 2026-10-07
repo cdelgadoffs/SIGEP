@@ -94,3 +94,26 @@
 .base-sidebar5-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.35);
 }
+
+.base-sidebar5-amplio {
+  width: 75vw;
+}
+
+.base-sidebar5-claro {
+  background: #f4f5f7;
+  color: #222;
+  border-right-color: #d9dce1;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+}
+.base-sidebar5-claro .base-sidebar5-header {
+  border-bottom-color: #d9dce1;
+}
+.base-sidebar5-claro .base-sidebar5-title {
+  color: #1a1a1a;
+}
+.base-sidebar5-claro .base-sidebar5-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+}
+.base-sidebar5-claro .base-sidebar5-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32);
+}

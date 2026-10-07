@@ -3,12 +3,14 @@ import CalendarizacionAnual from './CalendarizacionAnual.jsx';
 import BotonNuevoCalendarioAnual from './BotonNuevoCalendarioAnual.jsx';
 import Quorum from './Quorum.jsx';
 import SEPLE from './SEPLE.jsx';
+import Email from './Email.jsx';
 import { useUI } from '../../../context/UIContext.jsx';
 
 const ITEMS_PANEL_CONTROL = [
   { id: 'calendarizacionAnual', label: 'Calendarización anual', Panel: CalendarizacionAnual, AccionHeader: BotonNuevoCalendarioAnual },
   { id: 'quorum', label: 'Quorum', Panel: Quorum },
   { id: 'seple', label: 'SEPLE', Panel: SEPLE },
+  { id: 'email', label: 'Email', Panel: Email },
 ];
 
 export function AccionesHeaderPanelControl() {

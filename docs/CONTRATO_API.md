@@ -215,6 +215,44 @@ Lectura para cualquier usuario autenticado; escritura solo del capturista.
 - Marcar `presidente: true` (al crear o editar) deja `presidente: false` en los demás, de forma atómica. Editar el presidente sin marcarlo lo deja sin presidente.
 - Los integrantes son los únicos que pueden figurar en el `quorum` de una votación (ver "Votación de un punto"). Al **editar** un integrante, el texto de las votaciones que lo mencionan cambia solo (se deriva al leer). Al **eliminarlo**, se quita del quórum de las votaciones de las sesiones aún no celebradas; si figura en la votación de una sesión **ya celebrada** no se puede eliminar (`EN_USO`), para no alterar un acta.
 
+### Correo (contactos, plantillas, listas y correo de los remitentes)
+
+Datos del órgano que usa el panel de Email. No dependen de una sesión.
+
+| Modelo | Campos | Notas |
+|---|---|---|
+| `ContactoCorreo` | `id`, `nombre`, `correo` | Nombre obligatorio (máx. 200); correo con formato válido y **único** entre contactos (sin distinguir mayúsculas). |
+| `PlantillaCorreo` | `id`, `nombre`, `asunto`, `cuerpoDoc`, `cuerpo` | Nombre y asunto obligatorios; el cuerpo puede ir vacío. Nombre único. `cuerpoDoc` es un `Documento` (ver "Documento (texto con formato)"); `cuerpo` es el texto plano **derivado** al leer (nunca se guarda). |
+| `ListaDestinatarios` | `id`, `nombre`, `correos` | Nombre único; al menos un correo; todos con formato válido y sin repetir. |
+| `CorreoRemitente` | `remitenteId`, `correo` | Un correo por remitente del catálogo `remitentes` (el catálogo es de solo lectura, por eso va aparte). Es el correo al que se mandarán los engroses. |
+
+| `CorreoEnviado` | `id`, `para`, `cc`, `cco`, `asunto`, `cuerpoDoc`, `cuerpo`, `adjuntos`, `enviadoEn`, `enviadoPor` | Historial de lo enviado con `enviarCorreo` (lo que muestra la carpeta Enviados). `adjuntos` es `{ nombre, tamano }[]`: guarda los nombres, no los binarios. `enviadoPor` es `{ id, nombre }` del usuario del servidor. No se edita. `cuerpoDoc` es un `Documento`; `cuerpo` es su texto plano derivado (lo usan la vista previa de la lista y la búsqueda). |
+
+Todos llevan `version`, `creadoEn` y `modificadoEn` del servidor.
+
+### Operaciones de correo
+
+Lectura para cualquier usuario autenticado; escritura solo del capturista.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `listarContactosCorreo()` | — | `ContactoCorreo[]` (por nombre) | — |
+| `crearContactoCorreo(datos)` | `{ nombre, correo }` | `ContactoCorreo` | `NO_AUTORIZADO`, `VALIDACION`, `DUPLICADO` |
+| `eliminarContactoCorreo(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
+| `listarPlantillasCorreo()` | — | `PlantillaCorreo[]` (por nombre) | — |
+| `crearPlantillaCorreo(datos)` | `{ nombre, asunto, cuerpoDoc }` (o `cuerpo` en texto plano) | `PlantillaCorreo` | `NO_AUTORIZADO`, `VALIDACION`, `DUPLICADO` |
+| `eliminarPlantillaCorreo(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
+| `listarListasCorreo()` | — | `ListaDestinatarios[]` (por nombre) | — |
+| `crearListaCorreo(datos)` | `{ nombre, correos }` | `ListaDestinatarios` | `NO_AUTORIZADO`, `VALIDACION`, `DUPLICADO` |
+| `eliminarListaCorreo(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
+| `listarCorreosRemitentes()` | — | `CorreoRemitente[]` | — |
+| `guardarCorreoRemitente(remitenteId, correo)` | id del remitente, correo (vacío lo quita) | `CorreoRemitente` \| `null` | `NO_AUTORIZADO`, `VALIDACION` |
+| `listarCorreosEnviados()` | — | `CorreoEnviado[]` (el más reciente primero) | — |
+| `enviarCorreo(datos)` | ver abajo | `CorreoEnviado` (ya guardado en el historial) | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `ARCHIVO_INVALIDO` |
+
+- **`enviarCorreo`:** `datos = { para, cc, cco, asunto, cuerpoDoc, archivosPunto, archivosExternos }`. `para`, `cc` y `cco` son listas de correos (se normalizan y se quitan repetidos); debe haber al menos un correo en `para`; todos con formato válido; `asunto` obligatorio (máx. 300); `cuerpoDoc` es un `Documento` (acepta también `cuerpo` en texto plano, un párrafo por línea; si llegan ambos, gana el documento) con hasta 20 000 caracteres de texto plano. Las marcas y nodos son los de la lista blanca de `Documento`; el servidor real lo convertirá a HTML al enviar. La marca `oculto` no tiene efecto en un correo. `archivosPunto` son ids de archivos adjuntos a puntos (deben existir y el usuario debe poder verlos); `archivosExternos` son `File[]` (máx. 10, 25 MB en total). **El prototipo solo valida y simula el envío** (espera un momento y responde); el servidor real mandará el correo. Cada envío correcto queda guardado en el historial (`CorreoEnviado`).
+- Los correos de los remitentes los usará el envío real de los engroses (`enviarEngrose`).
+
 ### Horarios de la celebración
 
 Una sesión se celebra en tres pasos: **cerrar la lista**, **comenzar** y **celebrar** (finalizar). Reglas del servidor:
@@ -328,7 +366,7 @@ Notas de comportamiento:
 | `FECHA_NO_DISPONIBLE` | La fecha no está entre las disponibles para una sesión extraordinaria. |
 | `SESION_ORDINARIA` | La operación solo aplica a sesiones extraordinarias. |
 | `CALENDARIO_EXISTE` | Ya hay un calendario de ese año y no se pidió sobrescribirlo. |
-| `DUPLICADO` | Ya existe un integrante con ese correo. |
+| `DUPLICADO` | Ya existe un integrante, contacto, plantilla o lista con ese correo o nombre. |
 | `LIMITE_ALCANZADO` | Ya hay 5 integrantes. |
 | `EN_USO` | El integrante figura en la votación de una sesión celebrada. |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |

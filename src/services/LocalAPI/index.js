@@ -1,6 +1,7 @@
 import { ApiError } from '../ApiError.js';
 import {
   STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS, STORE_INTEGRANTES, STORE_SECRETARIO,
+  STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_REMITENTES, STORE_CORREOS_ENVIADOS,
   STORE_GENERACIONES, STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS,
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
@@ -11,6 +12,7 @@ import {
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
+  validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -714,4 +716,130 @@ export async function guardarSecretarioEjecutivo(datos) {
 export async function eliminarSecretarioEjecutivo() {
   exigirEscritura();
   await escribirVarios({ borrar: [{ store: STORE_SECRETARIO, id: ID_SECRETARIO }] });
+}
+
+function conCuerpo(registro) {
+  return { ...registro, cuerpo: textoPlanoDeDoc(registro.cuerpoDoc) };
+}
+
+function porNombre(a, b) {
+  return a.nombre.localeCompare(b.nombre, 'es');
+}
+
+async function crearRegistroCorreo(store, campos) {
+  const ahora = new Date().toISOString();
+  const nuevo = { id: crypto.randomUUID(), ...campos, version: 1, creadoEn: ahora, modificadoEn: ahora };
+  await guardar(store, nuevo);
+  return nuevo;
+}
+
+async function eliminarRegistroCorreo(store, id, etiqueta) {
+  exigirEscritura();
+  if (!(await obtener(store, id))) throw new ApiError('NO_ENCONTRADO', `${etiqueta} no existe.`);
+  await escribirVarios({ borrar: [{ store, id }] });
+}
+
+export async function listarContactosCorreo() {
+  return (await obtenerTodos(STORE_CONTACTOS_CORREO)).sort(porNombre);
+}
+
+export async function crearContactoCorreo(datos) {
+  exigirEscritura();
+  const campos = validarContactoCorreo(datos, await obtenerTodos(STORE_CONTACTOS_CORREO));
+  return crearRegistroCorreo(STORE_CONTACTOS_CORREO, campos);
+}
+
+export function eliminarContactoCorreo(id) {
+  return eliminarRegistroCorreo(STORE_CONTACTOS_CORREO, id, 'El contacto');
+}
+
+export async function listarPlantillasCorreo() {
+  return (await obtenerTodos(STORE_PLANTILLAS_CORREO)).sort(porNombre).map(conCuerpo);
+}
+
+export async function crearPlantillaCorreo(datos) {
+  exigirEscritura();
+  const campos = validarPlantillaCorreo(datos, await obtenerTodos(STORE_PLANTILLAS_CORREO));
+  return conCuerpo(await crearRegistroCorreo(STORE_PLANTILLAS_CORREO, campos));
+}
+
+export function eliminarPlantillaCorreo(id) {
+  return eliminarRegistroCorreo(STORE_PLANTILLAS_CORREO, id, 'La plantilla');
+}
+
+export async function listarListasCorreo() {
+  return (await obtenerTodos(STORE_LISTAS_CORREO)).sort(porNombre);
+}
+
+export async function crearListaCorreo(datos) {
+  exigirEscritura();
+  const campos = validarListaCorreo(datos, await obtenerTodos(STORE_LISTAS_CORREO));
+  return crearRegistroCorreo(STORE_LISTAS_CORREO, campos);
+}
+
+export function eliminarListaCorreo(id) {
+  return eliminarRegistroCorreo(STORE_LISTAS_CORREO, id, 'La lista');
+}
+
+export function listarCorreosRemitentes() {
+  return obtenerTodos(STORE_CORREOS_REMITENTES);
+}
+
+export async function guardarCorreoRemitente(remitenteId, correo) {
+  exigirEscritura();
+  const limpio = validarCorreoRemitente(remitenteId, correo, await listarCatalogos());
+  if (!limpio) {
+    await escribirVarios({ borrar: [{ store: STORE_CORREOS_REMITENTES, id: remitenteId }] });
+    return null;
+  }
+  const actual = await obtener(STORE_CORREOS_REMITENTES, remitenteId);
+  const ahora = new Date().toISOString();
+  const registro = {
+    remitenteId,
+    correo: limpio,
+    version: (actual?.version ?? 0) + 1,
+    creadoEn: actual?.creadoEn ?? ahora,
+    modificadoEn: ahora,
+  };
+  await guardar(STORE_CORREOS_REMITENTES, registro);
+  return registro;
+}
+
+export async function listarCorreosEnviados() {
+  return (await obtenerTodos(STORE_CORREOS_ENVIADOS)).sort((a, b) => (a.enviadoEn < b.enviadoEn ? 1 : -1)).map(conCuerpo);
+}
+
+export async function enviarCorreo(datos) {
+  exigirEscritura();
+  const envio = validarEnvioCorreo(datos);
+  const adjuntos = [];
+  for (const archivoId of envio.archivosPunto) {
+    const registro = await obtener(STORE_ARCHIVOS, archivoId);
+    const punto = registro && await obtener(STORE_PUNTOS, registro.puntoId);
+    if (!punto) throw new ApiError('NO_ENCONTRADO', 'Un archivo adjunto ya no existe.');
+    if (punto.confidencial && !puedeVerConfidencial()) {
+      throw new ApiError('NO_AUTORIZADO', 'No tienes permiso para adjuntar un archivo de un punto confidencial.');
+    }
+    adjuntos.push({ nombre: registro.nombre, tamano: registro.blob?.size ?? 0 });
+  }
+  envio.archivosExternos.forEach((f) => adjuntos.push({ nombre: f.name, tamano: f.size }));
+  await new Promise((resolver) => setTimeout(resolver, 400));
+  const ahora = new Date().toISOString();
+  const { id, nombre } = usuarioActual();
+  const enviado = {
+    id: crypto.randomUUID(),
+    para: envio.para,
+    cc: envio.cc,
+    cco: envio.cco,
+    asunto: envio.asunto,
+    cuerpoDoc: envio.cuerpoDoc,
+    adjuntos,
+    enviadoEn: ahora,
+    enviadoPor: { id, nombre },
+    version: 1,
+    creadoEn: ahora,
+    modificadoEn: ahora,
+  };
+  await guardar(STORE_CORREOS_ENVIADOS, enviado);
+  return conCuerpo(enviado);
 }

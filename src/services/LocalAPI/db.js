@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 23;
+const DB_VERSION = 26;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -11,6 +11,11 @@ export const STORE_ARCHIVOS = 'archivos';
 export const STORE_CALENDARIOS = 'calendarios';
 export const STORE_INTEGRANTES = 'integrantes';
 export const STORE_SECRETARIO = 'secretarioEjecutivo';
+export const STORE_CONTACTOS_CORREO = 'contactosCorreo';
+export const STORE_PLANTILLAS_CORREO = 'plantillasCorreo';
+export const STORE_LISTAS_CORREO = 'listasCorreo';
+export const STORE_CORREOS_REMITENTES = 'correosRemitentes';
+export const STORE_CORREOS_ENVIADOS = 'correosEnviados';
 export const STORE_GENERACIONES = 'generaciones';
 export const STORE_ARCHIVO_SESIONES = 'archivoSesiones';
 export const STORE_ARCHIVO_PUNTOS = 'archivoPuntos';
@@ -39,6 +44,12 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_GENERACIONES)) {
         db.createObjectStore(STORE_GENERACIONES, { keyPath: 'id' });
       }
+      [STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_ENVIADOS].forEach((nombre) => {
+        if (!db.objectStoreNames.contains(nombre)) db.createObjectStore(nombre, { keyPath: 'id' });
+      });
+      if (!db.objectStoreNames.contains(STORE_CORREOS_REMITENTES)) {
+        db.createObjectStore(STORE_CORREOS_REMITENTES, { keyPath: 'remitenteId' });
+      }
       [STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS].forEach((nombre) => {
         if (!db.objectStoreNames.contains(nombre)) db.createObjectStore(nombre, { keyPath: 'clave' });
       });
@@ -48,6 +59,18 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 26) {
+        const tx = req.transaction;
+        [STORE_PLANTILLAS_CORREO, STORE_CORREOS_ENVIADOS].forEach((nombre) => {
+          tx.objectStore(nombre).openCursor().onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (!cursor) return;
+            const { cuerpo, ...resto } = cursor.value;
+            if (!resto.cuerpoDoc) cursor.update({ ...resto, cuerpoDoc: docDesdeTexto(cuerpo) });
+            cursor.continue();
+          };
+        });
       }
       if (evento.oldVersion < 22) {
         const catalogos = req.transaction.objectStore(STORE_CATALOGOS);

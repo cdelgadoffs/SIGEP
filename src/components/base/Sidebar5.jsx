@@ -1,11 +1,11 @@
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import '../../styles/base/Sidebar5.css';
 
-export default function Sidebar5({ abierto = false, ancho = false, arriba = 52, accionesHeader, onCerrar, mostrarCerrar = true, children }) {
+export default function Sidebar5({ abierto = false, ancho = false, amplio = false, claro = false, arriba = 52, accionesHeader, onCerrar, mostrarCerrar = true, children }) {
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   return (
     <aside
-      className={'base-sidebar5' + (abierto ? ' base-sidebar5-open' : '') + (ancho ? ' base-sidebar5-ancho' : '')}
+      className={'base-sidebar5' + (abierto ? ' base-sidebar5-open' : '') + (ancho ? ' base-sidebar5-ancho' : '') + (amplio ? ' base-sidebar5-amplio' : '') + (claro ? ' base-sidebar5-claro' : '')}
       style={{ top: arriba, height: `calc(100vh - ${arriba}px)` }}
     >
       <div className="base-sidebar5-header">

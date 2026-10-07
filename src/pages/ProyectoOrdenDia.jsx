@@ -25,6 +25,7 @@ export default function ProyectoOrdenDia() {
     sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
+    sidebar5Amplio,
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
@@ -78,6 +79,8 @@ export default function ProyectoOrdenDia() {
       <Sidebar5
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
+        amplio={sidebar5Amplio}
+        claro={sidebar5Amplio}
         accionesHeader={<AccionesHeaderPanelControl />}
         onCerrar={cerrarSidebar5}
       >
