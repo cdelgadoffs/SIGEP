@@ -4,6 +4,7 @@ import ListaExpandible from '../../base/ListaExpandible.jsx';
 import BotonS from '../../base/BotonS.jsx';
 import Modal from '../../base/Modal.jsx';
 import { useProyecto } from '../../../context/ProyectoContext.jsx';
+import { useUI } from '../../../context/UIContext.jsx';
 import { etiquetaMes } from '../../../utils/fechas.js';
 import { nombreTipoSesion } from '../../../utils/sesiones.js';
 import '../../../styles/widgets/panelcontrol/ListaSesionesMes.css';
@@ -22,6 +23,7 @@ function mesActualISO() {
 
 export default function ListaSesionesMes() {
   const { FECHAS_SESIONES, sesionActivaFecha, cargarSesion, eliminarSesion } = useProyecto();
+  const { sidebar3Abierto } = useUI();
   const [mes, setMes] = useState(() => (sesionActivaFecha || mesActualISO()).slice(0, 7));
   const [aEliminar, setAEliminar] = useState(null);
   const [errorEliminar, setErrorEliminar] = useState(null);
@@ -52,6 +54,7 @@ export default function ListaSesionesMes() {
         <ListaExpandible valorActual={mes} etiquetaActual={etiquetaMes(mes)} opciones={opcionesMes} onSeleccionar={setMes} />
       </div>
       <p className="widget-lista-sesiones-mes-resumen">Sesiones: {delMes.length} · Celebradas: {celebradas}</p>
+      {sidebar3Abierto && <p className="widget-lista-sesiones-mes-aviso">Cierra el formulario de nuevo punto para cambiar de sesión.</p>}
       <div className="widget-lista-sesiones-mes-lista">
         {delMes.length === 0 && <p className="widget-lista-sesiones-mes-vacio">No hay sesiones en este mes.</p>}
         {delMes.map((f) => (
@@ -61,7 +64,7 @@ export default function ListaSesionesMes() {
             titulo={`Sesión ${nombreTipoSesion(f.tipo)} N° ${f.numeroSesion ?? '—'}`}
             subtitulo={f.label}
             estadoLabel={f.id === sesionActivaFecha ? 'Activa' : ESTADO_LABEL[f.estado]}
-            onClick={() => cargarSesion(f.id)}
+            onClick={sidebar3Abierto ? undefined : () => cargarSesion(f.id)}
             onEliminar={() => setAEliminar(f)}
             eliminarDeshabilitado={f.tipo !== 'extraordinaria' || f.celebrada || f.id === sesionActivaFecha}
           />

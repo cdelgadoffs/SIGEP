@@ -20,7 +20,7 @@ export function UIProvider({ children }) {
   const [panelControlActivo, setPanelControlActivo] = useState(null);
   const [mostrarFormularioCalendario, setMostrarFormularioCalendario] = useState(true);
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
-  const [vistaActual, setVistaActual] = useState('inicio');
+  const [vistaActual, setVistaActualInterna] = useState('inicio');
   const [acordeonAbierto, setAcordeonAbierto] = useState(false);
   const [seccionNuevoPunto, setSeccionNuevoPunto] = useState(null);
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
@@ -42,6 +42,10 @@ export function UIProvider({ children }) {
   function cerrarSidebar3() {
     setSidebar3Abierto(false);
     setPuntoEnEdicionId(null);
+  }
+  function setVistaActual(vista) {
+    if (vista !== 'proyecto') cerrarSidebar3();
+    setVistaActualInterna(vista);
   }
   function cerrarSidebar5() {
     setSidebar5Abierto(false);

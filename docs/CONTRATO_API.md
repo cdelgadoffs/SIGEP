@@ -222,12 +222,12 @@ Una sesión se celebra en tres pasos: **cerrar la lista**, **comenzar** y **cele
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
 | `comenzarSesion(id)` | id de sesión | `Sesion` actualizada (`horaInicio` = ahora) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_ABIERTA` |
-| `editarHorario(id, cambios)` | id, `{ horaInicio?: "HH:MM", horaFin?: "HH:MM" }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
+| `editarHorario(id, cambios)` | id, `{ horaInicio?: "HH:MM", horaFin?: "HH:MM" }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION`, `HORARIO_INVALIDO` |
 
 - `comenzarSesion` exige la lista cerrada y es idempotente (si ya comenzó, no cambia la hora). No aplica a una sesión celebrada.
 - **Estado y operaciones.** Solo la sesión **próxima** se puede comenzar o celebrar (`SESION_NO_PROXIMA`; las pendientes todavía no y las demás ya no). Una sesión **no celebrada** (roja) es de solo lectura: toda operación que cambie sus puntos, su lista, su asistencia o sus horarios se rechaza con `SESION_VENCIDA` (se puede seguir leyendo, y eliminar si es extraordinaria). Una sesión celebrada ya se rechazaba con `SESION_CELEBRADA`.
 - `celebrarSesion` exige que la sesión haya comenzado (`SESION_NO_COMENZADA`) y además de `celebrada` fija `horaFin` = ahora.
-- `editarHorario` corrige la **hora del día** de una marca ya existente, **conservando su fecha**: no se puede editar `horaFin` sin que exista, ni `horaInicio` sin haber comenzado (`VALIDACION`); el formato es `HH:MM` (`VALIDACION`); y la hora de inicio no puede ser posterior a la de fin (`HORARIO_INVALIDO`). Se permite también con la sesión ya celebrada (excepción documentada a su inmutabilidad): PlenoLOCAL deja corregir las horas siempre.
+- `editarHorario` corrige la **hora del día** de una marca ya existente, **conservando su fecha**: no se puede editar `horaFin` sin que exista, ni `horaInicio` sin haber comenzado (`VALIDACION`); el formato es `HH:MM` (`VALIDACION`); y la hora de inicio no puede ser posterior a la de fin (`HORARIO_INVALIDO`). **No se permite con la sesión ya celebrada** (`SESION_CELEBRADA`): las horas se corrigen mientras la sesión está en curso. (PlenoLOCAL las dejaba corregir siempre; SIGEP no.)
 
 ### Asistencia a la sesión
 

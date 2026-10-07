@@ -7,7 +7,7 @@ import { horaDeISO } from '../../utils/fechas.js';
 import '../../styles/widgets/HorariosSesion.css';
 
 export default function HorariosSesion() {
-  const { sesionSeleccionada, editarHorario } = useProyecto();
+  const { sesionSeleccionada, sesionFinalizada, editarHorario } = useProyecto();
   const [error, setError] = useState(null);
 
   const inicio = sesionSeleccionada?.horaInicio;
@@ -35,13 +35,13 @@ export default function HorariosSesion() {
       {inicio && (
         <div className="widget-horarios-sesion-tarjeta widget-horarios-sesion-inicio">
           <span>Comenzó a las</span>
-          <CampoHora value={horaDeISO(inicio)} onChange={(hhmm) => cambiar('horaInicio', hhmm)} tono="verde" ariaLabel="Hora de inicio" />
+          <CampoHora value={horaDeISO(inicio)} onChange={(hhmm) => cambiar('horaInicio', hhmm)} tono="verde" ariaLabel="Hora de inicio" disabled={sesionFinalizada} />
         </div>
       )}
       {fin && (
         <div className="widget-horarios-sesion-tarjeta widget-horarios-sesion-fin">
           <span>Finalizó a las</span>
-          <CampoHora value={horaDeISO(fin)} onChange={(hhmm) => cambiar('horaFin', hhmm)} tono="rojo" ariaLabel="Hora de fin" />
+          <CampoHora value={horaDeISO(fin)} onChange={(hhmm) => cambiar('horaFin', hhmm)} tono="rojo" ariaLabel="Hora de fin" disabled={sesionFinalizada} />
         </div>
       )}
       <Modal abierto={!!error} titulo="Horario" onCerrar={() => setError(null)}>

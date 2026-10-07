@@ -7,7 +7,7 @@ import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { etiquetaMes } from '../../utils/fechas.js';
 import '../../styles/widgets/CintaSesiones.css';
 
-export default function CintaSesiones({ textoVacio }) {
+export default function CintaSesiones({ textoVacio, titulo }) {
   const { FECHAS_SESIONES: fechas, sesionActivaFecha, cargarSesion, cargando, error } = useProyecto();
   const [mesSeleccionadoManual, setMesSeleccionadoManual] = useState(null);
 
@@ -41,6 +41,14 @@ export default function CintaSesiones({ textoVacio }) {
     if (nuevoMes < 1) { nuevoMes = 12; nuevoAnio--; }
     if (nuevoMes > 12) { nuevoMes = 1; nuevoAnio++; }
     setMesSeleccionadoManual(`${nuevoAnio}-${String(nuevoMes).padStart(2, '0')}`);
+  }
+
+  if (titulo) {
+    return (
+      <div className="widget-cinta-sesiones widget-cinta-sesiones-titulo">
+        <span>{titulo}</span>
+      </div>
+    );
   }
 
   return (

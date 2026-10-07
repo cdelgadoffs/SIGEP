@@ -40,6 +40,7 @@ export default function ProyectoOrdenDia() {
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}
+        mostrarNuevaExtraordinaria={!sidebar3Abierto}
         opcionesConfiguracion={[
           vistaCompletaProyecto
             ? { id: 'vista', label: 'Ver por sección', icono: 'ri-list-unordered' }
@@ -47,7 +48,10 @@ export default function ProyectoOrdenDia() {
         ]}
         onSeleccionarConfiguracion={() => cambiarAjuste('vistaCompletaProyecto', !vistaCompletaProyecto)}
       />
-      <CintaSesiones textoVacio="Aún no hay sesiones programadas." />
+      <CintaSesiones
+        textoVacio="Aún no hay sesiones programadas."
+        titulo={sidebar3Abierto && sesionSeleccionada ? `${sesionActual.titulo} · ${sesionActual.subtitulo}` : undefined}
+      />
       <Sidebar1
         izquierda={izquierdaSidebar1}
         arriba={arribaSidebar}

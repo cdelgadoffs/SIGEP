@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import '../../styles/base/CampoHora.css';
 
-export default function CampoHora({ value, onChange, tono = 'verde', ariaLabel }) {
+export default function CampoHora({ value, onChange, tono = 'verde', ariaLabel, disabled = false }) {
   const [editando, setEditando] = useState(false);
   const [texto, setTexto] = useState('');
 
@@ -28,6 +28,7 @@ export default function CampoHora({ value, onChange, tono = 'verde', ariaLabel }
       value={editando ? texto : value}
       placeholder="hhmm"
       aria-label={ariaLabel}
+      disabled={disabled}
       onFocus={iniciar}
       onChange={(e) => setTexto(e.target.value.replace(/\D/g, '').slice(0, 4))}
       onBlur={confirmar}
