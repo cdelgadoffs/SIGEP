@@ -2,13 +2,17 @@ import { useState } from 'react';
 import Modal from '../base/Modal.jsx';
 import BotonS from '../base/BotonS.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
+import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/BotonCerrarLista.css';
 
 export default function BotonCerrarLista() {
-  const { sesionActivaFecha, listaCerrada, establecerListaCerrada } = useProyecto();
+  const { sesionActivaFecha, listaCerrada, establecerListaCerrada, AVISOS_EDICION } = useProyecto();
+  const { setAvisosEdicionExpandido } = useUI();
   const [confirmando, setConfirmando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
+
+  const hayAvisosPendientes = !listaCerrada && AVISOS_EDICION.length > 0;
 
   function cancelar() {
     setConfirmando(false);
@@ -38,9 +42,9 @@ export default function BotonCerrarLista() {
         type="button"
         className={'widget-boton-cerrar-lista ' + (listaCerrada ? 'widget-boton-cerrar-lista-cerrada' : 'widget-boton-cerrar-lista-abierta')}
         disabled={!sesionActivaFecha}
-        onClick={() => setConfirmando(true)}
+        onClick={() => (hayAvisosPendientes ? setAvisosEdicionExpandido(true) : setConfirmando(true))}
       >
-        {listaCerrada ? 'Abrir lista' : 'Cerrar lista'}
+        {hayAvisosPendientes ? 'Notificar cambios para cerrar lista' : listaCerrada ? 'Abrir lista' : 'Cerrar lista'}
       </button>
       <Modal abierto={confirmando} titulo={listaCerrada ? 'Abrir lista' : 'Cerrar lista'} onCerrar={cancelar}>
         <p className="widget-boton-cerrar-lista-mensaje">{mensaje}</p>

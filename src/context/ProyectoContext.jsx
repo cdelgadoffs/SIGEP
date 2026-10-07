@@ -7,6 +7,7 @@ import {
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
   descargarArchivo as descargarArchivoEnApi,
+  listarAvisosEdicion, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
 } from '../services/api.js';
 import {
   guardarBorrador, obtenerBorrador, eliminarBorrador,
@@ -20,6 +21,7 @@ const CACHE_CATALOGOS = 'catalogos';
 const CACHE_SESIONES = 'sesiones';
 const cachePuntos = (sesionId) => `puntos:${sesionId}`;
 const cacheAsistencia = (sesionId) => `asistencia:${sesionId}`;
+const cacheAvisos = (sesionId) => `avisos:${sesionId}`;
 const cacheCalendario = (anio) => `calendario:${anio}`;
 
 const ANIO_CALENDARIO = new Date().getFullYear();
@@ -37,6 +39,7 @@ export function ProyectoProvider({ children }) {
   const [catalogos, setCatalogos] = useState(CATALOGOS_VACIOS);
   const [calendario, setCalendario] = useState(null);
   const [asistencia, setAsistencia] = useState([]);
+  const [avisos, setAvisos] = useState([]);
   const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, calendario: { cargando: true }, puntos: {} });
 
   function marcarCarga(recurso, estado) {
@@ -157,6 +160,31 @@ export function ProyectoProvider({ children }) {
     return () => { vigente = false; };
   }, [sesionActivaFecha]);
 
+  useEffect(() => {
+    setAvisos([]);
+    if (!sesionActivaFecha) {
+      marcarCarga('avisos', {});
+      return;
+    }
+    marcarCarga('avisos', { cargando: true });
+    let vigente = true;
+    let servidorListo = false;
+    const clave = cacheAvisos(sesionActivaFecha);
+    obtenerCache(clave).then((c) => {
+      if (vigente && !servidorListo && Array.isArray(c)) setAvisos(c);
+    });
+    listarAvisosEdicion(sesionActivaFecha)
+      .then((lista) => {
+        if (!vigente) return;
+        servidorListo = true;
+        setAvisos(lista);
+        guardarCache(clave, lista);
+        marcarCarga('avisos', {});
+      })
+      .catch((e) => vigente && marcarCarga('avisos', { error: e }));
+    return () => { vigente = false; };
+  }, [sesionActivaFecha]);
+
   function aplicarSesiones(sesiones) {
     const lista = conEtiqueta(sesiones);
     setFechasSesiones(lista);
@@ -207,6 +235,21 @@ export function ProyectoProvider({ children }) {
   async function registrarAsistencia(integranteId, presente) {
     aplicarAsistencia(await registrarAsistenciaEnApi(sesionActivaFecha, integranteId, presente));
   }
+  function aplicarAvisos(lista) {
+    setAvisos(lista);
+    guardarCache(cacheAvisos(sesionActivaFecha), lista);
+  }
+  async function refrescarAvisos() {
+    if (sesionActivaFecha) aplicarAvisos(await listarAvisosEdicion(sesionActivaFecha));
+  }
+  async function enviarAvisoEdicion(id) {
+    await enviarAvisoEdicionEnApi(id);
+    await refrescarAvisos();
+  }
+  async function descartarAvisoEdicion(id) {
+    await descartarAvisoEdicionEnApi(id);
+    await refrescarAvisos();
+  }
   async function establecerListaCerrada(cerrada) {
     await establecerListaCerradaEnApi(sesionActivaFecha, cerrada);
     aplicarSesiones(await listarSesiones());
@@ -242,6 +285,7 @@ export function ProyectoProvider({ children }) {
     try {
       await editarPuntoEnApi(id, version, cambios);
       await refrescarPuntos();
+      await refrescarAvisos();
     } catch (e) {
       if (e.codigo === 'CONFLICTO') await refrescarPuntos();
       throw e;
@@ -250,6 +294,7 @@ export function ProyectoProvider({ children }) {
   async function eliminarPunto(id) {
     await eliminarPuntoEnApi(id);
     await refrescarPuntos();
+    await refrescarAvisos();
   }
   async function reordenarPuntos(seccion, ids) {
     try {
@@ -301,6 +346,7 @@ export function ProyectoProvider({ children }) {
     TIPOS_SESION: catalogos.tiposSesion,
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
     listaCerrada, establecerListaCerrada,
+    AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion,
     PUNTOS: puntos, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,

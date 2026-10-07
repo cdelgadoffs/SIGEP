@@ -1,7 +1,7 @@
 import { ApiError } from '../ApiError.js';
 import {
   STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS, STORE_INTEGRANTES, STORE_SECRETARIO,
-  STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_REMITENTES, STORE_CORREOS_ENVIADOS,
+  STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_REMITENTES, STORE_CORREOS_ENVIADOS, STORE_AVISOS_EDICION,
   STORE_GENERACIONES, STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS,
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
@@ -12,7 +12,7 @@ import {
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
-  validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc,
+  validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -163,6 +163,7 @@ export async function generarCalendarioAnual(anio, datos, sobrescribir) {
       ...archivar.sesiones.map((s) => ({ store: STORE_SESIONES, id: s.id })),
       ...archivar.puntos.map((p) => ({ store: STORE_PUNTOS, id: p.id })),
       ...archivar.binarios.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
+      ...archivar.puntos.map((p) => ({ store: STORE_AVISOS_EDICION, id: p.id })),
     ],
   });
   return { calendario: registro, sesiones: await listarSesiones(), generacion };
@@ -263,6 +264,7 @@ export async function eliminarSesion(id) {
     borrar: [
       { store: STORE_SESIONES, id },
       ...puntos.map((p) => ({ store: STORE_PUNTOS, id: p.id })),
+      ...puntos.map((p) => ({ store: STORE_AVISOS_EDICION, id: p.id })),
       ...archivos.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
     ],
   });
@@ -273,6 +275,9 @@ export async function establecerListaCerrada(id, cerrada) {
   exigirEscritura();
   if (typeof cerrada !== 'boolean') throw new ApiError('VALIDACION', 'El valor de "cerrada" debe ser verdadero o falso.');
   const sesion = await exigirSesionAbierta(id);
+  if (cerrada && (await obtenerTodos(STORE_AVISOS_EDICION)).some((a) => a.sesionId === id)) {
+    throw new ApiError('AVISOS_PENDIENTES', 'Hay avisos de edición pendientes. Envíalos o descártalos antes de cerrar la lista.');
+  }
   if (!!sesion.listaCerrada !== cerrada) {
     await guardar(STORE_SESIONES, { ...sesion, listaCerrada: cerrada, version: sesion.version + 1 });
   }
@@ -415,7 +420,23 @@ export async function editarPunto(id, version, cambios) {
     version: actual.version + 1,
     modificadoEn: new Date().toISOString(),
   };
-  await guardar(STORE_PUNTOS, punto);
+  const textoDe = (p) => `${textoPlanoDeDoc(p.contenidoDoc)} ${textoPlanoDeDoc(p.acuerdoDoc)}`;
+  const aviso = {
+    id,
+    sesionId: punto.sesionId,
+    puntoId: id,
+    remitenteId: punto.remitente,
+    diff: diferenciaTexto(textoDe(actual), textoDe(punto)),
+    version: 1,
+    creadoEn: punto.modificadoEn,
+    creadoPor: usuarioActual().id,
+  };
+  await escribirVarios({
+    poner: [
+      { store: STORE_PUNTOS, valor: punto },
+      { store: STORE_AVISOS_EDICION, valor: aviso },
+    ],
+  });
   return puntoArmado(punto.sesionId, id);
 }
 
@@ -513,6 +534,7 @@ export async function eliminarPunto(id) {
   await escribirVarios({
     borrar: [
       { store: STORE_PUNTOS, id },
+      { store: STORE_AVISOS_EDICION, id },
       ...actual.archivos.filter((a) => a.id).map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
     ],
   });
@@ -842,4 +864,32 @@ export async function enviarCorreo(datos) {
   };
   await guardar(STORE_CORREOS_ENVIADOS, enviado);
   return conCuerpo(enviado);
+}
+
+export async function listarAvisosEdicion(sesionId) {
+  if (usuarioActual().rol !== 'capturista') return [];
+  const avisos = (await obtenerTodos(STORE_AVISOS_EDICION)).filter((a) => a.sesionId === sesionId);
+  if (avisos.length === 0) return [];
+  const puntos = await armarPuntos(sesionId);
+  return avisos
+    .sort((a, b) => (a.creadoEn < b.creadoEn ? -1 : 1))
+    .map((a) => ({ ...a, numero: puntos.find((p) => p.id === a.puntoId)?.numero ?? null }));
+}
+
+export async function enviarAvisoEdicion(id) {
+  exigirEscritura();
+  const aviso = await obtener(STORE_AVISOS_EDICION, id);
+  if (!aviso) throw new ApiError('NO_ENCONTRADO', 'El aviso no existe.');
+  if (!(await obtener(STORE_CORREOS_REMITENTES, aviso.remitenteId))?.correo) {
+    const remitente = (await listarCatalogos()).remitentes?.find((r) => r.id === aviso.remitenteId);
+    throw new ApiError('SIN_CORREO_REMITENTE', `${remitente?.nombre ?? 'El remitente'} no tiene un correo vinculado.`);
+  }
+  await new Promise((resolver) => setTimeout(resolver, 300));
+  await escribirVarios({ borrar: [{ store: STORE_AVISOS_EDICION, id }] });
+}
+
+export async function descartarAvisoEdicion(id) {
+  exigirEscritura();
+  if (!(await obtener(STORE_AVISOS_EDICION, id))) throw new ApiError('NO_ENCONTRADO', 'El aviso no existe.');
+  await escribirVarios({ borrar: [{ store: STORE_AVISOS_EDICION, id }] });
 }

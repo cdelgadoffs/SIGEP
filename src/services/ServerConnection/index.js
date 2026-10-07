@@ -54,3 +54,6 @@ export const listarCorreosRemitentes = () => noImplementado();
 export const guardarCorreoRemitente = () => noImplementado();
 export const enviarCorreo = () => noImplementado();
 export const listarCorreosEnviados = () => noImplementado();
+export const listarAvisosEdicion = () => noImplementado();
+export const enviarAvisoEdicion = () => noImplementado();
+export const descartarAvisoEdicion = () => noImplementado();

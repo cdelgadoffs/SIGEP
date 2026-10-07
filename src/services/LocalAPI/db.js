@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 26;
+const DB_VERSION = 27;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -16,6 +16,7 @@ export const STORE_PLANTILLAS_CORREO = 'plantillasCorreo';
 export const STORE_LISTAS_CORREO = 'listasCorreo';
 export const STORE_CORREOS_REMITENTES = 'correosRemitentes';
 export const STORE_CORREOS_ENVIADOS = 'correosEnviados';
+export const STORE_AVISOS_EDICION = 'avisosEdicion';
 export const STORE_GENERACIONES = 'generaciones';
 export const STORE_ARCHIVO_SESIONES = 'archivoSesiones';
 export const STORE_ARCHIVO_PUNTOS = 'archivoPuntos';
@@ -44,7 +45,7 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_GENERACIONES)) {
         db.createObjectStore(STORE_GENERACIONES, { keyPath: 'id' });
       }
-      [STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_ENVIADOS].forEach((nombre) => {
+      [STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_ENVIADOS, STORE_AVISOS_EDICION].forEach((nombre) => {
         if (!db.objectStoreNames.contains(nombre)) db.createObjectStore(nombre, { keyPath: 'id' });
       });
       if (!db.objectStoreNames.contains(STORE_CORREOS_REMITENTES)) {

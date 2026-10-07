@@ -17,6 +17,7 @@ export function UIProvider({ children }) {
   const [sidebar5Abierto, setSidebar5Abierto] = useState(false);
   const [sidebar5Ancho, setSidebar5Ancho] = useState(false);
   const [sidebar5Amplio, setSidebar5Amplio] = useState(false);
+  const [avisosEdicionExpandido, setAvisosEdicionExpandido] = useState(false);
   const [emailSeccion, setEmailSeccion] = useState('enviados');
   const [correoSeleccionadoId, setCorreoSeleccionadoId] = useState(null);
   const [sidebar6Abierto, setSidebar6Abierto] = useState(false);
@@ -61,6 +62,7 @@ export function UIProvider({ children }) {
     sidebar5Abierto, toggleSidebar5, cerrarSidebar5,
     sidebar5Ancho, setSidebar5Ancho,
     sidebar5Amplio, setSidebar5Amplio,
+    avisosEdicionExpandido, setAvisosEdicionExpandido,
     emailSeccion, setEmailSeccion,
     correoSeleccionadoId, setCorreoSeleccionadoId,
     sidebar6Abierto, setSidebar6Abierto,

@@ -34,7 +34,7 @@ Al traer algo de PlenoLOCAL, nunca se copia tal cual su estructura de archivos n
 | `context/` | Almacén central de datos y acciones de negocio. |
 | `services/` | I/O externo: el API (intercambiable `LocalAPI`/`ServerConnection`) y el almacenamiento del cliente (`SesionIndexedDB`). Solo los llama `context/`. Ver "Arquitectura de datos". |
 | `pages/` | Ensambla una vista completa: monta sus propias instancias de `base`/`widgets` + contenido estático trivial. |
-| `App.jsx` | Decide qué page se sirve (routing vía `vistaActual`) y monta solo piezas verdaderamente globales que no pertenecen a ninguna page (hoy: `Sidebar4`). |
+| `App.jsx` | Decide qué page se sirve (routing vía `vistaActual`) y monta solo piezas verdaderamente globales que no pertenecen a ninguna page (hoy: `Sidebar4` y `AvisoEdicionCorreo`). |
 
 ## La regla mecánica: `base` vs `widgets`
 
@@ -156,7 +156,7 @@ context/ (puente)  ──▶  services/api.js  ──▶  LocalAPI/          (pr
 - No es `utils/` (que no tiene React ni estado) ni `context/` (estado de negocio compartido): un hook tiene estado propio **por instancia**.
 
 ### `App.jsx`
-- Decide el routing (`vistaActual` → `PAGES` map) y monta las piezas verdaderamente globales que no pertenecen a ninguna page (hoy solo `Sidebar4`).
+- Decide el routing (`vistaActual` → `PAGES` map) y monta las piezas verdaderamente globales que no pertenecen a ninguna page (hoy `Sidebar4` y `AvisoEdicionCorreo`, que sobrevive a los cambios de page).
 - No conoce el estado interno de ninguna page ni de Sidebar5 — esa lógica de cierre/reset vive centralizada en `UIContext` (ver `toggleSidebar5`/`cerrarSidebar5`), nunca duplicada en cada page ni empujada a `App.jsx`.
 - Si en el futuro un widget gana una relación propia con `Sidebar4` (ej. algo que lo abra, como ya pasa con `Topbar`→`Sidebar5`), `App.jsx` pierde el control de esa apertura específica, pero conserva el montaje y el cierre — porque sigue siendo la única pieza que `App.jsx` hospeda. "Controlar la apertura" y "montar el componente" son responsabilidades independientes.
 
@@ -348,7 +348,7 @@ Reglas tomadas de PlenoLOCAL (`BotonListaCerrada`, `toggleListaCerrada`, y los b
 - **Efectos en la interfaz con la lista cerrada:** `ListaPuntosProyecto` oculta Mover, Editar y Eliminar de las tarjetas (queda Adjuntar); `MenuPrincipalSesion` quita el "+" de las secciones que no admiten añadir (`SubMenuDD` acepta `sinAgregar` por ítem) y **deshabilita "Celebrar sesión" mientras la lista esté abierta**; `FormularioPunto` solo ofrece las secciones que admiten añadir; `PuntoSesion` no muestra Eliminar.
 - **`widgets/BotonDescargar.jsx`** (conectado, con su CSS): debajo del botón de cerrar lista, en el mismo `pie` de `Sidebar1`; la page `ProyectoOrdenDia` lo monta **solo con la lista cerrada** (y apila los dos botones con un `div` inline). Reutiliza `base/BotonS` (variante clara, a todo el ancho desde su CSS), muestra "Generando..." mientras trabaja y explica el error en un `Modal`. Llama a `generarWordOrdenDia` de `utils/ordenDia.js` con la sesión, los puntos y las secciones del contexto, y guarda el archivo con `guardarEnDisco` (`utils/archivos.js`).
 - **`utils/ordenDia.js`** (decisión 14.2 de `EstandarNodos.md`, opción A): constructor **puro** del documento (datos entran, `Blob` sale; sin React, sin estado, sin I/O); carga la librería `docx` con `import()` dinámico, así solo se descarga al pulsar el botón. Contenido tomado de PlenoLOCAL: título "SESIÓN ORDINARIA NÚMERO n" con letras espaciadas, "PROYECTO DE ORDEN DEL DÍA", "ÓRGANO DE ADMINISTRACIÓN JUDICIAL", fecha en letras, cada sección con su título en mayúsculas (salvo las que el catálogo marca con `sinTituloEnDocumento`: Actas y Asuntos generales) y los puntos numerados con su `numero` (incluyendo los fijos; los confidenciales salen como "CONFIDENCIAL"), y la fecha de hoy al pie. Archivo: `Orden del dia - SESIÓN ORDINARIA NÚMERO n.docx`.
-- **Fuera de alcance por ahora:** el aviso "Notificar cambios para cerrar lista" (depende del correo), el adjuntar automáticamente el orden del día al primer punto, el zip de archivos y la bitácora de acciones.
+- **Fuera de alcance por ahora:** el adjuntar automáticamente el orden del día al primer punto, el zip de archivos y la bitácora de acciones.
 
 ## Estado actual de la votación de un punto (referencia funcional)
 
@@ -387,6 +387,17 @@ Reglas tomadas de `Email.jsx` de PlenoLOCAL (envío y gestión de contactos), co
 - **`CorreoContext`** (`context/CorreoContext.jsx`, montado en `main.jsx`): espejo de los cuatro datos (`CONTACTOS_CORREO`, `PLANTILLAS_CORREO`, `LISTAS_CORREO`, `CORREOS_REMITENTES`) con caché primero y servidor después; cada acción llama al API y vuelve a pedir la lista. Los widgets de envío combinan este contexto con `ProyectoContext` (remitentes, categorías y los archivos de `PUNTOS`).
 - **Plan por fases** (distribución Outlook; no hay Bandeja de entrada porque SIGEP no recibe correo, a menos que algún día se integre con la cuenta de Outlook): **hecha la Fase 1** (historial en el API, estructura de tres zonas, Enviados con lectura) y **el redactor estilo Outlook con borrador automático** (adelantado de la Fase 2). Faltan: Fase 2, la carpeta Borradores (varios borradores, hoy hay uno solo); Fase 3, Responder, Reenviar y Eliminar con carpeta "Eliminados" y restaurar (los eliminados viven del lado del API, con la mecánica de archivo de la futura papelería de reciclaje, **no** en `SesionIndexedDB`); Fase 4, afinar Personas y Configuración dentro de la navegación.
 - **Pendiente además:** el envío real (que también servirá a `enviarEngrose`, con los correos de los remitentes) y editar contactos, plantillas y listas (hoy solo se crean y se eliminan).
+
+## Estado actual de los avisos de edición (referencia funcional)
+
+Reglas tomadas de `AvisoEdicionCorreo` de PlenoLOCAL ("notificar cambios al remitente antes de cerrar la lista"). Contrato en `docs/CONTRATO_API.md` ("Avisos de edición"). A diferencia de PlenoLOCAL (estado solo del cliente, que se perdía al recargar), aquí los datos y la regla viven en el API.
+
+- **API** (`DB_VERSION` 27, almacén `avisosEdicion`): `editarPunto` crea, en la misma transacción que guarda el punto, un `AvisoEdicion` (**uno por punto**: editar otra vez lo reemplaza) con el remitente y un resumen del cambio (`diff`) que calcula `diferenciaTexto` (`LocalAPI/reglas.js`, por palabras, sobre el texto plano de contenido y acuerdo). Operaciones `listarAvisosEdicion(sesionId)` (el número del punto se deriva al leer; los lectores reciben `[]`), `enviarAvisoEdicion(id)` (exige el correo vinculado del remitente: `SIN_CORREO_REMITENTE`; **solo simula el envío** y no crea nada en Enviados, porque el contenido del correo está por definir con el usuario) y `descartarAvisoEdicion(id)`. **No se puede cerrar la lista con avisos pendientes** (`AVISOS_PENDIENTES`). Eliminar un punto o una extraordinaria, o regenerar el calendario, limpia los avisos afectados.
+- **`ProyectoContext`:** espejo `AVISOS_EDICION` de la sesión activa (caché primero y servidor después, como la asistencia); `editarPunto` y `eliminarPunto` lo refrescan, y expone `enviarAvisoEdicion` y `descartarAvisoEdicion`. `UIContext` guarda solo si la bandeja está expandida (`avisosEdicionExpandido`).
+- **`widgets/AvisoEdicionCorreo`** (conectado, con CSS propio oscuro, igual que PlenoLOCAL): con un aviso, una **tarjeta flotante** abajo a la derecha ("Cambio en PLE/002", remitente, resumen del cambio, correo destino en verde o aviso ámbar si no tiene, "Descartar" y "Enviar aviso"); con dos o más, una **burbuja** "N avisos pendientes" que abre una **bandeja** con "Notificar todos" (envía los que tienen correo) y las tarjetas; un aviso nuevo con dos o más pliega la bandeja. Combina `ProyectoContext` y `CorreoContext`: el correo destino se actualiza al instante si se vincula en Email. Reutiliza `BotonS`.
+- **Montaje:** `App.jsx`, como pieza global (igual que `Sidebar4`), para que sobreviva al cambio de page.
+- **`BotonCerrarLista`:** con avisos pendientes dice "Notificar cambios para cerrar lista" y, en vez de pedir confirmación, abre la bandeja.
+- **Pendiente:** definir con el usuario el contenido del correo (asunto, cuerpo, copia); entonces el envío creará un `CorreoEnviado` real y las plantillas se gestionarán desde Email (por ahora solo hay las que se crean en Configuración > Plantillas). La futura conversión de Email en una page se decidirá más adelante.
 
 ## Estado actual de la page Inicio (referencia funcional)
 

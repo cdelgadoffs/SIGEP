@@ -156,6 +156,30 @@ Cada sesión tiene un registro de puntos que el capturista puede **cerrar** (`li
 - La lista se puede **reabrir** mientras la sesión no esté celebrada. Una sesión celebrada es inmutable (`SESION_CELEBRADA`).
 - **No se puede celebrar una sesión con la lista abierta** (`LISTA_ABIERTA`).
 
+### Avisos de edición (notificar cambios a los remitentes)
+
+Cuando el capturista edita un punto, queda pendiente avisar de ese cambio al remitente del punto. Es un dato de la sesión (persistido por el API), no estado de interfaz.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | string | Es el `id` del punto: **un aviso por punto**. Editar otra vez el mismo punto **reemplaza** su aviso. |
+| `sesionId`, `puntoId` | string | Sesión y punto editado. |
+| `remitenteId` | string | `id` del catálogo `remitentes`: a quién se avisa (el remitente que el punto tiene tras la edición). |
+| `numero` | int \| null | **Derivado al leer**: el número del punto en el orden del documento (la interfaz lo presenta como `PLE/nnn`). |
+| `diff` | objeto | Resumen del cambio, calculado por el API comparando el texto plano de antes y de después (contenido + acuerdo): `{ tipo: 'agregado', fragmento }`, `{ tipo: 'eliminado', fragmento }`, `{ tipo: 'modificado', fragmentoAnterior, fragmento }` o `{ tipo: 'modificado', fragmento: '' }` si el texto no cambió (por ejemplo, solo archivos). Compara por palabras: recorta el prefijo y el sufijo comunes y lo que queda es el cambio. |
+| `version`, `creadoEn`, `creadoPor` | | Del servidor. |
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `listarAvisosEdicion(sesionId)` | id de sesión | `AvisoEdicion[]` (por antigüedad). Solo el capturista los ve: para los lectores es `[]`. | — |
+| `enviarAvisoEdicion(id)` | id del aviso | — (el aviso desaparece) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SIN_CORREO_REMITENTE` |
+| `descartarAvisoEdicion(id)` | id del aviso | — | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
+
+- **Se crean** dentro de `editarPunto`, en la misma transacción que guarda el punto. Crear, mover, marcar o adjuntar no generan aviso.
+- **`enviarAvisoEdicion`** exige que el remitente tenga correo vinculado (`CorreoRemitente`); si no, `SIN_CORREO_REMITENTE`. **El prototipo solo simula el envío** (espera un momento y elimina el aviso; no crea nada en Enviados): el contenido del correo está por definirse con el usuario y el servidor real lo mandará.
+- **No se puede cerrar la lista** de una sesión con avisos pendientes: `establecerListaCerrada(id, true)` → `AVISOS_PENDIENTES`. Hay que enviarlos o descartarlos antes.
+- **Limpieza:** eliminar un punto, eliminar una sesión extraordinaria o regenerar el calendario con "sobrescribir" elimina los avisos de los puntos afectados (no se archivan: son notificaciones, no datos del acta).
+
 ### Orden
 - `Punto.orden`: entero (1…n) dentro de cada (`sesionId`, `seccion`). Al crear un punto queda **al final** de su sección. `listarPuntos` devuelve ordenado por `orden`.
 - No tiene que ser contiguo tras eliminar; `reordenarPuntos` lo reescribe a 1…n.
@@ -360,6 +384,8 @@ Notas de comportamiento:
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
 | `SESION_NO_PROXIMA` | Se intentó comenzar o celebrar una sesión que no es la próxima (`proxima`, la azul). |
 | `SESION_VENCIDA` | La sesión ya pasó sin celebrarse (`no-celebrada`, la roja): es de solo lectura, no admite cambios. |
+| `SIN_CORREO_REMITENTE` | El remitente del punto no tiene correo vinculado (`enviarAvisoEdicion`). |
+| `AVISOS_PENDIENTES` | La sesión tiene avisos de edición sin enviar ni descartar y no se puede cerrar su lista. |
 | `SESION_NO_CELEBRADA` | La operación exige una sesión ya celebrada (`enviarEngrose`). |
 | `SESION_NO_COMENZADA` | Se intentó celebrar una sesión que aún no ha comenzado. |
 | `HORARIO_INVALIDO` | La hora de inicio quedaría posterior a la de fin. |

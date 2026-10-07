@@ -53,4 +53,7 @@ export const {
   guardarCorreoRemitente,
   listarCorreosEnviados,
   enviarCorreo,
+  listarAvisosEdicion,
+  enviarAvisoEdicion,
+  descartarAvisoEdicion,
 } = implementacion;
