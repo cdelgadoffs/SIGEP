@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
 import SubMenuDD from './SubMenuDD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -6,13 +7,13 @@ import { contarPuntos } from '../../utils/puntos.js';
 
 const VISTAS_MENU_PRINCIPAL = [
   { id: 'inicio', label: 'Inicio' },
-  { id: 'proyecto', label: 'Proyecto del orden del día', expandible: true, mostrarTotalPuntos: true },
-  { id: 'sesion', label: 'Celebrar sesión', labelFinalizada: 'Sesión celebrada' },
+  { id: 'proyecto', label: 'Proyecto del orden del día', expandible: true, mostrarTotalPuntos: true, estados: ['proxima', 'pendiente'] },
+  { id: 'sesion', label: 'Celebrar sesión', labelFinalizada: 'Sesión celebrada', estados: ['proxima', 'celebrada'] },
   { id: 'historial', label: 'Historial' },
 ];
 
 export default function MenuPrincipalSesion() {
-  const { SECCIONES_DOCUMENTO, PUNTOS, sesionFinalizada, listaCerrada, cargando, error } = useProyecto();
+  const { SECCIONES_DOCUMENTO, PUNTOS, sesionSeleccionada, sesionFinalizada, listaCerrada, cargando, error } = useProyecto();
   const {
     vistaActual, setVistaActual,
     acordeonAbierto, setAcordeonAbierto,
@@ -20,6 +21,14 @@ export default function MenuPrincipalSesion() {
     puntoEnEdicionId, setPuntoEnEdicionId,
     seccionActivaProyecto, setSeccionActivaProyecto,
   } = useUI();
+
+  const estadoSesion = sesionSeleccionada?.estado;
+  const disponibles = VISTAS_MENU_PRINCIPAL.filter((v) => !v.estados || v.estados.includes(estadoSesion));
+  const vistaDisponible = disponibles.some((v) => v.id === vistaActual);
+
+  useEffect(() => {
+    if (!vistaDisponible) setVistaActual('inicio');
+  }, [vistaDisponible, setVistaActual]);
 
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
@@ -51,7 +60,7 @@ export default function MenuPrincipalSesion() {
 
   return (
     <>
-      {VISTAS_MENU_PRINCIPAL.map((v) => {
+      {disponibles.map((v) => {
         const activo = vistaActual === v.id;
         const expandido = v.expandible && activo && acordeonAbierto;
         const label = v.labelFinalizada && sesionFinalizada ? v.labelFinalizada : v.label;

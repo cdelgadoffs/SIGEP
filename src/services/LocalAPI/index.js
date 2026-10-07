@@ -13,10 +13,25 @@ import {
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
 } from './reglas.js';
 
+async function estadoDeSesion(sesionId) {
+  return calcularEstados(await obtenerTodos(STORE_SESIONES)).find((s) => s.id === sesionId)?.estado;
+}
+
 async function exigirSesionAbierta(sesionId) {
   const sesion = await obtener(STORE_SESIONES, sesionId);
   if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
   if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada y no admite cambios.');
+  if (await estadoDeSesion(sesionId) === 'no-celebrada') {
+    throw new ApiError('SESION_VENCIDA', 'La sesión ya pasó sin celebrarse y no admite cambios.');
+  }
+  return sesion;
+}
+
+async function exigirSesionProxima(sesionId) {
+  const sesion = await exigirSesionAbierta(sesionId);
+  if (await estadoDeSesion(sesionId) !== 'proxima') {
+    throw new ApiError('SESION_NO_PROXIMA', 'Solo se puede comenzar o celebrar la sesión próxima.');
+  }
   return sesion;
 }
 
@@ -264,9 +279,7 @@ export async function establecerListaCerrada(id, cerrada) {
 
 export async function celebrarSesion(id) {
   exigirEscritura();
-  const sesion = await obtener(STORE_SESIONES, id);
-  if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
-  if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada.');
+  const sesion = await exigirSesionProxima(id);
   if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de celebrar la sesión.');
   if (!sesion.horaInicio) throw new ApiError('SESION_NO_COMENZADA', 'Debes comenzar la sesión antes de celebrarla.');
   const ahora = new Date().toISOString();
@@ -284,7 +297,7 @@ export async function celebrarSesion(id) {
 
 export async function comenzarSesion(id) {
   exigirEscritura();
-  const sesion = await exigirSesionAbierta(id);
+  const sesion = await exigirSesionProxima(id);
   if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de comenzar la sesión.');
   if (!sesion.horaInicio) {
     await guardar(STORE_SESIONES, { ...sesion, horaInicio: new Date().toISOString(), version: sesion.version + 1 });

@@ -277,6 +277,23 @@ Reglas tomadas de PlenoLOCAL (`getTituloPunto`, `conPuntosFijosAsegurados`, `con
 - **Confidencial:** el punto se numera igual y su título se pinta en rojo. Para quien no puede verlo (lectores), el API ya no lo excluye: lo entrega **oculto** (mismo `numero`, `contenido: "CONFIDENCIAL"`, sin acuerdo ni archivos), así la numeración es la misma para todos. Hoy solo existe el rol capturista, así que esta rama del API solo está probada con pruebas unitarias de la regla.
 - **Fuera de alcance por ahora:** los puntos "registrados desde Asuntos Generales" (`origenAG`), la lista cerrada y los textos de votación/acta.
 
+## Estado de la sesión y qué ofrece el menú principal (referencia funcional)
+
+Decisión de SIGEP (se corrigió respecto a PlenoLOCAL). Contrato en `docs/CONTRATO_API.md` ("Estado y operaciones").
+
+| Estado (lo calcula el API) | Proyecto del orden del día (con `SubMenuDD`) | Celebrar sesión |
+|---|---|---|
+| `proxima` (azul) | sí | sí ("Celebrar sesión") |
+| `pendiente` (gris) | sí | no |
+| `no-celebrada` (roja) | no | no |
+| `celebrada` (verde) | no | sí ("Sesión celebrada": la lista de engroses) |
+
+Inicio e Historial se ofrecen siempre. **`MenuPrincipalSesion`** (cliente) filtra su tabla `VISTAS_MENU_PRINCIPAL` por el `estado` de la sesión seleccionada (cada fila declara sus `estados`) y, si la vista actual deja de estar disponible al cambiar de sesión en la cinta, lleva a Inicio. Sin sesión seleccionada solo quedan Inicio e Historial.
+
+- **Reglas en el API (la interfaz solo las refleja):** solo la sesión **próxima** se puede comenzar o celebrar (`SESION_NO_PROXIMA`); una sesión **no celebrada** es de solo lectura (`SESION_VENCIDA`: puntos, lista, asistencia, horarios, votaciones…; se puede leer y, si es extraordinaria, eliminar). Es `exigirSesionAbierta`/`exigirSesionProxima` en `LocalAPI/index.js`.
+- **Próxima con extraordinarias:** la próxima es la primera fecha desde hoy sin celebrar, ordinaria o extraordinaria. Normalmente la extraordinaria se celebra el mismo día y es la próxima; si hubiera dos juntas, la de fecha más cercana es la próxima.
+- **Consecuencia conocida:** una sesión comenzada que no se finalizó el mismo día pasa a `no-celebrada` y ya no se puede finalizar; hay que atenderlo si llega a ocurrir (p. ej. restablecerla).
+
 ## Estado actual de los horarios y del flujo de celebrar (referencia funcional)
 
 Reglas tomadas de `HorariosCelebracion` y de los botones "Comenzar sesión" / "Finalizar sesión" de `SidebarPrincipal` y de las funciones `comenzarSesionCelebracion`, `finalizarSesionCelebracion` y `actualizarHora*Celebracion` de PlenoLOCAL. Contrato en `docs/CONTRATO_API.md` ("Horarios de la celebración").
@@ -343,6 +360,14 @@ Reglas tomadas de `Quorum.jsx` y `SEPLE.jsx` de PlenoLOCAL. Contrato en `docs/CO
 - **Paneles** (`widgets/panelcontrol/Quorum.jsx` y `widgets/panelcontrol/SEPLE.jsx`, registrados en `ITEMS_PANEL_CONTROL`): ensamblan widgets conectados con CSS propio para el panel oscuro: `FormularioQuorum` (recibe del anfitrión el integrante a editar y `onTerminar`; la casilla Presidente solo se ofrece si no hay otro presidente; avisa cuando se llega al máximo), `ListaQuorum` (una `CardS` por integrante, con el presidente resaltado en verde por su propio CSS, editar y eliminar con confirmación en `Modal`), `FormularioSecretario` y `SecretarioEjecutivo` (una `CardS` con editar y quitar). `base/CardS` ganó, opt-in, los slots `acciones` (botones a la derecha del título) y `children` (contenido bajo el subtítulo), y ya no pinta la fila inferior si no hay subtítulo ni ✕. `base/CampoTexto` es el átomo nuevo del campo de texto oscuro. Al editar o eliminar un integrante, el widget pide recargar los puntos para que el texto de las votaciones que lo nombran se actualice.
 - **Pendiente:** la asistencia por sesión (casilla "presente" de cada integrante y el contador "X / Y" en la page Sesión), que es el siguiente paso; los firmantes del engrose (presidente y SEPLE) los usará `VistaPreviaFlotante`.
 
+## Estado actual de la page Inicio (referencia funcional)
+
+Tomada del bloque de la barra lateral de Inicio (`SidebarPrincipal`) de PlenoLOCAL con la sesión celebrada.
+
+- **`widgets/ResumenSesion`** (conectado, con CSS propio) se monta en `Sidebar1` de la page `Inicio`, bajo el menú. Muestra siempre "Lista de puntos cerrada/abierta · N puntos" de la sesión seleccionada en la cinta y, con la sesión **celebrada**, una `base/Card` verde (el color lo pone el CSS del widget, `base/Card` no cambia) con "Sesión celebrada", las horas de inicio y fin y los botones "Descargar archivos de sesión" y "Descargar engroses (ZIP)"; debajo, "Descargar orden del día" y "Descargar acta". La page ensancha `Sidebar1` a 340 con la sesión celebrada (`ancho`, como en `Sesion`) y calcula el inicio del panel principal a partir de ese ancho. El panel principal conserva el título "Inicio" (ahí irá la vista del acta).
+- **Botones** (todos conectados, con `base/BotonS` en variante clara a todo el ancho desde el CSS del anfitrión): `BotonDescargar` y `BotonDescargarActa` ya existían; `BotonDescargarEngroses` es la lógica del ZIP de engroses extraída de `ListaEngroses` (la usan los dos); `BotonDescargarArchivosSesion` baja los binarios por el contexto y se los pasa a `utils/zipArchivosSesion.js` (constructor puro con `import()` dinámico de `jszip`): carpeta `01-Aprobación del orden del día` con el Word (si la lista está cerrada) y una carpeta `NN-resumen` por punto con adjuntos, numeradas en secuencia como en PlenoLOCAL; archivo `Archivos - Sesión {Tipo} {n}.zip`. No se muestra si no hay nada que descargar.
+- **Pendiente:** la vista del acta en el panel principal (más adelante), el acta pública y "Restablecer sesión" (viven en este mismo bloque en PlenoLOCAL).
+
 ## Estado actual de la lista de engroses (referencia funcional)
 
 Reglas tomadas de `ListaEngroses` y `zipEngroses` de PlenoLOCAL. Contrato en `docs/CONTRATO_API.md` (`enviarEngrose`, `engroseEnviado`, "engrose" derivado del punto).
@@ -351,7 +376,7 @@ Reglas tomadas de `ListaEngroses` y `zipEngroses` de PlenoLOCAL. Contrato en `do
 - **API:** el punto guarda `engroseEnviado` y `engroseEnviadoEn`; `enviarEngrose(puntoId)` **simula** el envío (el servidor real mandará el correo; los correos de los remitentes quedaron fuera por ahora), exige sesión celebrada (`SESION_NO_CELEBRADA`) y un punto con engrose, y se puede repetir (reenviar). Excepción documentada a la inmutabilidad de la sesión celebrada. `ProyectoContext.enviarEngrose` vuelve a pedir la lista tras cada envío (así los envíos seguidos no se pisan).
 - **`widgets/ListaEngroses`** (conectado, con CSS propio): lista los puntos que traen `engrose` (con hoja de acuerdo; no fijos ni informes): contador "N de M enviados", casilla por punto pendiente (todas marcadas por omisión), filtros por remitente y por estado (`ListaExpandible`), "Enviar engroses seleccionados (n)", "Enviar engrose"/"Reenviar" por punto y "Descargar ZIP de engroses". **Pulsar una tarjeta abre la vista previa del engrose** (`VistaPreviaFlotante` en solo lectura, borde derecho, con el engrose, el código y el remitente; seguir pulsando otras tarjetas la cambia, volver a pulsar la misma la cierra); el panel principal se reduce igual que con el ojo (`UIContext.vistaPreviaAbierta`).
 - **Archivos (nombres de PlenoLOCAL):** Word `ENGROSE_PLE002.docx`; ZIP `Engroses - Sesión {Tipo} {n}.zip` con todos los Word en la raíz (`utils/zipEngroses.js`, constructor puro con `import()` dinámico de `jszip`, reutiliza `generarWordPuntoAcuerdo`). El formulario de hoja de un punto (`formDePunto`) vive en `utils/plantillasActa.js` y lo comparten `ListaPuntosSesion` y `ListaEngroses`.
-- **Pendiente:** el envío real por correo, y que "Restablecer sesión" limpie `engroseEnviado`.
+- **Pendiente:** el envío real por correo, y que "Restablecer sesión" limpie `engroseEnviado`. El botón del ZIP es `widgets/BotonDescargarEngroses`.
 
 ## Estado actual de la hoja del punto: vista previa flotante y Word (referencia funcional)
 

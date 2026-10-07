@@ -1,0 +1,39 @@
+.widget-resumen-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  font-size: 12px;
+  color: #444;
+}
+.widget-resumen-sesion-lista {
+  font-weight: 600;
+}
+.widget-resumen-sesion-celebrada .base-card {
+  border-color: #a5d6a7;
+  background: #f1f9f1;
+}
+.widget-resumen-sesion-celebrada-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+.widget-resumen-sesion-celebrada-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-resumen-sesion-horario {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #333;
+}
+.widget-resumen-sesion .base-boton-s {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}

@@ -5,14 +5,11 @@ import ListaExpandible from '../base/ListaExpandible.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
 import Modal from '../base/Modal.jsx';
 import VistaPreviaFlotante from './VistaPreviaFlotante.jsx';
+import BotonDescargarEngroses from './BotonDescargarEngroses.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI, ALTO_TOPBAR } from '../../context/UIContext.jsx';
 import { puntosOrdenados, tituloPunto } from '../../utils/puntos.js';
 import { formDePunto } from '../../utils/plantillasActa.js';
-import { generarZipEngroses } from '../../utils/zipEngroses.js';
-import { guardarEnDisco } from '../../utils/archivos.js';
-import { cargarLogo } from '../../utils/logo.js';
-import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/ListaEngroses.css';
 
 const OPCIONES_ESTADO = [
@@ -32,7 +29,6 @@ export default function ListaEngroses() {
   const [desmarcados, setDesmarcados] = useState(() => new Set());
   const [enviandoId, setEnviandoId] = useState(null);
   const [enviandoTodos, setEnviandoTodos] = useState(false);
-  const [descargandoZip, setDescargandoZip] = useState(false);
   const [aviso, setAviso] = useState(null);
 
   const nombreRemitente = (id) => REMITENTES.find((r) => r.id === id)?.nombre ?? id;
@@ -102,26 +98,6 @@ export default function ListaEngroses() {
     }
   }
 
-  async function descargarZip() {
-    setDescargandoZip(true);
-    try {
-      const { blob, nombreArchivo } = await generarZipEngroses({
-        sesion: sesionSeleccionada,
-        tipoSesion: nombreTipoSesion(sesionSeleccionada.tipo),
-        puntos: items.map((i) => i.punto),
-        plantillas: PLANTILLAS_ACTA,
-        tiposBloque: TIPOS_BLOQUE_ACTA,
-        textosActa: TEXTOS_ACTA,
-        logo: await cargarLogo(),
-      });
-      guardarEnDisco(nombreArchivo, blob);
-    } catch (e) {
-      setAviso(`No se pudo generar el ZIP de engroses: ${e.message || 'error desconocido'}`);
-    } finally {
-      setDescargandoZip(false);
-    }
-  }
-
   if (items.length === 0) {
     const mensaje = error
       ? `No se pudo cargar la información: ${error.mensaje}`
@@ -153,9 +129,7 @@ export default function ListaEngroses() {
             onSeleccionar={setFiltroEstado}
           />
         </div>
-        <BotonS variant="claro" onClick={descargarZip} disabled={descargandoZip}>
-          {descargandoZip ? 'Generando ZIP...' : 'Descargar ZIP de engroses'}
-        </BotonS>
+        <BotonDescargarEngroses />
       </div>
       <div className="widget-lista-engroses-lista">
         {visibles.length === 0 && <div className="widget-lista-engroses-vacio">Ningún engrose coincide con los filtros.</div>}

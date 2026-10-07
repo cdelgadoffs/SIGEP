@@ -225,6 +225,7 @@ Una sesión se celebra en tres pasos: **cerrar la lista**, **comenzar** y **cele
 | `editarHorario(id, cambios)` | id, `{ horaInicio?: "HH:MM", horaFin?: "HH:MM" }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
 
 - `comenzarSesion` exige la lista cerrada y es idempotente (si ya comenzó, no cambia la hora). No aplica a una sesión celebrada.
+- **Estado y operaciones.** Solo la sesión **próxima** se puede comenzar o celebrar (`SESION_NO_PROXIMA`; las pendientes todavía no y las demás ya no). Una sesión **no celebrada** (roja) es de solo lectura: toda operación que cambie sus puntos, su lista, su asistencia o sus horarios se rechaza con `SESION_VENCIDA` (se puede seguir leyendo, y eliminar si es extraordinaria). Una sesión celebrada ya se rechazaba con `SESION_CELEBRADA`.
 - `celebrarSesion` exige que la sesión haya comenzado (`SESION_NO_COMENZADA`) y además de `celebrada` fija `horaFin` = ahora.
 - `editarHorario` corrige la **hora del día** de una marca ya existente, **conservando su fecha**: no se puede editar `horaFin` sin que exista, ni `horaInicio` sin haber comenzado (`VALIDACION`); el formato es `HH:MM` (`VALIDACION`); y la hora de inicio no puede ser posterior a la de fin (`HORARIO_INVALIDO`). Se permite también con la sesión ya celebrada (excepción documentada a su inmutabilidad): PlenoLOCAL deja corregir las horas siempre.
 
@@ -319,6 +320,8 @@ Notas de comportamiento:
 | `LISTA_CERRADA` | La sesión tiene la lista de puntos cerrada y la operación no está permitida con ella cerrada. |
 | `LISTA_ABIERTA` | Se intentó celebrar una sesión con la lista de puntos abierta. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
+| `SESION_NO_PROXIMA` | Se intentó comenzar o celebrar una sesión que no es la próxima (`proxima`, la azul). |
+| `SESION_VENCIDA` | La sesión ya pasó sin celebrarse (`no-celebrada`, la roja): es de solo lectura, no admite cambios. |
 | `SESION_NO_CELEBRADA` | La operación exige una sesión ya celebrada (`enviarEngrose`). |
 | `SESION_NO_COMENZADA` | Se intentó celebrar una sesión que aún no ha comenzado. |
 | `HORARIO_INVALIDO` | La hora de inicio quedaría posterior a la de fin. |

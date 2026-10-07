@@ -6,24 +6,28 @@ import Sidebar6 from '../components/base/Sidebar6.jsx';
 import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
 import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsueto.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
+import ResumenSesion from '../components/widgets/ResumenSesion.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
-import { useUI, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
+import { useUI, ALTO_TOPBAR, ALTO_CINTA, ANCHO_SIDEBAR1 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
 import '../styles/pages/Inicio.css';
 
+const ANCHO_SIDEBAR1_CELEBRADA = 340;
+
 export default function Inicio() {
   const {
-    izquierdaSidebar1, izquierdaSidebar3,
+    izquierdaSidebar1,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada, CALENDARIO } = useProyecto();
+  const { sesionSeleccionada, sesionFinalizada, CALENDARIO } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
-  const panelIzquierda = izquierdaSidebar3;
+  const anchoSidebar1 = sesionFinalizada ? ANCHO_SIDEBAR1_CELEBRADA : ANCHO_SIDEBAR1;
+  const panelIzquierda = izquierdaSidebar1 + anchoSidebar1;
   const arriba = ALTO_TOPBAR + ALTO_CINTA;
   const arribaSidebar = arriba - 1;
 
@@ -37,10 +41,12 @@ export default function Inicio() {
       <Sidebar1
         izquierda={izquierdaSidebar1}
         arriba={arribaSidebar}
+        ancho={anchoSidebar1}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
       >
         <MenuPrincipalSesion />
+        <ResumenSesion />
       </Sidebar1>
       <Sidebar5
         abierto={sidebar5Abierto}
