@@ -4,6 +4,7 @@ import Sidebar2 from '../components/base/Sidebar2.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
 import Sidebar6 from '../components/base/Sidebar6.jsx';
 import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
+import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsueto.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import BotonMarcarTodos from '../components/widgets/BotonMarcarTodos.jsx';
 import ListaPuntosSesion from '../components/widgets/ListaPuntosSesion.jsx';
@@ -29,7 +30,7 @@ export default function Sesion() {
     izquierdaSidebar1,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
-    sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
+    sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
     vistaPreviaAbierta,
   } = useUI();
@@ -87,7 +88,8 @@ export default function Sesion() {
         izquierda={izquierdaSidebar6}
         titulo="Días de asueto"
         subtitulo={subtituloAsuetos(CALENDARIO)}
-        onCerrar={() => setSidebar6Abierto(false)}
+        mostrarCerrar={false}
+        encabezado={<FormularioAsueto />}
       >
         <ListaAsuetos />
       </Sidebar6>

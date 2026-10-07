@@ -16,9 +16,9 @@ export default function CalendarizacionAnual() {
   }, [setSidebar5Ancho]);
 
   useEffect(() => {
-    setSidebar6Abierto(mostrarFormularioCalendario);
+    setSidebar6Abierto(!mostrarFormularioCalendario && !!CALENDARIO);
     return () => setSidebar6Abierto(false);
-  }, [mostrarFormularioCalendario, setSidebar6Abierto]);
+  }, [mostrarFormularioCalendario, CALENDARIO, setSidebar6Abierto]);
 
   useLayoutEffect(() => {
     setMostrarFormularioCalendario(FECHAS_SESIONES.length === 0);

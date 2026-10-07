@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
   listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi,
-  obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi,
+  obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi, resumenArchivoCalendario,
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
@@ -171,7 +171,10 @@ export function ProyectoProvider({ children }) {
     return actualizado;
   }
   async function generarCalendarioAnual(anio, datos, sobrescribir) {
-    return aplicarCalendario(await generarCalendarioAnualEnApi(anio, datos, sobrescribir));
+    const respuesta = await generarCalendarioAnualEnApi(anio, datos, sobrescribir);
+    aplicarCalendario(respuesta);
+    if (respuesta.generacion) setSesionActivaFecha(null);
+    return respuesta.generacion;
   }
   async function agregarAsueto(anio, asueto) {
     return aplicarCalendario(await agregarAsuetoEnApi(anio, asueto));
@@ -300,7 +303,7 @@ export function ProyectoProvider({ children }) {
     listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
-    CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, agregarAsueto, quitarAsueto,
+    CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,
   };

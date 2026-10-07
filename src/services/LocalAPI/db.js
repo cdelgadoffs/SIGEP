@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 22;
+const DB_VERSION = 23;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -11,6 +11,10 @@ export const STORE_ARCHIVOS = 'archivos';
 export const STORE_CALENDARIOS = 'calendarios';
 export const STORE_INTEGRANTES = 'integrantes';
 export const STORE_SECRETARIO = 'secretarioEjecutivo';
+export const STORE_GENERACIONES = 'generaciones';
+export const STORE_ARCHIVO_SESIONES = 'archivoSesiones';
+export const STORE_ARCHIVO_PUNTOS = 'archivoPuntos';
+export const STORE_ARCHIVO_BINARIOS = 'archivoBinarios';
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -32,6 +36,12 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_INTEGRANTES)) {
         db.createObjectStore(STORE_INTEGRANTES, { keyPath: 'id' });
       }
+      if (!db.objectStoreNames.contains(STORE_GENERACIONES)) {
+        db.createObjectStore(STORE_GENERACIONES, { keyPath: 'id' });
+      }
+      [STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS].forEach((nombre) => {
+        if (!db.objectStoreNames.contains(nombre)) db.createObjectStore(nombre, { keyPath: 'clave' });
+      });
       if (!db.objectStoreNames.contains(STORE_SECRETARIO)) {
         db.createObjectStore(STORE_SECRETARIO, { keyPath: 'id' });
       }
@@ -166,8 +176,8 @@ export async function escribirVarios({ poner = [], borrar = [] }) {
   const stores = [...new Set([...poner.map((e) => e.store), ...borrar.map((e) => e.store)])];
   return new Promise((resolve, reject) => {
     const tx = db.transaction(stores, 'readwrite');
-    poner.forEach(({ store, valor }) => tx.objectStore(store).put(valor));
     borrar.forEach(({ store, id }) => tx.objectStore(store).delete(id));
+    poner.forEach(({ store, valor }) => tx.objectStore(store).put(valor));
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);

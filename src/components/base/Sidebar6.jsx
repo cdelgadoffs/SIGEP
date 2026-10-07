@@ -1,7 +1,7 @@
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import '../../styles/base/Sidebar6.css';
 
-export default function Sidebar6({ abierto = false, izquierda = 0, arriba = 52, titulo, subtitulo, onCerrar, mostrarCerrar = true, children }) {
+export default function Sidebar6({ abierto = false, izquierda = 0, arriba = 52, titulo, subtitulo, onCerrar, mostrarCerrar = true, encabezado, children }) {
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   return (
     <aside
@@ -18,6 +18,7 @@ export default function Sidebar6({ abierto = false, izquierda = 0, arriba = 52, 
             <button type="button" className="base-sidebar6-cerrar" aria-label="Cerrar panel" onClick={onCerrar}>✕</button>
           )}
         </div>
+        {encabezado && <div className="base-sidebar6-encabezado">{encabezado}</div>}
       </div>
       <div className="base-sidebar6-cuerpo-wrap">
         <div className="base-sidebar6-cuerpo" ref={contenedorRef} onScroll={onScroll}>{children}</div>

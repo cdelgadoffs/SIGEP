@@ -5,6 +5,7 @@ import Sidebar3 from '../components/base/Sidebar3.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
 import Sidebar6 from '../components/base/Sidebar6.jsx';
 import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
+import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsueto.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
@@ -24,7 +25,7 @@ export default function ProyectoOrdenDia() {
     sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
-    sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
+    sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
   const { sesionSeleccionada, sesionFinalizada, listaCerrada, CALENDARIO } = useProyecto();
@@ -83,7 +84,8 @@ export default function ProyectoOrdenDia() {
         izquierda={izquierdaSidebar6}
         titulo="Días de asueto"
         subtitulo={subtituloAsuetos(CALENDARIO)}
-        onCerrar={() => setSidebar6Abierto(false)}
+        mostrarCerrar={false}
+        encabezado={<FormularioAsueto />}
       >
         <ListaAsuetos />
       </Sidebar6>

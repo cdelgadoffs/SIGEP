@@ -9,6 +9,8 @@ export const listarSesiones = () => noImplementado();
 export const crearSesiones = () => noImplementado();
 export const obtenerCalendario = () => noImplementado();
 export const generarCalendarioAnual = () => noImplementado();
+export const resumenArchivoCalendario = () => noImplementado();
+export const listarGeneraciones = () => noImplementado();
 export const agregarAsueto = () => noImplementado();
 export const quitarAsueto = () => noImplementado();
 export const establecerListaCerrada = () => noImplementado();

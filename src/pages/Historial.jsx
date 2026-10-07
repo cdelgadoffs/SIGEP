@@ -3,6 +3,7 @@ import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
 import Sidebar6 from '../components/base/Sidebar6.jsx';
 import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
+import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsueto.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
@@ -16,7 +17,7 @@ export default function Historial() {
     izquierdaSidebar1, izquierdaSidebar3,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
-    sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
+    sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
   const { sesionSeleccionada, CALENDARIO } = useProyecto();
@@ -49,7 +50,8 @@ export default function Historial() {
         izquierda={izquierdaSidebar6}
         titulo="Días de asueto"
         subtitulo={subtituloAsuetos(CALENDARIO)}
-        onCerrar={() => setSidebar6Abierto(false)}
+        mostrarCerrar={false}
+        encabezado={<FormularioAsueto />}
       >
         <ListaAsuetos />
       </Sidebar6>

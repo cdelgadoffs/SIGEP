@@ -1,6 +1,7 @@
 import { ApiError } from '../ApiError.js';
 import {
   STORE_SESIONES, STORE_PUNTOS, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS, STORE_INTEGRANTES, STORE_SECRETARIO,
+  STORE_GENERACIONES, STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS,
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
@@ -81,6 +82,38 @@ function registroCalendario(calendario, existente, ahora) {
   };
 }
 
+async function reunirDelAnio(anio) {
+  const sesiones = (await obtenerTodos(STORE_SESIONES)).filter((s) => s.id.startsWith(`${anio}-`));
+  const idsSesiones = new Set(sesiones.map((s) => s.id));
+  const puntos = (await obtenerTodos(STORE_PUNTOS)).filter((p) => idsSesiones.has(p.sesionId));
+  const idsPuntos = new Set(puntos.map((p) => p.id));
+  const binarios = (await obtenerTodos(STORE_ARCHIVOS)).filter((a) => idsPuntos.has(a.puntoId));
+  return { sesiones, puntos, binarios };
+}
+
+function resumenDe({ sesiones, puntos, binarios }) {
+  return {
+    sesiones: sesiones.length,
+    celebradas: sesiones.filter((s) => s.celebrada).length,
+    extraordinarias: sesiones.filter((s) => tipoDeSesion(s) === 'extraordinaria').length,
+    puntos: puntos.length,
+    archivos: binarios.length,
+  };
+}
+
+export async function resumenArchivoCalendario(anio) {
+  exigirEscritura();
+  validarCalendario(anio, { diaSemana: 1, vacaciones: [] });
+  return resumenDe(await reunirDelAnio(anio));
+}
+
+export async function listarGeneraciones(anio) {
+  validarCalendario(anio, { diaSemana: 1, vacaciones: [] });
+  return (await obtenerTodos(STORE_GENERACIONES))
+    .filter((g) => g.anio === anio)
+    .sort((a, b) => (a.creadoEn < b.creadoEn ? 1 : -1));
+}
+
 export async function generarCalendarioAnual(anio, datos, sobrescribir) {
   exigirEscritura();
   const base = validarCalendario(anio, datos);
@@ -88,25 +121,34 @@ export async function generarCalendarioAnual(anio, datos, sobrescribir) {
   if (existente && sobrescribir !== true) {
     throw new ApiError('CALENDARIO_EXISTE', `Ya existe un calendario para ${anio}. Marca «Sobrescribir» para regenerarlo.`);
   }
-  const asuetos = existente && existente.diaSemana === base.diaSemana ? existente.asuetos : [];
-  const calendario = { ...base, asuetos };
+  const calendario = { ...base, asuetos: [] };
   const fechas = generarFechasAnuales(calendario);
-  const sesiones = await obtenerTodos(STORE_SESIONES);
-  const conPuntos = await puntosPorSesion();
   const ahora = new Date().toISOString();
-  const nuevas = fechas.filter((id) => !sesiones.some((s) => s.id === id)).map((id) => nuevaSesion(id, ahora));
-  const sobrantes = sobrescribir === true
-    ? sesiones.filter((s) => s.id.startsWith(`${anio}-`) && !fechas.includes(s.id) && !s.celebrada && !conPuntos.has(s.id))
-    : [];
+  const archivar = sobrescribir === true ? await reunirDelAnio(anio) : { sesiones: [], puntos: [], binarios: [] };
+  const idsArchivadas = new Set(archivar.sesiones.map((s) => s.id));
+  const vigentes = (await obtenerTodos(STORE_SESIONES)).filter((s) => !idsArchivadas.has(s.id));
+  const nuevas = fechas.filter((id) => !vigentes.some((s) => s.id === id)).map((id) => nuevaSesion(id, ahora));
   const registro = registroCalendario(calendario, existente, ahora);
+  const generacion = existente || archivar.sesiones.length > 0
+    ? { id: `gen_${crypto.randomUUID()}`, anio, creadoEn: ahora, creadoPor: usuarioActual().id, calendario: existente ?? null, resumen: resumenDe(archivar) }
+    : null;
+  const copia = (valor) => ({ ...valor, generacionId: generacion?.id, clave: `${generacion?.id}:${valor.id}` });
   await escribirVarios({
     poner: [
       ...nuevas.map((valor) => ({ store: STORE_SESIONES, valor })),
       { store: STORE_CALENDARIOS, valor: registro },
+      ...(generacion ? [{ store: STORE_GENERACIONES, valor: generacion }] : []),
+      ...archivar.sesiones.map((valor) => ({ store: STORE_ARCHIVO_SESIONES, valor: copia(valor) })),
+      ...archivar.puntos.map((valor) => ({ store: STORE_ARCHIVO_PUNTOS, valor: copia(valor) })),
+      ...archivar.binarios.map((valor) => ({ store: STORE_ARCHIVO_BINARIOS, valor: copia(valor) })),
     ],
-    borrar: sobrantes.map((s) => ({ store: STORE_SESIONES, id: s.id })),
+    borrar: [
+      ...archivar.sesiones.map((s) => ({ store: STORE_SESIONES, id: s.id })),
+      ...archivar.puntos.map((p) => ({ store: STORE_PUNTOS, id: p.id })),
+      ...archivar.binarios.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
+    ],
   });
-  return { calendario: registro, sesiones: await listarSesiones() };
+  return { calendario: registro, sesiones: await listarSesiones(), generacion };
 }
 
 async function exigirCalendario(anio) {

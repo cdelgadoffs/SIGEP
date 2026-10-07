@@ -90,3 +90,15 @@
 .widget-formulario-calendario-estado-ok {
   color: #81c784;
 }
+
+.widget-formulario-calendario-modal-texto {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #333;
+}
+.widget-formulario-calendario-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

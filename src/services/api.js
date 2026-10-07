@@ -17,6 +17,8 @@ export const {
   establecerListaCerrada,
   obtenerCalendario,
   generarCalendarioAnual,
+  resumenArchivoCalendario,
+  listarGeneraciones,
   agregarAsueto,
   quitarAsueto,
   listarPuntos,
