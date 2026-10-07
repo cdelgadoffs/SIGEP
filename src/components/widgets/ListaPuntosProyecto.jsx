@@ -7,7 +7,7 @@ import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
-import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
+import { estiloArchivo } from '../../utils/archivos.js';
 import { tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
@@ -16,7 +16,7 @@ function seleccionarSiNoEsControl(e, seleccionar) {
   seleccionar();
 }
 
-function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opciones, onDescargar, seleccionada, onSeleccionar }) {
+function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opciones, onAbrir, seleccionada, onSeleccionar }) {
   const esInforme = !requiereAcuerdo;
   return (
     <div className={'widget-lista-puntos-item' + (seleccionada ? ' widget-lista-puntos-item-seleccionado' : '')}>
@@ -63,7 +63,7 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
                     texto={a.nombre}
                     icono={icono}
                     tono={tono}
-                    onClick={a.id ? () => onDescargar(a) : undefined}
+                    onClick={a.id ? () => onAbrir(a) : undefined}
                   />
                 );
               })}
@@ -75,7 +75,7 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
   );
 }
 
-function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onDescargar, seleccionadoId, seleccionar) {
+function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onAbrir, seleccionadoId, seleccionar) {
   const deLaSeccion = puntos.filter((p) => p.seccion === seccion.id);
   const hayPuntos = deLaSeccion.some((p) => !p.encabezado);
   let aviso = null;
@@ -99,7 +99,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
           requiereAcuerdo={seccion.requiereAcuerdo}
           nombreRemitente={remitentes.find((r) => r.id === p.remitente)?.nombre ?? p.remitente}
           opciones={renderOpciones(p, deLaSeccion, seccion.id)}
-          onDescargar={onDescargar}
+          onAbrir={onAbrir}
           seleccionada={seleccionadoId === p.id}
           onSeleccionar={() => seleccionar(p.id, seccion.id)}
         />
@@ -110,11 +110,11 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
 }
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
-  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, descargarArchivo, reordenarPuntos, cargando, error } = useProyecto();
+  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const { seccionActivaProyecto, setSeccionActivaProyecto } = useUI();
+  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo } = useUI();
   const { vistaCompletaProyecto } = useAjustesVisuales();
   const seleccionar = (id, seccionId) => {
     setSeccionActivaProyecto(seccionId);
@@ -126,15 +126,6 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
       {error ? `No se pudo cargar la información: ${error.mensaje}` : errorAccion}
     </div>
   );
-  async function descargar(archivo) {
-    setErrorAccion(null);
-    try {
-      const { nombre, blob } = await descargarArchivo(archivo.id);
-      guardarEnDisco(nombre, blob);
-    } catch (e) {
-      setErrorAccion(e.mensaje || 'No se pudo descargar el archivo.');
-    }
-  }
   async function mover(seccionId, deLaSeccion, indice, delta) {
     if (moviendo) return;
     const ids = deLaSeccion.map((p) => p.id);
@@ -181,7 +172,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
         {SECCIONES_DOCUMENTO.map((s) => (
           <div key={s.id} className="widget-lista-puntos-grupo">
             <div className="widget-lista-puntos-separador">{s.nombre}</div>
-            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, descargar, seleccionadoId, seleccionar)}
+            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar)}
           </div>
         ))}
       </div>
@@ -194,7 +185,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   return (
     <div className="widget-lista-puntos-proyecto">
       {avisoError}
-      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, descargar, seleccionadoId, seleccionar) : (
+      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar) : (
         estadoCarga === 'listo' && <div className="widget-lista-puntos-vacio">Sin secciones definidas.</div>
       )}
       {!seccion && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}

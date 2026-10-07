@@ -51,3 +51,33 @@
   padding: 16px;
   overflow-y: auto;
 }
+.base-modal-acciones {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.base-modal-completo,
+.base-modal-documento {
+  width: 95vw;
+  height: 95vh;
+  max-height: 95vh;
+}
+.base-modal-documento {
+  width: min(900px, 95vw);
+}
+.base-modal-completo .base-modal-titulo,
+.base-modal-documento .base-modal-titulo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.base-modal-completo .base-modal-cuerpo,
+.base-modal-documento .base-modal-cuerpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

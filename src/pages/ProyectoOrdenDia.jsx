@@ -1,4 +1,5 @@
 import Topbar from '../components/widgets/Topbar.jsx';
+import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
 import CintaSesiones from '../components/widgets/CintaSesiones.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar3 from '../components/base/Sidebar3.jsx';
@@ -38,6 +39,7 @@ export default function ProyectoOrdenDia() {
 
   return (
     <>
+      <VisorArchivo />
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}

@@ -17,6 +17,7 @@ export function UIProvider({ children }) {
   const [sidebar5Abierto, setSidebar5Abierto] = useState(false);
   const [sidebar5Ancho, setSidebar5Ancho] = useState(false);
   const [sidebar5Amplio, setSidebar5Amplio] = useState(false);
+  const [archivoEnVista, setArchivoEnVista] = useState(null);
   const [avisosEdicionExpandido, setAvisosEdicionExpandido] = useState(false);
   const [emailSeccion, setEmailSeccion] = useState('enviados');
   const [correoSeleccionadoId, setCorreoSeleccionadoId] = useState(null);
@@ -47,7 +48,14 @@ export function UIProvider({ children }) {
     setSidebar3Abierto(false);
     setPuntoEnEdicionId(null);
   }
+  function abrirVistaArchivo(archivo) {
+    setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo });
+  }
+  function cerrarVistaArchivo() {
+    setArchivoEnVista(null);
+  }
   function setVistaActual(vista) {
+    cerrarVistaArchivo();
     if (vista !== 'proyecto') cerrarSidebar3();
     setVistaActualInterna(vista);
   }
@@ -62,6 +70,7 @@ export function UIProvider({ children }) {
     sidebar5Abierto, toggleSidebar5, cerrarSidebar5,
     sidebar5Ancho, setSidebar5Ancho,
     sidebar5Amplio, setSidebar5Amplio,
+    archivoEnVista, abrirVistaArchivo, cerrarVistaArchivo,
     avisosEdicionExpandido, setAvisosEdicionExpandido,
     emailSeccion, setEmailSeccion,
     correoSeleccionadoId, setCorreoSeleccionadoId,

@@ -1,4 +1,5 @@
 import Topbar from '../components/widgets/Topbar.jsx';
+import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar2 from '../components/base/Sidebar2.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
@@ -43,6 +44,7 @@ export default function Sesion() {
 
   return (
     <>
+      <VisorArchivo />
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}

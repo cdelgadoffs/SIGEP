@@ -10,7 +10,7 @@ import VistaPreviaFlotante from './VistaPreviaFlotante.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../../context/UIContext.jsx';
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
-import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
+import { estiloArchivo } from '../../utils/archivos.js';
 import { docDesdeTexto, docVacio, esDocVacio } from '../../utils/documento.js';
 import { contenidoPorOmision, hojaPorOmision } from '../../utils/plantillasActa.js';
 import { tituloPunto } from '../../utils/puntos.js';
@@ -43,8 +43,8 @@ function aDocumentos(borrador) {
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3 } = useUI();
+  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, abrirVistaArchivo } = useUI();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
   const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision);
   const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
@@ -170,16 +170,6 @@ export default function FormularioPunto() {
     setForm((f) => ({ ...f, archivos: f.archivos.filter((_, i) => i !== indice) }));
   }
 
-  async function descargar(archivo) {
-    setError(null);
-    try {
-      const { nombre, blob } = await descargarArchivo(archivo.id);
-      guardarEnDisco(nombre, blob);
-    } catch (e) {
-      setError(e.mensaje || 'No se pudo descargar el archivo.');
-    }
-  }
-
   function cancelarQuitar() {
     setArchivoAQuitar(null);
     setErrorQuitar(null);
@@ -293,7 +283,7 @@ export default function FormularioPunto() {
                         texto={a.nombre}
                         icono={icono}
                         tono={tono}
-                        onClick={a.id ? () => descargar(a) : undefined}
+                        onClick={a.id ? () => abrirVistaArchivo(a) : undefined}
                         onEliminar={a.id && !a.autogenerado ? () => setArchivoAQuitar(a) : undefined}
                       />
                     );
