@@ -64,6 +64,8 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 | `archivos` | `Archivo[]` | Metadatos de los archivos adjuntos (ver "Archivo"). |
 | `orden` | int | Posición dentro de su (sesión, sección), 1…n (ver "Orden"). |
 | `tratado` | bool | Marca de la celebración: el punto ya se trató. Empieza en `false`; los puntos anteriores al campo se leen como `false`. Solo cambia con `marcarPunto`. |
+| `engroseEnviado` | bool | Hecho persistido: el engrose del punto ya se envió (`enviarEngrose`). Empieza en `false`. |
+| `engroseEnviadoEn` | string \| null | Timestamp del último envío. |
 | `numero` | int | **Derivado.** Posición del punto en el orden del documento de su sesión, empezando en 1 (ver "Numeración y puntos fijos"). Todo `Punto` que el API devuelve lo lleva. |
 | `fijo` | bool | **Derivado.** `true` en los puntos autogenerados (no se guardan como puntos; ver abajo). |
 | `encabezado` | bool | **Derivado.** Solo en puntos fijos que funcionan como título de una sección (cuentan en la numeración, pero no son puntos a tratar). |
@@ -276,12 +278,14 @@ La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada int
 |---|---|---|---|
 | `registrarVotacion(id, votacion)` | id de punto, `Votacion \| null` | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `marcarPunto(id, tratado)` | id de punto + bool | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
+| `enviarEngrose(puntoId)` | id de punto | `Punto` actualizado (`engroseEnviado: true`, `engroseEnviadoEn` = ahora) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_NO_CELEBRADA`, `VALIDACION` |
 | `marcarPuntos(sesionId, tratado)` | id de sesión + bool | `Punto[]` de la sesión (ordenados, ya filtrados según el usuario) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `adjuntarArchivos(puntoId, archivos)` | id de punto + archivos (binarios) | `Punto` actualizado (`version` + 1) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `ARCHIVO_INVALIDO` |
 | `eliminarArchivo(puntoId, archivoId)` | ids | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `descargarArchivo(archivoId)` | id | `{ nombre, tipo, blob }` (en el servidor real, una URL firmada) | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
 | `reordenarPuntos(sesionId, seccion, ids)` | sesión, sección e **ids de la sección en el orden deseado** | `Punto[]` de esa sección, ya ordenados | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
 
+- `enviarEngrose(puntoId)` **simula** el envío del engrose (el servidor real mandará el correo al remitente): solo aplica a puntos con engrose (con hoja de acuerdo; no fijos ni confidenciales; si no, `VALIDACION`) de una sesión **celebrada** (`SESION_NO_CELEBRADA`), marca `engroseEnviado` y fija `engroseEnviadoEn`. Se puede repetir (reenviar: solo actualiza el timestamp y `version`). Es una excepción documentada a la inmutabilidad de la sesión celebrada, como `editarHorario`. Los correos de los remitentes aún no son parte del contrato.
 - `marcarPunto(id, tratado)` fija `tratado` (bool) del punto y devuelve el `Punto` actualizado. Es **idempotente** (repetir el mismo valor no cambia nada ni sube `version`) y no exige `version`: solo guarda un valor, no hay edición concurrente que proteger. Errores: `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` (si `tratado` no es booleano). Solo cuando cambia el valor se incrementa `version` y se actualiza `modificadoEn`.
 - `marcarPuntos` fija `tratado` en **todos** los puntos de la sesión que el usuario puede ver, en una sola operación **atómica** (o se aplican todos o ninguno). Es idempotente: solo cambian de `version` y `modificadoEn` los puntos cuyo valor cambió.
 - `editarPunto` **no** modifica `tratado`.
@@ -313,6 +317,7 @@ Notas de comportamiento:
 | `LISTA_CERRADA` | La sesión tiene la lista de puntos cerrada y la operación no está permitida con ella cerrada. |
 | `LISTA_ABIERTA` | Se intentó celebrar una sesión con la lista de puntos abierta. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
+| `SESION_NO_CELEBRADA` | La operación exige una sesión ya celebrada (`enviarEngrose`). |
 | `SESION_NO_COMENZADA` | Se intentó celebrar una sesión que aún no ha comenzado. |
 | `HORARIO_INVALIDO` | La hora de inicio quedaría posterior a la de fin. |
 | `FECHA_NO_DISPONIBLE` | La fecha no está entre las disponibles para una sesión extraordinaria. |

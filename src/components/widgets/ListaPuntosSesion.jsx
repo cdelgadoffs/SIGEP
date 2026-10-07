@@ -7,8 +7,7 @@ import VistaPreviaFlotante from './VistaPreviaFlotante.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI, ALTO_TOPBAR } from '../../context/UIContext.jsx';
 import { puntosOrdenados, puntoActivo, tituloPunto } from '../../utils/puntos.js';
-import { docDesdeTexto } from '../../utils/documento.js';
-import { hojaPorOmision } from '../../utils/plantillasActa.js';
+import { formDePunto } from '../../utils/plantillasActa.js';
 import '../../styles/widgets/ListaPuntosSesion.css';
 
 export default function ListaPuntosSesion() {
@@ -44,19 +43,6 @@ export default function ListaPuntosSesion() {
     }
     setPuntoSesionSeleccionadoId(id);
     setVistaPreviaAbierta(true);
-  }
-
-  function formDeVistaPrevia(punto) {
-    const hoja = hojaPorOmision(PLANTILLAS_ACTA, TEXTOS_ACTA, punto.plantilla);
-    return {
-      ...hoja,
-      contenidoDoc: punto.contenidoDoc ?? docDesdeTexto(punto.contenido),
-      acuerdoDoc: punto.acuerdoDoc ?? docDesdeTexto(punto.acuerdo),
-      plantilla: punto.plantilla ?? hoja.plantilla,
-      introDoc: punto.introDoc ?? hoja.introDoc,
-      puenteDoc: punto.puenteDoc ?? hoja.puenteDoc,
-      bloquesActa: punto.bloquesActa ?? hoja.bloquesActa,
-    };
   }
 
   async function marcar(id, tratado) {
@@ -124,7 +110,7 @@ export default function ListaPuntosSesion() {
           soloLectura
           derecha={0}
           arriba={ALTO_TOPBAR}
-          form={formDeVistaPrevia(puntoVistaPrevia)}
+          form={formDePunto(puntoVistaPrevia, PLANTILLAS_ACTA, TEXTOS_ACTA)}
           plantillas={PLANTILLAS_ACTA}
           tiposBloque={TIPOS_BLOQUE_ACTA}
           codigo={tituloPunto(puntoVistaPrevia.numero)}

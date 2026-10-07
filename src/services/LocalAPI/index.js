@@ -389,6 +389,21 @@ export async function marcarPunto(id, tratado) {
   return puntoArmado(actual.sesionId, id);
 }
 
+export async function enviarEngrose(id) {
+  exigirEscritura();
+  exigirNoFijo(id);
+  const actual = await obtener(STORE_PUNTOS, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  const sesion = await obtener(STORE_SESIONES, actual.sesionId);
+  if (!sesion?.celebrada) throw new ApiError('SESION_NO_CELEBRADA', 'El engrose solo se envía cuando la sesión ya fue celebrada.');
+  const armado = await puntoArmado(actual.sesionId, id);
+  if (!armado?.engrose) throw new ApiError('VALIDACION', 'Este punto no tiene engrose.');
+  await new Promise((resolver) => setTimeout(resolver, 300));
+  const ahora = new Date().toISOString();
+  await guardar(STORE_PUNTOS, { ...actual, engroseEnviado: true, engroseEnviadoEn: ahora, version: actual.version + 1, modificadoEn: ahora });
+  return puntoArmado(actual.sesionId, id);
+}
+
 export async function registrarVotacion(id, votacion) {
   exigirEscritura();
   exigirNoFijo(id);

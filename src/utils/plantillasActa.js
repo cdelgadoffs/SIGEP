@@ -43,3 +43,16 @@ export function tiposBloqueDisponibles(tiposBloque, bloques) {
   const personalizada = tiposBloque.find((t) => t.titulo === null);
   return personalizada ? [...libres, personalizada] : libres;
 }
+
+export function formDePunto(punto, plantillasActa, textosActa) {
+  const hoja = hojaPorOmision(plantillasActa, textosActa, punto.plantilla);
+  return {
+    ...hoja,
+    contenidoDoc: punto.contenidoDoc ?? docDesdeTexto(punto.contenido),
+    acuerdoDoc: punto.acuerdoDoc ?? docDesdeTexto(punto.acuerdo),
+    plantilla: punto.plantilla ?? hoja.plantilla,
+    introDoc: punto.introDoc ?? hoja.introDoc,
+    puenteDoc: punto.puenteDoc ?? hoja.puenteDoc,
+    bloquesActa: punto.bloquesActa ?? hoja.bloquesActa,
+  };
+}

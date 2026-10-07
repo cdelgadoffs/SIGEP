@@ -1,0 +1,119 @@
+.widget-lista-engroses {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px 32px;
+}
+.widget-lista-engroses-vacio {
+  color: #aaa;
+  font-size: 13px;
+  font-style: italic;
+}
+.widget-lista-engroses-titulo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.widget-lista-engroses-subtitulo {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #777;
+}
+.widget-lista-engroses-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.widget-lista-engroses-barra-izq {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.widget-lista-engroses-barra .base-boton-s {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.widget-lista-engroses-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.widget-lista-engroses-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #c9c9ca;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.widget-lista-engroses-item:hover {
+  background: #fafafa;
+}
+.widget-lista-engroses-item-enviado,
+.widget-lista-engroses-item-enviado:hover {
+  border-color: #2e7d32;
+  background: #f4faf5;
+}
+.widget-lista-engroses-item-seleccionado,
+.widget-lista-engroses-item-seleccionado:hover {
+  padding: 10px 14px;
+  border-width: 2px;
+  border-color: #1a1a1a;
+}
+.widget-lista-engroses-item-seleccionado.widget-lista-engroses-item-enviado {
+  border-color: #2e7d32;
+}
+.widget-lista-engroses-item-seleccionado .widget-lista-engroses-resumen {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.widget-lista-engroses-casilla {
+  display: inline-flex;
+}
+.widget-lista-engroses-info {
+  flex: 1;
+  min-width: 0;
+}
+.widget-lista-engroses-linea {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.widget-lista-engroses-codigo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.widget-lista-engroses-resumen {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #555;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.widget-lista-engroses-item .base-boton-s {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.widget-lista-engroses-mensaje {
+  margin: 0;
+  font-size: 13.5px;
+  color: #c62828;
+}

@@ -8,6 +8,7 @@ import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import BotonMarcarTodos from '../components/widgets/BotonMarcarTodos.jsx';
 import ListaPuntosSesion from '../components/widgets/ListaPuntosSesion.jsx';
 import PuntoSesion from '../components/widgets/PuntoSesion.jsx';
+import ListaEngroses from '../components/widgets/ListaEngroses.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import AsistenciaQuorum from '../components/widgets/AsistenciaQuorum.jsx';
 import HorariosSesion from '../components/widgets/HorariosSesion.jsx';
@@ -36,7 +37,7 @@ export default function Sesion() {
   const { vistaCompletaSesion, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const izquierdaSidebar2 = izquierdaSidebar1 + ANCHO_SIDEBAR1_SESION;
-  const panelIzquierda = izquierdaSidebar2 + ANCHO_SIDEBAR2;
+  const panelIzquierda = sesionFinalizada ? izquierdaSidebar2 : izquierdaSidebar2 + ANCHO_SIDEBAR2;
 
   return (
     <>
@@ -62,15 +63,17 @@ export default function Sesion() {
         <AsistenciaQuorum />
         <HorariosSesion />
       </Sidebar1>
-      <Sidebar2
-        izquierda={izquierdaSidebar2}
-        badge="Sesión en curso"
-        subtitulo={`${contarPuntos(PUNTOS)} ${contarPuntos(PUNTOS) === 1 ? 'punto' : 'puntos'}`}
-        mostrarCerrar={false}
-        accionesHeader={<BotonMarcarTodos />}
-      >
-        <ListaPuntosSesion />
-      </Sidebar2>
+      {!sesionFinalizada && (
+        <Sidebar2
+          izquierda={izquierdaSidebar2}
+          badge="Sesión en curso"
+          subtitulo={`${contarPuntos(PUNTOS)} ${contarPuntos(PUNTOS) === 1 ? 'punto' : 'puntos'}`}
+          mostrarCerrar={false}
+          accionesHeader={<BotonMarcarTodos />}
+        >
+          <ListaPuntosSesion />
+        </Sidebar2>
+      )}
       <Sidebar5
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
@@ -88,8 +91,8 @@ export default function Sesion() {
       >
         <ListaAsuetos />
       </Sidebar6>
-      <PanelPrincipal izquierda={panelIzquierda} derecha={vistaPreviaAbierta && !sesionSeleccionada?.horaInicio ? ANCHO_VISTA_PREVIA : 0}>
-        <PuntoSesion />
+      <PanelPrincipal izquierda={panelIzquierda} derecha={vistaPreviaAbierta && (sesionFinalizada || !sesionSeleccionada?.horaInicio) ? ANCHO_VISTA_PREVIA : 0}>
+        {sesionFinalizada ? <ListaEngroses /> : <PuntoSesion />}
       </PanelPrincipal>
     </>
   );

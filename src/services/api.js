@@ -26,6 +26,7 @@ export const {
   reordenarPuntos,
   marcarPunto,
   marcarPuntos,
+  enviarEngrose,
   registrarVotacion,
   listarIntegrantes,
   crearIntegrante,

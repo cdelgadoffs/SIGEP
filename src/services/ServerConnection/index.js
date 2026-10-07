@@ -27,6 +27,7 @@ export const eliminarPunto = () => noImplementado();
 export const reordenarPuntos = () => noImplementado();
 export const marcarPunto = () => noImplementado();
 export const marcarPuntos = () => noImplementado();
+export const enviarEngrose = () => noImplementado();
 export const registrarVotacion = () => noImplementado();
 export const listarIntegrantes = () => noImplementado();
 export const crearIntegrante = () => noImplementado();
