@@ -5,6 +5,7 @@ export const ANCHO_SIDEBAR2 = 250;
 export const ANCHO_SIDEBAR3 = 500;
 export const ANCHO_SIDEBAR5 = 300;
 export const ANCHO_SIDEBAR5_ANCHO = 420;
+export const ANCHO_VISTA_PREVIA = 650;
 export const ALTO_TOPBAR = 52;
 export const ALTO_CINTA = 50;
 
@@ -25,6 +26,7 @@ export function UIProvider({ children }) {
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
   const [seccionActivaProyecto, setSeccionActivaProyecto] = useState(null);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
+  const [vistaPreviaAbierta, setVistaPreviaAbierta] = useState(false);
   const izquierdaSidebar1 = 0;
   const izquierdaSidebar3 = izquierdaSidebar1 + ANCHO_SIDEBAR1;
   const izquierdaSidebar6 = sidebar5Ancho ? ANCHO_SIDEBAR5_ANCHO : ANCHO_SIDEBAR5;
@@ -61,6 +63,7 @@ export function UIProvider({ children }) {
     puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto,
     seccionActivaProyecto, setSeccionActivaProyecto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
+    vistaPreviaAbierta, setVistaPreviaAbierta,
     izquierdaSidebar1, izquierdaSidebar3, izquierdaSidebar6,
   };
 

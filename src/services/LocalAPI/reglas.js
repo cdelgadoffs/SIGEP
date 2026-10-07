@@ -205,6 +205,31 @@ function fechaLarga(id) {
   return `${d.getDate()} de ${MESES_LARGOS[d.getMonth()]} de ${d.getFullYear()}`;
 }
 
+const UNIDADES_LETRAS = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez', 'once', 'doce', 'trece', 'catorce', 'quince', 'dieciséis', 'diecisiete', 'dieciocho', 'diecinueve', 'veinte', 'veintiuno', 'veintidós', 'veintitrés', 'veinticuatro', 'veinticinco', 'veintiséis', 'veintisiete', 'veintiocho', 'veintinueve'];
+const DECENAS_LETRAS = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+const CENTENAS_LETRAS = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+function numeroEnLetras(n) {
+  if (n === 0) return 'cero';
+  const partes = [];
+  const miles = Math.floor(n / 1000);
+  let resto = n % 1000;
+  if (miles > 0) partes.push(miles === 1 ? 'mil' : `${numeroEnLetras(miles)} mil`);
+  const centena = Math.floor(resto / 100);
+  resto %= 100;
+  if (centena > 0) partes.push(centena === 1 && resto === 0 ? 'cien' : CENTENAS_LETRAS[centena]);
+  if (resto > 0) {
+    if (resto < 30) partes.push(UNIDADES_LETRAS[resto]);
+    else partes.push(resto % 10 ? `${DECENAS_LETRAS[Math.floor(resto / 10)]} y ${UNIDADES_LETRAS[resto % 10]}` : DECENAS_LETRAS[Math.floor(resto / 10)]);
+  }
+  return partes.join(' ');
+}
+
+function fechaEnLetras(id) {
+  const d = new Date(id + 'T00:00:00');
+  return `${numeroEnLetras(d.getDate())} de ${MESES_LARGOS[d.getMonth()]} de ${numeroEnLetras(d.getFullYear())}`;
+}
+
 export function esPuntoFijo(id) {
   return typeof id === 'string' && id.startsWith('fijo:');
 }
@@ -311,7 +336,7 @@ export function ocultarConfidencial(p) {
   if (!p.confidencial) return p;
   return {
     ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [], votacion: null, acuerdoLineas: [], textoVotacion: null,
-    contenidoDoc: null, acuerdoDoc: null, introDoc: null, puenteDoc: null, bloquesActa: [],
+    contenidoDoc: null, acuerdoDoc: null, introDoc: null, puenteDoc: null, bloquesActa: [], engrose: null,
   };
 }
 
@@ -475,6 +500,55 @@ function textoVotacionGenerado(v, lineas, catalogos) {
     completo = `El Pleno, ${voto.frase} de votos, con la precisión de que ${norm.precision}, ${estado.nombre}.`;
   } else completo = `El Pleno, en ${votacion.nombre}, ${voto.frase}, ${estado.nombre}.`;
   return unico ? `${sinPunto(completo)}, ${unico}.` : completo;
+}
+
+function descriptorVotacionEngrose(v, catalogos) {
+  const norm = validarVotacion(v ?? {}, catalogos);
+  const voto = catalogos.tiposVoto.find((o) => o.id === norm.voto);
+  const votacion = catalogos.tiposVotacion.find((o) => o.id === norm.votacion);
+  if (voto.votosRequeridos) {
+    const nombres = norm.quorum
+      .map((id) => {
+        const i = (catalogos.integrantes || []).find((x) => x.id === id);
+        return i ? `${i.tratamiento} ${i.nombre}`.trim() : id;
+      })
+      .join(' y ') || '<<pendiente>>';
+    return `${voto.frase}, con el voto en contra de ${nombres},`;
+  }
+  const base = voto.fraseEngrose ?? voto.frase;
+  if (voto.sinVotacion) return `${base},`;
+  return voto.admitePrecision && votacion.admitePrecision ? `${base}, en ${votacion.nombre},` : base;
+}
+
+function nombreFirmante(tratamiento, nombre) {
+  return `${(tratamiento || '').replace(/^(el|la)\s+/i, '')} ${nombre}`.trim().toUpperCase();
+}
+
+export function engroseDePunto(punto, { sesion, tipo, presidente, secretario }, catalogos) {
+  const texto = (catalogos.textosActa || []).find((t) => t.id === 'engrose');
+  if (!texto || punto.fijo || punto.confidencial) return null;
+  let descriptor;
+  try {
+    descriptor = descriptorVotacionEngrose(punto.votacion, catalogos);
+  } catch {
+    descriptor = 'por unanimidad de votos';
+  }
+  return {
+    parrafo: texto.texto
+      .replace('{votacion}', descriptor)
+      .replace('{tipo}', tipo)
+      .replace('{fecha}', fechaEnLetras(sesion.id)),
+    firmaPresidente: {
+      nombre: presidente ? nombreFirmante(presidente.tratamiento, presidente.nombre) : '<<presidente>>',
+      cargo1: texto.cargoPresidente[0],
+      cargo2: texto.cargoPresidente[1],
+    },
+    firmaSecretario: {
+      nombre: secretario ? secretario.nombre.toUpperCase() : '<<secretario>>',
+      cargo1: texto.cargoSecretario[0],
+      cargo2: texto.cargoSecretario[1],
+    },
+  };
 }
 
 export function decorarPunto(p, catalogos) {

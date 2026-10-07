@@ -13,6 +13,7 @@ export function AjustesVisualesProvider({ children }) {
 
   const value = {
     vistaCompletaProyecto: ajustes.vistaCompletaProyecto === true,
+    vistaCompletaSesion: ajustes.vistaCompletaSesion === true,
     cambiarAjuste,
   };
   return <AjustesVisualesContext.Provider value={value}>{children}</AjustesVisualesContext.Provider>;

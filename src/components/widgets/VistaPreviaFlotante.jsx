@@ -7,7 +7,7 @@ import EditorTexto from './EditorTexto.jsx';
 import BarraHerramientasTexto from './BarraHerramientasTexto.jsx';
 import { bloquesParaPlantilla, nuevoIdBloque, tiposBloqueDisponibles } from '../../utils/plantillasActa.js';
 import { docVacio } from '../../utils/documento.js';
-import { generarWordPuntoAcuerdo, nombreArchivoPuntoAcuerdo } from '../../utils/puntoAcuerdo.js';
+import { generarWordPuntoAcuerdo, nombreArchivoPuntoAcuerdo, nombreArchivoEngrose } from '../../utils/puntoAcuerdo.js';
 import { cargarLogo, URL_LOGO_DOCUMENTO } from '../../utils/logo.js';
 import { guardarEnDisco } from '../../utils/archivos.js';
 import '../../styles/widgets/VistaPreviaFlotante.css';
@@ -18,6 +18,7 @@ const PLACEHOLDERS_BLOQUE = { considerando: 'Considerandos...', antecedente: 'An
 export default function VistaPreviaFlotante({
   abierto,
   izquierda,
+  derecha,
   arriba,
   form,
   onCambiar,
@@ -27,6 +28,9 @@ export default function VistaPreviaFlotante({
   codigo,
   fecha,
   soloLectura = false,
+  remitente,
+  engrose,
+  onCerrar,
 }) {
   const [tipoNuevo, setTipoNuevo] = useState('');
   const [tituloPersonalizado, setTituloPersonalizado] = useState('');
@@ -54,6 +58,7 @@ export default function VistaPreviaFlotante({
   if (!plantilla) return null;
 
   function aporte(cambios) {
+    if (soloLectura) return;
     if (onAporte) onAporte();
     onCambiar(cambios);
   }
@@ -88,12 +93,12 @@ export default function VistaPreviaFlotante({
     setErrorDescarga(null);
     try {
       const logo = await cargarLogo();
-      const resultado = await generarWordPuntoAcuerdo({ punto: form, plantillas, tiposBloque, logo, fecha });
+      const resultado = await generarWordPuntoAcuerdo({ punto: form, plantillas, tiposBloque, logo, fecha, engrose: soloLectura ? engrose : null });
       if (!resultado) {
         setErrorDescarga('El punto no tiene contenido para exportar.');
         return;
       }
-      guardarEnDisco(codigo ? nombreArchivoPuntoAcuerdo(codigo) : resultado.nombreArchivo, resultado.blob);
+      guardarEnDisco(codigo ? (soloLectura && engrose ? nombreArchivoEngrose(codigo) : nombreArchivoPuntoAcuerdo(codigo)) : resultado.nombreArchivo, resultado.blob);
     } catch (e) {
       setErrorDescarga(e?.message || 'No se pudo generar el documento.');
     } finally {
@@ -161,7 +166,17 @@ export default function VistaPreviaFlotante({
 
   return (
     <>
-      <PanelFlotante abierto={abierto} izquierda={izquierda} arriba={arriba}>
+      <PanelFlotante abierto={abierto} izquierda={izquierda} derecha={derecha} arriba={arriba}>
+        {soloLectura && (
+          <div className="widget-vista-previa-barra widget-vista-previa-barra-lectura">
+            <div className="widget-vista-previa-lectura-info">
+              {codigo && <span className="widget-vista-previa-lectura-codigo">{codigo}</span>}
+              {remitente && <span className="widget-vista-previa-lectura-remitente">{remitente}</span>}
+            </div>
+            <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />
+            <BotonIcono icono="ri-close-line" ariaLabel="Cerrar vista previa" onClick={onCerrar} />
+          </div>
+        )}
         {!soloLectura && (
           <div className="widget-vista-previa-barra">
             <select className="widget-vista-previa-select" value={plantilla.id} onChange={(e) => cambiarPlantilla(e.target.value)} title="Plantilla">
@@ -203,7 +218,7 @@ export default function VistaPreviaFlotante({
             )}
             <BarraHerramientasTexto obtenerEditor={() => editorActivoRef.current} onError={setErrorDescarga} />
             <span className="widget-vista-previa-separador"></span>
-            <BotonIcono icono="ri-file-word-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />
+            <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />
           </div>
         )}
         <div className="widget-vista-previa-hoja">
@@ -211,6 +226,19 @@ export default function VistaPreviaFlotante({
             <img src={URL_LOGO_DOCUMENTO} alt="Logo" />
           </div>
           {secciones}
+          {soloLectura && engrose && (
+            <div className="widget-vista-previa-engrose">
+              <div className="widget-vista-previa-engrose-parrafo">{engrose.parrafo}</div>
+              {[engrose.firmaPresidente, engrose.firmaSecretario].map((firma) => (
+                <div key={firma.cargo1} className="widget-vista-previa-engrose-firma">
+                  <div className="widget-vista-previa-engrose-linea"></div>
+                  <div className="widget-vista-previa-engrose-nombre">{firma.nombre}</div>
+                  <div>{firma.cargo1}</div>
+                  <div>{firma.cargo2}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </PanelFlotante>
       <Modal abierto={!!errorDescarga} titulo="Vista previa" onCerrar={() => setErrorDescarga(null)}>

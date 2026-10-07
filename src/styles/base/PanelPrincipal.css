@@ -4,7 +4,7 @@
   right: 0;
   height: calc(100vh - 52px);
   z-index: 1;
-  transition: left 0.25s ease;
+  transition: left 0.25s ease, right 0.25s ease;
 }
 .base-panel-principal {
   width: 100%;

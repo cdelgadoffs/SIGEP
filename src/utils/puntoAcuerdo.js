@@ -8,6 +8,10 @@ export function nombreArchivoPuntoAcuerdo(codigo) {
   return `01-Punto de acuerdo_${(codigo || '').replace(/\//g, '')}.docx`;
 }
 
+export function nombreArchivoEngrose(codigo) {
+  return `ENGROSE_${(codigo || '').replace(/\//g, '')}.docx`;
+}
+
 function tamanoDeFuente(marcas) {
   const marca = (marcas || []).find((m) => m.type === 'fontSize');
   const px = marca ? parseFloat(marca.attrs?.size) : NaN;

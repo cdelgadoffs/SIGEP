@@ -1,0 +1,135 @@
+.widget-tarjeta-punto-sesion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.widget-tarjeta-punto-sesion-error {
+  background: #fdecea;
+  border: 1px solid #f5c2c0;
+  border-radius: 6px;
+  color: #c62828;
+  font-size: 13px;
+  padding: 10px 14px;
+}
+.widget-tarjeta-punto-sesion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f5f6f8;
+  padding: 12px 18px;
+  border-bottom: 1px solid #c9c9ca;
+  transition: background 0.2s;
+}
+.widget-tarjeta-punto-sesion-titulo {
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a1a1a;
+  letter-spacing: 0.01em;
+}
+.widget-tarjeta-punto-sesion-titulo-confidencial {
+  color: #c62828;
+}
+.widget-tarjeta-punto-sesion-dependencia {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #e8f0fe;
+  color: #1a56db;
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px solid #1a56db;
+}
+.widget-tarjeta-punto-sesion-label {
+  display: block;
+  font-weight: 600;
+  font-size: 11px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+.widget-tarjeta-punto-sesion-contenido {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.widget-tarjeta-punto-sesion-acuerdo {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12.5px;
+  color: #666;
+}
+.widget-tarjeta-punto-sesion-principal {
+  padding: 11px 18px;
+}
+.widget-tarjeta-punto-sesion-tratado .base-card {
+  border-color: #2e7d32;
+}
+.widget-tarjeta-punto-sesion-tratado .widget-tarjeta-punto-sesion-header {
+  background: #e6f4ea;
+  border-bottom-color: #a5d6a7;
+}
+.widget-tarjeta-punto-sesion-tratado .widget-tarjeta-punto-sesion-seccion {
+  border-top-color: #cfe6d3;
+}
+.widget-tarjeta-punto-sesion-tratado .widget-tarjeta-punto-sesion-navegacion {
+  border-top-color: #cfe6d3;
+}
+.widget-tarjeta-punto-sesion-navegacion {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 18px;
+  border-top: 1px solid #c9c9ca;
+}
+.widget-tarjeta-punto-sesion .base-boton-icono[aria-label="Eliminar punto"]:hover:not(:disabled) {
+  background: #fdecea;
+  border-color: #f5c2c0;
+  color: #c62828;
+}
+
+.widget-tarjeta-punto-sesion-seccion {
+  padding: 11px 18px;
+  border-top: 1px solid #c9c9ca;
+}
+.widget-tarjeta-punto-sesion-aviso {
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: #999;
+}
+.widget-tarjeta-punto-sesion-resultado {
+  margin-top: 8px;
+  padding: 16px 20px;
+  font-size: 15.5px;
+  color: #444;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-left: 4px solid #ccc;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 1.4em;
+}
+.widget-tarjeta-punto-sesion-resultado:focus {
+  outline: none;
+  border-color: #90a4ae;
+  border-left-color: #90a4ae;
+}
+.widget-tarjeta-punto-sesion-resultado-vacio {
+  color: #999;
+  font-style: italic;
+}
+.widget-tarjeta-punto-sesion-separador {
+  border: none;
+  border-top: 1px dashed #ccc;
+  margin: 6px 0;
+}

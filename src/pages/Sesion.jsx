@@ -15,8 +15,9 @@ import BotonComenzarSesion from '../components/widgets/BotonComenzarSesion.jsx';
 import BotonFinalizarSesion from '../components/widgets/BotonFinalizarSesion.jsx';
 import BotonDescargarActa from '../components/widgets/BotonDescargarActa.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
-import { useUI, ANCHO_SIDEBAR2 } from '../context/UIContext.jsx';
+import { useUI, ANCHO_SIDEBAR2, ANCHO_VISTA_PREVIA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
+import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
 import { contarPuntos } from '../utils/puntos.js';
 
@@ -29,8 +30,10 @@ export default function Sesion() {
     sidebar5Ancho,
     sidebar6Abierto, setSidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
+    vistaPreviaAbierta,
   } = useUI();
   const { sesionSeleccionada, sesionFinalizada, CALENDARIO, PUNTOS } = useProyecto();
+  const { vistaCompletaSesion, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const izquierdaSidebar2 = izquierdaSidebar1 + ANCHO_SIDEBAR1_SESION;
   const panelIzquierda = izquierdaSidebar2 + ANCHO_SIDEBAR2;
@@ -41,6 +44,12 @@ export default function Sesion() {
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}
         mostrarNuevaExtraordinaria={false}
+        opcionesConfiguracion={[
+          vistaCompletaSesion
+            ? { id: 'vista', label: 'Ver por punto', icono: 'ri-file-list-line' }
+            : { id: 'vista', label: 'Ver todos los puntos', icono: 'ri-stack-line' },
+        ]}
+        onSeleccionarConfiguracion={() => cambiarAjuste('vistaCompletaSesion', !vistaCompletaSesion)}
       />
       <Sidebar1
         izquierda={izquierdaSidebar1}
@@ -79,7 +88,7 @@ export default function Sesion() {
       >
         <ListaAsuetos />
       </Sidebar6>
-      <PanelPrincipal izquierda={panelIzquierda}>
+      <PanelPrincipal izquierda={panelIzquierda} derecha={vistaPreviaAbierta && !sesionSeleccionada?.horaInicio ? ANCHO_VISTA_PREVIA : 0}>
         <PuntoSesion />
       </PanelPrincipal>
     </>

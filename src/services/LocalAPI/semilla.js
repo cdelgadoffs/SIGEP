@@ -26,10 +26,10 @@ export const CATALOGOS_SEMILLA = {
     { id: 'asuntos-generales', seccion: 'asuntos-generales', remitente: 'pleno', texto: 'Asuntos generales.', encabezado: true, tipos: ['ordinaria'] },
   ],
   tiposVoto: [
-    { id: 'unanimidad', nombre: 'por unanimidad', frase: 'por unanimidad', admitePrecision: true },
+    { id: 'unanimidad', nombre: 'por unanimidad', frase: 'por unanimidad', fraseEngrose: 'por unanimidad de votos', admitePrecision: true },
     { id: 'mayoria-4', nombre: 'por mayoría de 4 votos', frase: 'por mayoría de cuatro votos', votosRequeridos: 1 },
     { id: 'mayoria-3', nombre: 'por mayoría de 3 votos', frase: 'por mayoría de tres votos', votosRequeridos: 2 },
-    { id: 'retirar', nombre: 'acuerda retirar', frase: 'acuerda retirar', sinVotacion: true },
+    { id: 'retirar', nombre: 'acuerda retirar', frase: 'acuerda retirar', fraseEngrose: 'por decisión de retirar el asunto', sinVotacion: true },
   ],
   tiposVotacion: [
     { id: 'economica', nombre: 'votación económica' },
@@ -51,6 +51,13 @@ export const CATALOGOS_SEMILLA = {
       nombre: 'Fundamento',
       negrita: 'El Pleno del Órgano de Administración Judicial del Poder Judicial de la Federación',
       texto: ', con fundamento en los artículos 94, párrafo segundo, 100, párrafos décimo segundo, décimo tercero y décimo octavo de la Constitución Política de los Estados Unidos Mexicanos; 1, fracción VIII, 70, 71, 78, 79, 80, fracciones II y XI de la Ley Orgánica del Poder Judicial de la Federación; y.',
+    },
+    {
+      id: 'engrose',
+      nombre: 'Engrose',
+      texto: 'Así lo aprobaron {votacion} las personas integrantes del Pleno del Órgano de Administración Judicial, en sesión {tipo} de {fecha}, firmando al calce el Presidente del Órgano de Administración Judicial y la persona Titular de la Secretaría Ejecutiva del Pleno, de conformidad con lo dispuesto en los artículos 91, 99, fracción VIII y 100, párrafo primero de la Ley Orgánica del Poder Judicial de la Federación.',
+      cargoPresidente: ['PRESIDENTE DEL ÓRGANO DE ADMINISTRACIÓN JUDICIAL', 'DEL PODER JUDICIAL DE LA FEDERACIÓN'],
+      cargoSecretario: ['SECRETARIO EJECUTIVO DEL PLENO', 'DEL ÓRGANO DE ADMINISTRACIÓN JUDICIAL'],
     },
     { id: 'puente', nombre: 'Frase puente', texto: 'Por lo anterior, se emite el siguiente:' },
     { id: 'contenido', nombre: 'Punto de acuerdo nuevo', texto: 'Proyecto de Acuerdo del Pleno del Órgano de Administración Judicial ' },

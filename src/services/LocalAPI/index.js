@@ -7,7 +7,7 @@ import {
   usuarioActual, exigirEscritura, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   camposPunto, validarPunto, normalizarPunto,
-  esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
+  esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
 } from './reglas.js';
@@ -229,11 +229,12 @@ export async function celebrarSesion(id) {
   if (!sesion.horaInicio) throw new ApiError('SESION_NO_COMENZADA', 'Debes comenzar la sesión antes de celebrarla.');
   const ahora = new Date().toISOString();
   const ausentes = sesion.ausentes ?? [];
+  const secretario = await obtenerSecretarioEjecutivo();
   const asistentes = (await listarIntegrantes()).map((i) => ({
     integranteId: i.id, nombre: i.nombre, tratamiento: i.tratamiento, presidente: !!i.presidente, presente: !ausentes.includes(i.id),
   }));
   await guardar(STORE_SESIONES, {
-    ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, asistentes, version: sesion.version + 1,
+    ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, asistentes, secretarioEjecutivo: secretario ? { nombre: secretario.nombre } : null, version: sesion.version + 1,
   });
   const lista = await listarSesiones();
   return lista.find((s) => s.id === id);
@@ -279,7 +280,16 @@ async function armarPuntos(sesionId) {
   const catalogos = await catalogosConIntegrantes();
   const almacenados = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === sesionId);
   const fijos = generarPuntosFijos(sesion, sesiones, catalogos.puntosFijos);
-  return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []).map((punto) => decorarPunto(punto, catalogos));
+  const secretario = sesion.secretarioEjecutivo ?? await obtenerSecretarioEjecutivo();
+  const presidente = sesion.asistentes
+    ? sesion.asistentes.find((a) => a.presidente)
+    : (catalogos.integrantes || []).find((i) => i.presidente);
+  const contexto = { sesion, tipo: tipoDeSesion(sesion), presidente, secretario };
+  return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []).map((punto) => {
+    const decorado = decorarPunto(punto, catalogos);
+    const conHoja = !!(catalogos.secciones || []).find((s) => s.id === punto.seccion)?.requiereAcuerdo;
+    return { ...decorado, engrose: conHoja ? engroseDePunto(decorado, contexto, catalogos) : null };
+  });
 }
 
 async function puntoArmado(sesionId, id) {

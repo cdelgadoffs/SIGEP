@@ -176,3 +176,53 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.widget-vista-previa-barra-lectura {
+  justify-content: flex-end;
+}
+.widget-vista-previa-lectura-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  min-width: 0;
+}
+.widget-vista-previa-lectura-codigo {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.widget-vista-previa-lectura-remitente {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #e3f2fd;
+  color: #1565c0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.widget-vista-previa-engrose {
+  margin-top: 28px;
+  font-size: 13px;
+}
+.widget-vista-previa-engrose-parrafo {
+  text-align: justify;
+}
+.widget-vista-previa-engrose-firma {
+  margin-top: 70px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.widget-vista-previa-engrose-linea {
+  width: 70%;
+  margin: 0 auto 6px;
+  border-top: 1px solid #1a1a1a;
+}
+.widget-vista-previa-engrose-nombre {
+  margin-bottom: 2px;
+}
