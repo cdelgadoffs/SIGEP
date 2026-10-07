@@ -97,6 +97,16 @@ Un `Documento` es un **documento ProseMirror/TipTap en JSON** (`{ type: 'doc', c
 - Tipos permitidos: PDF, Word (`.doc`, `.docx`), Excel (`.xls`, `.xlsx`) e imágenes (`.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`). Cualquier otro → `ARCHIVO_INVALIDO`.
 - El contenido binario nunca viaja dentro del `Punto`: se obtiene con `descargarArchivo`. El caché del cliente guarda solo los metadatos.
 
+**Archivos automáticos (derivados al leer, no se guardan).** Además de los archivos adjuntos, `listarPuntos` agrega al principio de `Punto.archivos` unos `Archivo` con `autogenerado: true` y un `origen`, que representan documentos que se **generan a partir de los datos** (nunca se guardan, así que siempre están al día y no hay nada que reemplazar):
+
+| `origen` | En qué punto | Cuándo aparece | `nombre` | `id` |
+|---|---|---|---|---|
+| `punto` | Todo punto con hoja de acuerdo (secciones con `requiereAcuerdo`; no informes ni fijos; no los confidenciales ocultos) | Desde que se crea | `01-Punto de acuerdo_PLE002.docx` (el código sigue a `numero`) | `auto:punto:<puntoId>` |
+| `ordenDia` | El punto fijo "Aprobación del orden del día" | Con la **lista cerrada** | `Orden del dia - SESIÓN ORDINARIA NÚMERO 3.docx` (o `Orden del dia - PROYECTO DEL ORDEN DEL DÍA.docx` si la sesión aún no tiene número) | `auto:ordenDia:<sesionId>` |
+| `acta` | El punto fijo "Aprobación del acta" de la sesión ordinaria anterior y los de actas de extraordinarias | En cuanto la sesión referenciada está **celebrada** | `Acta - SESIÓN ORDINARIA NÚMERO TRES.docx` (número en letras mayúsculas) | `auto:acta:<sesionId referenciada>` |
+
+Llevan `tipo` Word, `tamano: null` y `creadoPor: 'sistema'`. **No se pueden quitar** ni se cuentan en el máximo de 30 archivos. `descargarArchivo` no los sirve (el servidor real tendrá que generarlos al enviarlos por correo): la interfaz los **construye en el cliente** con los constructores de documentos (`utils/puntoAcuerdo.js`, `ordenDia.js`, `actaSesion.js`) usando los datos vigentes, y por eso `adjuntarArchivos`, `eliminarArchivo` y el adjuntar al correo los ignoran.
+
 ### Integrante
 
 Persona que integra el Pleno (el quórum). Máximo **5**. No es una sesión ni un punto: es un dato del órgano.

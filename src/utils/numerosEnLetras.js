@@ -1,5 +1,6 @@
 const UNIDADES = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
 const ESPECIALES = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
+const VEINTI_ACENTUADOS = { 2: 'VEINTIDÓS ', 3: 'VEINTITRÉS ', 6: 'VEINTISÉIS ' };
 const DECENAS = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
 const CENTENAS = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
 
@@ -26,7 +27,7 @@ export function numeroALetras(numero) {
     else {
       const decena = Math.floor(resto / 10);
       const unidad = resto % 10;
-      if (decena === 2 && unidad > 0) resultado += unidad === 6 ? 'VEINTISÉIS ' : `VEINTI${UNIDADES[unidad]} `;
+      if (decena === 2 && unidad > 0) resultado += VEINTI_ACENTUADOS[unidad] ?? `VEINTI${UNIDADES[unidad]} `;
       else {
         resultado += DECENAS[decena];
         if (unidad > 0) resultado += ` Y ${UNIDADES[unidad]}`;

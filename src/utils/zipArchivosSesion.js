@@ -19,8 +19,12 @@ function nombreUnico(nombre, usados) {
   return nuevo;
 }
 
+export function archivosDescargables(punto) {
+  return (punto.archivos || []).filter((a) => a.id && a.origen !== 'ordenDia');
+}
+
 export function puntosConAdjuntos(puntos) {
-  return puntos.filter((p) => (p.archivos || []).some((a) => a.id));
+  return puntos.filter((p) => archivosDescargables(p).length > 0);
 }
 
 export async function generarZipArchivosSesion({ sesion, tipoSesion = 'Ordinaria', puntos, secciones, listaCerrada, binarios }) {
@@ -42,7 +46,7 @@ export async function generarZipArchivosSesion({ sesion, tipoSesion = 'Ordinaria
     const resumen = punto.contenido ? punto.contenido.slice(0, 35).trim() : 'Punto';
     const carpeta = zip.folder(nombreSeguro(`${numero}-${resumen}`));
     const usados = new Set();
-    punto.archivos.filter((a) => a.id && binarios.has(a.id)).forEach((archivo) => {
+    archivosDescargables(punto).filter((a) => binarios.has(a.id)).forEach((archivo) => {
       carpeta.file(nombreUnico(archivo.nombre, usados), binarios.get(archivo.id));
     });
   });

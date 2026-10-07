@@ -14,6 +14,8 @@ import {
   guardarCache, obtenerCache,
 } from '../services/SesionIndexedDB.js';
 import { etiquetaFecha } from '../utils/fechas.js';
+import { cargarLogo } from '../utils/logo.js';
+import { esArchivoAutomatico, analizarIdAutomatico, generarArchivoAutomatico } from '../utils/archivosAutomaticos.js';
 
 const ProyectoContext = createContext(null);
 
@@ -324,8 +326,24 @@ export function ProyectoProvider({ children }) {
   async function eliminarArchivo(puntoId, archivoId) {
     reemplazarPunto(puntoId, await eliminarArchivoEnApi(puntoId, archivoId));
   }
+  async function descargarArchivoAutomatico(archivoId) {
+    const { origen, clave } = analizarIdAutomatico(archivoId);
+    const logo = await cargarLogo();
+    if (origen === 'punto') {
+      const punto = puntos.find((p) => p.id === clave);
+      if (!punto) throw new Error('El punto ya no existe.');
+      return generarArchivoAutomatico(archivoId, {
+        punto, logo, plantillas: catalogos.plantillasActa, tiposBloque: catalogos.tiposBloqueActa, textosActa: catalogos.textosActa,
+      });
+    }
+    const sesion = fechasSesiones.find((s) => s.id === clave);
+    if (!sesion) throw new Error('La sesión ya no existe.');
+    return generarArchivoAutomatico(archivoId, {
+      sesion, logo, puntos: await listarPuntos(clave), secciones: catalogos.secciones, asistentes: sesion.asistentes ?? [],
+    });
+  }
   function descargarArchivo(archivoId) {
-    return descargarArchivoEnApi(archivoId);
+    return esArchivoAutomatico(archivoId) ? descargarArchivoAutomatico(archivoId) : descargarArchivoEnApi(archivoId);
   }
 
   const cargando = Object.values(cargas).some((c) => c.cargando);

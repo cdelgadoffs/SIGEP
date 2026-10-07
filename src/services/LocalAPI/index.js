@@ -12,7 +12,7 @@ import {
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
-  validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto,
+  validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -346,10 +346,17 @@ async function armarPuntos(sesionId) {
     ? sesion.asistentes.find((a) => a.presidente)
     : (catalogos.integrantes || []).find((i) => i.presidente);
   const contexto = { sesion, tipo: tipoDeSesion(sesion), presidente, secretario };
+  const infoSesiones = new Map(calcularEstados(sesiones).map((s) => [s.id, s]));
+  const nombreTipo = (tipo) => (catalogos.tiposSesion || []).find((t) => t.id === tipo)?.nombre ?? 'Ordinaria';
   return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []).map((punto) => {
     const decorado = decorarPunto(punto, catalogos);
     const conHoja = !!(catalogos.secciones || []).find((s) => s.id === punto.seccion)?.requiereAcuerdo;
-    return { ...decorado, engrose: conHoja ? engroseDePunto(decorado, contexto, catalogos) : null };
+    const automaticos = archivosAutomaticosDe(decorado, { conHoja, sesion, sesiones, infoSesiones, nombreTipo });
+    return {
+      ...decorado,
+      archivos: [...automaticos, ...(decorado.archivos || [])],
+      engrose: conHoja ? engroseDePunto(decorado, contexto, catalogos) : null,
+    };
   });
 }
 

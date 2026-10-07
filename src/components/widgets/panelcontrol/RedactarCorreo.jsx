@@ -40,7 +40,7 @@ export default function RedactarCorreo() {
   const [error, setError] = useState(null);
   const [enviando, setEnviando] = useState(false);
 
-  const documentos = PUNTOS.flatMap((p) => (p.archivos ?? []).filter((a) => a.id).map((a) => ({ id: a.id, nombre: a.nombre })));
+  const documentos = PUNTOS.flatMap((p) => (p.archivos ?? []).filter((a) => a.id && !a.autogenerado).map((a) => ({ id: a.id, nombre: a.nombre })));
   const hayContenido = form.para.length > 0 || form.cc.length > 0 || form.cco.length > 0
     || form.asunto.trim() !== '' || !esDocVacio(form.cuerpoDoc);
 

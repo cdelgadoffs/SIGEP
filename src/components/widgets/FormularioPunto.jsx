@@ -294,7 +294,7 @@ export default function FormularioPunto() {
                         icono={icono}
                         tono={tono}
                         onClick={a.id ? () => descargar(a) : undefined}
-                        onEliminar={a.id ? () => setArchivoAQuitar(a) : undefined}
+                        onEliminar={a.id && !a.autogenerado ? () => setArchivoAQuitar(a) : undefined}
                       />
                     );
                   })

@@ -880,3 +880,53 @@ export function diferenciaTexto(anterior, nuevo) {
   if (quitado && agregado) return { tipo: 'modificado', fragmentoAnterior: quitado, fragmento: agregado };
   return { tipo: 'modificado', fragmento: n };
 }
+
+const MIME_WORD = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+export function archivoAutomatico(origen, clave, nombre) {
+  return {
+    id: `auto:${origen}:${clave}`,
+    nombre,
+    tipo: MIME_WORD,
+    tamano: null,
+    origen,
+    autogenerado: true,
+    creadoEn: null,
+    creadoPor: 'sistema',
+  };
+}
+
+export function nombreArchivoPunto(numero) {
+  return `01-Punto de acuerdo_PLE${String(numero).padStart(3, '0')}.docx`;
+}
+
+export function nombreArchivoOrdenDia(numeroSesion, nombreTipo) {
+  const titulo = numeroSesion ? `SESIÓN ${nombreTipo.toUpperCase()} NÚMERO ${numeroSesion}` : 'PROYECTO DEL ORDEN DEL DÍA';
+  return `Orden del dia - ${titulo}.docx`;
+}
+
+export function nombreArchivoActa(numeroSesion, nombreTipo) {
+  const titulo = numeroSesion ? `SESIÓN ${nombreTipo.toUpperCase()} NÚMERO ${numeroEnLetras(numeroSesion).toUpperCase()}` : 'ACTA DE SESIÓN';
+  return `Acta - ${titulo}.docx`;
+}
+
+export function archivosAutomaticosDe(punto, { conHoja, sesion, sesiones, infoSesiones, nombreTipo }) {
+  if (!punto.fijo) {
+    return conHoja ? [archivoAutomatico('punto', punto.id, nombreArchivoPunto(punto.numero))] : [];
+  }
+  const { clave } = analizarPuntoFijo(punto.id);
+  if (clave === 'orden-dia') {
+    if (!sesion.listaCerrada) return [];
+    const info = infoSesiones.get(sesion.id);
+    return [archivoAutomatico('ordenDia', sesion.id, nombreArchivoOrdenDia(info?.numeroSesion, nombreTipo(info?.tipo)))];
+  }
+  let referenciada = null;
+  if (clave === 'acta-anterior') {
+    referenciada = sesiones.filter((x) => tipoDeSesion(x) === 'ordinaria' && x.id < sesion.id).sort((a, b) => (a.id < b.id ? -1 : 1)).pop();
+  } else if (clave.startsWith('acta-auto-')) {
+    referenciada = sesiones.find((x) => x.id === clave.slice('acta-auto-'.length));
+  }
+  if (!referenciada?.celebrada) return [];
+  const info = infoSesiones.get(referenciada.id);
+  return [archivoAutomatico('acta', referenciada.id, nombreArchivoActa(info?.numeroSesion, nombreTipo(info?.tipo)))];
+}

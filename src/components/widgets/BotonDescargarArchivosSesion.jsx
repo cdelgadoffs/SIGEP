@@ -2,7 +2,7 @@ import { useState } from 'react';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { generarZipArchivosSesion, puntosConAdjuntos } from '../../utils/zipArchivosSesion.js';
+import { generarZipArchivosSesion, puntosConAdjuntos, archivosDescargables } from '../../utils/zipArchivosSesion.js';
 import { guardarEnDisco } from '../../utils/archivos.js';
 import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/BotonDescargarArchivosSesion.css';
@@ -21,7 +21,7 @@ export default function BotonDescargarArchivosSesion() {
     try {
       const binarios = new Map();
       for (const punto of puntosConAdjuntos(PUNTOS)) {
-        for (const archivo of punto.archivos.filter((a) => a.id)) {
+        for (const archivo of archivosDescargables(punto)) {
           binarios.set(archivo.id, (await descargarArchivo(archivo.id)).blob);
         }
       }
