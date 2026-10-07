@@ -5,6 +5,7 @@ import BotonIcono from '../base/BotonIcono.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { etiquetaMes } from '../../utils/fechas.js';
+import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/CintaSesiones.css';
 
 export default function CintaSesiones({ textoVacio, titulo }) {
@@ -20,7 +21,7 @@ export default function CintaSesiones({ textoVacio, titulo }) {
   const fechasFiltradas = mesFiltro
     ? fechas.filter((f) => f.id.substring(0, 7) === mesFiltro)
     : fechas;
-  const fechasConForma = fechasFiltradas.map((f) => ({ ...f, pildora: f.tipo === 'extraordinaria' }));
+  const fechasConForma = fechasFiltradas.map((f) => ({ ...f, label: `${nombreTipoSesion(f.tipo)} del ${f.label}`, pildora: f.tipo === 'extraordinaria' }));
 
   const proximaGlobal = fechas.find((f) => f.estado === 'proxima');
   const mostrarVolverProxima = proximaGlobal && proximaGlobal.id.substring(0, 7) !== mesFiltro;

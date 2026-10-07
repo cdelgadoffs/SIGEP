@@ -22,7 +22,7 @@
   border: 1px solid #d0d0d0;
   border-radius: 6px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-  z-index: 1200;
+  z-index: 2100;
   padding: 4px 0;
 }
 .base-lista-expandible-item {
