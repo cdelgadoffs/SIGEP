@@ -198,3 +198,19 @@
   .lg-fecha { display: none; }
   .lg-panel-claro { padding: 32px 28px; }
 }
+
+.lg-cargando {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  color: #666;
+  font-size: 14px;
+}
+.lg-error {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: #c62828;
+  line-height: 1.4;
+}

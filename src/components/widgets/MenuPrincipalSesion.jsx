@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
 import SubMenuDD from './SubMenuDD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -13,6 +14,7 @@ const VISTAS_MENU_PRINCIPAL = [
 ];
 
 export default function MenuPrincipalSesion() {
+  const { puedeEscribir } = useAuth();
   const { SECCIONES_DOCUMENTO, PUNTOS, sesionSeleccionada, sesionFinalizada, listaCerrada, cargando, error } = useProyecto();
   const {
     vistaActual, setVistaActual,
@@ -33,7 +35,7 @@ export default function MenuPrincipalSesion() {
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
     badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado).length,
-    sinAgregar: listaCerrada && !s.admiteConListaCerrada,
+    sinAgregar: !puedeEscribir || (listaCerrada && !s.admiteConListaCerrada),
   }));
 
   const avisoSecciones = seccionesConBadge.length > 0

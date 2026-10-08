@@ -50,3 +50,8 @@ export const eliminarBorrador = (clave) => borrar(STORE_BORRADORES, clave);
 
 export const guardarCache = (clave, valor) => escribir(STORE_CACHE, clave, valor);
 export const obtenerCache = (clave) => leer(STORE_CACHE, clave);
+
+export async function limpiarCliente() {
+  await pedir(STORE_CACHE, 'readwrite', (s) => s.clear());
+  await pedir(STORE_BORRADORES, 'readwrite', (s) => s.clear());
+}

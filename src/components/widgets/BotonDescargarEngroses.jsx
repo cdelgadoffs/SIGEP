@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -9,6 +10,7 @@ import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/BotonDescargarEngroses.css';
 
 export default function BotonDescargarEngroses({ etiqueta = 'Descargar ZIP de engroses' }) {
+  const { puedeDescargar } = useAuth();
   const { sesionSeleccionada, PUNTOS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA } = useProyecto();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +37,8 @@ export default function BotonDescargarEngroses({ etiqueta = 'Descargar ZIP de en
       setGenerando(false);
     }
   }
+
+  if (!puedeDescargar) return null;
 
   return (
     <>

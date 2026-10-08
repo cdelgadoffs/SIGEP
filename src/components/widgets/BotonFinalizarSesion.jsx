@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import '../../styles/widgets/BotonFinalizarSesion.css';
 
 export default function BotonFinalizarSesion() {
+  const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, finalizarSesion } = useProyecto();
   const [confirmando, setConfirmando] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
@@ -27,6 +29,8 @@ export default function BotonFinalizarSesion() {
       setFinalizando(false);
     }
   }
+
+  if (!puedeEscribir) return null;
 
   return (
     <div className="widget-boton-finalizar">

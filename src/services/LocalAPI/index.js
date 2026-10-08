@@ -6,7 +6,7 @@ import {
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
-  usuarioActual, exigirEscritura, puedeVerConfidencial,
+  usuarioActual, exigirEscritura, exigirDescarga, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   camposPunto, validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
@@ -592,6 +592,7 @@ export async function eliminarArchivo(puntoId, archivoId) {
 }
 
 export async function descargarArchivo(archivoId) {
+  exigirDescarga();
   const registro = await obtener(STORE_ARCHIVOS, archivoId);
   if (!registro) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
   const punto = await obtener(STORE_PUNTOS, registro.puntoId);
@@ -874,7 +875,7 @@ export async function enviarCorreo(datos) {
 }
 
 export async function listarAvisosEdicion(sesionId) {
-  if (usuarioActual().rol !== 'capturista') return [];
+  if (usuarioActual().rol !== 'administrador') return [];
   const avisos = (await obtenerTodos(STORE_AVISOS_EDICION)).filter((a) => a.sesionId === sesionId);
   if (avisos.length === 0) return [];
   const puntos = await armarPuntos(sesionId);

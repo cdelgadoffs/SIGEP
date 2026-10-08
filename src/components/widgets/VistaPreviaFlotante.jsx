@@ -28,6 +28,7 @@ export default function VistaPreviaFlotante({
   codigo,
   fecha,
   soloLectura = false,
+  permitirDescarga = true,
   remitente,
   engrose,
   onCerrar,
@@ -173,7 +174,7 @@ export default function VistaPreviaFlotante({
               {codigo && <span className="widget-vista-previa-lectura-codigo">{codigo}</span>}
               {remitente && <span className="widget-vista-previa-lectura-remitente">{remitente}</span>}
             </div>
-            <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />
+            {permitirDescarga && <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />}
             <BotonIcono icono="ri-close-line" ariaLabel="Cerrar vista previa" onClick={onCerrar} />
           </div>
         )}
@@ -218,7 +219,7 @@ export default function VistaPreviaFlotante({
             )}
             <BarraHerramientasTexto obtenerEditor={() => editorActivoRef.current} onError={setErrorDescarga} />
             <span className="widget-vista-previa-separador"></span>
-            <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />
+            {permitirDescarga && <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />}
           </div>
         )}
         <div className="widget-vista-previa-hoja">

@@ -10,12 +10,14 @@ import '../../styles/widgets/Topbar.css';
 
 export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesConfiguracion = [], onSeleccionarConfiguracion, mostrarNuevaExtraordinaria = true }) {
   const { toggleSidebar5 } = useUI();
-  const { cerrarSesion } = useAuth();
+  const { cerrarSesion, puedeEscribir } = useAuth();
 
   return (
     <header className="widget-topbar">
       <div className="widget-topbar-left">
-        <button type="button" className="widget-topbar-menu" aria-label="Alternar panel" onClick={toggleSidebar5}>☰</button>
+        {puedeEscribir && (
+          <button type="button" className="widget-topbar-menu" aria-label="Alternar panel" onClick={toggleSidebar5}>☰</button>
+        )}
         <img
           className="widget-topbar-logo"
           src={URL_LOGO}
@@ -24,7 +26,7 @@ export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesCon
       </div>
       <div className="widget-topbar-right">
         <BuscadorGlobal value={terminoBusqueda} onChange={onCambiarBusqueda} placeholder="Buscar punto..." />
-        {mostrarNuevaExtraordinaria && <NuevaSesionExtraordinaria />}
+        {mostrarNuevaExtraordinaria && puedeEscribir && <NuevaSesionExtraordinaria />}
         <FechaDia />
         <BotonS onClick={cerrarSesion}>Salir</BotonS>
         <BotonExpandible

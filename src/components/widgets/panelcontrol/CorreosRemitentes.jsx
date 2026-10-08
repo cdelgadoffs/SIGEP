@@ -22,7 +22,8 @@ export default function CorreosRemitentes() {
     try {
       await guardarCorreoRemitente(id, valor(id));
       setBorradores((b) => {
-        const { [id]: _, ...resto } = b;
+        const resto = { ...b };
+        delete resto[id];
         return resto;
       });
     } catch (e) {

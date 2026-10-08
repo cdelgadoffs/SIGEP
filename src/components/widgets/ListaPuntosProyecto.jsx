@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
@@ -63,7 +64,7 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
                     texto={a.nombre}
                     icono={icono}
                     tono={tono}
-                    onClick={a.id ? () => onAbrir(a) : undefined}
+                    onClick={a.id && onAbrir ? () => onAbrir(a) : undefined}
                   />
                 );
               })}
@@ -110,6 +111,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
 }
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
+  const { puedeEscribir, puedeDescargar } = useAuth();
   const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
@@ -141,7 +143,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
     }
   }
   const renderOpciones = (punto, deLaSeccion, seccionId) => {
-    if (sesionFinalizada || punto.fijo) return null;
+    if (sesionFinalizada || punto.fijo || !puedeEscribir) return null;
     const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar'] : opcionesOcultas;
     const delUsuario = deLaSeccion.filter((p) => !p.fijo);
     const indice = delUsuario.findIndex((p) => p.id === punto.id);
@@ -172,7 +174,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
         {SECCIONES_DOCUMENTO.map((s) => (
           <div key={s.id} className="widget-lista-puntos-grupo">
             <div className="widget-lista-puntos-separador">{s.nombre}</div>
-            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar)}
+            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, puedeDescargar ? abrirVistaArchivo : undefined, seleccionadoId, seleccionar)}
           </div>
         ))}
       </div>
@@ -185,7 +187,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   return (
     <div className="widget-lista-puntos-proyecto">
       {avisoError}
-      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar) : (
+      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, puedeDescargar ? abrirVistaArchivo : undefined, seleccionadoId, seleccionar) : (
         estadoCarga === 'listo' && <div className="widget-lista-puntos-vacio">Sin secciones definidas.</div>
       )}
       {!seccion && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}

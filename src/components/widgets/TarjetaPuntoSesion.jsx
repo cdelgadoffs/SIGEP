@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import Card from '../base/Card.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
@@ -10,6 +11,8 @@ import '../../styles/widgets/TarjetaPuntoSesion.css';
 
 export default function TarjetaPuntoSesion({ item, navegacion }) {
   const { REMITENTES, sesionFinalizada, listaCerrada, registrarVotacion, TIPOS_VOTO, TIPOS_VOTACION, ESTADOS_VOTO, TIPOS_CONOCIMIENTO } = useProyecto();
+  const { puedeEscribir } = useAuth();
+  const soloLectura = sesionFinalizada || !puedeEscribir;
   const { INTEGRANTES } = useOrgano();
   const [errorAccion, setErrorAccion] = useState(null);
   const [votacionLocal, setVotacionLocal] = useState(null);
@@ -62,7 +65,7 @@ export default function TarjetaPuntoSesion({ item, navegacion }) {
                 value={valorVotacion}
                 onChange={(valor) => cambiarVotacion(valor)}
                 tiposConocimiento={TIPOS_CONOCIMIENTO}
-                disabled={sesionFinalizada}
+                disabled={soloLectura}
               />
             ) : (
               <SelectorVotacion
@@ -72,14 +75,14 @@ export default function TarjetaPuntoSesion({ item, navegacion }) {
                 tiposVotacion={TIPOS_VOTACION}
                 estadosVoto={ESTADOS_VOTO}
                 integrantes={INTEGRANTES}
-                disabled={sesionFinalizada}
+                disabled={soloLectura}
               />
             ))}
             {punto.fijo || punto.tratado ? (
               <div
                 key={punto.id + ':' + punto.textoVotacion}
                 className="widget-tarjeta-punto-sesion-resultado"
-                contentEditable={!punto.fijo && !sesionFinalizada}
+                contentEditable={!punto.fijo && !soloLectura}
                 suppressContentEditableWarning
                 onBlur={(e) => {
                   const texto = e.currentTarget.textContent;
@@ -119,7 +122,7 @@ export default function TarjetaPuntoSesion({ item, navegacion }) {
               etiquetaSiguiente="Punto siguiente"
             />
           )}
-          {!sesionFinalizada && !listaCerrada && !punto.fijo && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
+          {puedeEscribir && !sesionFinalizada && !listaCerrada && !punto.fijo && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
         </div>
       </Card>
     </div>

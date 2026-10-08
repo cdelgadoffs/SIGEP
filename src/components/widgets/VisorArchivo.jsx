@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import Modal from '../base/Modal.jsx';
 import BotonS from '../base/BotonS.jsx';
 import { useUI } from '../../context/UIContext.jsx';
@@ -9,6 +10,7 @@ import '../../styles/widgets/VisorArchivo.css';
 const SIN_CARGAR = { id: null, error: null, archivo: null, url: null, texto: '' };
 
 export default function VisorArchivo() {
+  const { puedeDescargar } = useAuth();
   const { archivoEnVista, cerrarVistaArchivo } = useUI();
   const { descargarArchivo } = useProyecto();
   const [estado, setEstado] = useState(SIN_CARGAR);
@@ -82,7 +84,7 @@ export default function VisorArchivo() {
       titulo={archivoEnVista?.nombre}
       onCerrar={cerrarVistaArchivo}
       tamano={vista === 'word' || vista === 'pdf' ? 'documento' : vista ? 'completo' : 'normal'}
-      acciones={cargado.archivo && <BotonS variant="claro" onClick={descargar}>Descargar</BotonS>}
+      acciones={cargado.archivo && puedeDescargar && <BotonS variant="claro" onClick={descargar}>Descargar</BotonS>}
     >
       <div className="widget-visor-archivo">{contenido()}</div>
     </Modal>

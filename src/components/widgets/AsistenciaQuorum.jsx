@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import Modal from '../base/Modal.jsx';
 import BotonS from '../base/BotonS.jsx';
@@ -13,13 +14,14 @@ function iniciales(nombre) {
 export default function AsistenciaQuorum() {
   const { ASISTENCIA, GRADOS, registrarAsistencia, sesionActivaFecha, sesionFinalizada, cargando, error } = useProyecto();
   const { INTEGRANTES } = useOrgano();
+  const { puedeEscribir } = useAuth();
   const [errorAccion, setErrorAccion] = useState(null);
 
   const filas = ASISTENCIA
     .map((a) => ({ ...a, integrante: INTEGRANTES.find((i) => i.id === a.integranteId) }))
     .filter((f) => f.integrante);
   const presentes = filas.filter((f) => f.presente).length;
-  const deshabilitado = !sesionActivaFecha || sesionFinalizada;
+  const deshabilitado = !sesionActivaFecha || sesionFinalizada || !puedeEscribir;
 
   async function cambiar(integranteId, presente) {
     setErrorAccion(null);

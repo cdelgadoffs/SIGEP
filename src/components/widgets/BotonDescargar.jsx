@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -8,6 +9,7 @@ import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/BotonDescargar.css';
 
 export default function BotonDescargar() {
+  const { puedeDescargar } = useAuth();
   const { sesionSeleccionada, PUNTOS, SECCIONES_DOCUMENTO } = useProyecto();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState(null);
@@ -29,6 +31,8 @@ export default function BotonDescargar() {
       setGenerando(false);
     }
   }
+
+  if (!puedeDescargar) return null;
 
   return (
     <div className="widget-boton-descargar">

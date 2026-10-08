@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import CampoHora from '../base/CampoHora.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
@@ -7,6 +8,7 @@ import { horaDeISO } from '../../utils/fechas.js';
 import '../../styles/widgets/HorariosSesion.css';
 
 export default function HorariosSesion() {
+  const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, editarHorario } = useProyecto();
   const [error, setError] = useState(null);
 
@@ -35,13 +37,13 @@ export default function HorariosSesion() {
       {inicio && (
         <div className="widget-horarios-sesion-tarjeta widget-horarios-sesion-inicio">
           <span>Comenzó a las</span>
-          <CampoHora value={horaDeISO(inicio)} onChange={(hhmm) => cambiar('horaInicio', hhmm)} tono="verde" ariaLabel="Hora de inicio" disabled={sesionFinalizada} />
+          <CampoHora value={horaDeISO(inicio)} onChange={(hhmm) => cambiar('horaInicio', hhmm)} tono="verde" ariaLabel="Hora de inicio" disabled={sesionFinalizada || !puedeEscribir} />
         </div>
       )}
       {fin && (
         <div className="widget-horarios-sesion-tarjeta widget-horarios-sesion-fin">
           <span>Finalizó a las</span>
-          <CampoHora value={horaDeISO(fin)} onChange={(hhmm) => cambiar('horaFin', hhmm)} tono="rojo" ariaLabel="Hora de fin" disabled={sesionFinalizada} />
+          <CampoHora value={horaDeISO(fin)} onChange={(hhmm) => cambiar('horaFin', hhmm)} tono="rojo" ariaLabel="Hora de fin" disabled={sesionFinalizada || !puedeEscribir} />
         </div>
       )}
       <Modal abierto={!!error} titulo="Horario" onCerrar={() => setError(null)}>

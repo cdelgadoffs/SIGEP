@@ -1,4 +1,5 @@
 import { ApiError } from '../ApiError.js';
+import { usuarioActual as usuarioDelToken } from '../auth.js';
 
 const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa'];
 const MAX_TEXTO = 20000;
@@ -6,20 +7,26 @@ const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
 const EXTENSIONES_PERMITIDAS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
 
-const USUARIO = { id: 'usuario-local', nombre: 'Capturista local', rol: 'capturista' };
+const SIN_USUARIO = { id: 'anonimo', nombre: 'Anónimo', rol: null };
 
 export function usuarioActual() {
-  return USUARIO;
+  return usuarioDelToken() ?? SIN_USUARIO;
 }
 
 export function exigirEscritura() {
-  if (USUARIO.rol !== 'capturista') {
+  if (usuarioActual().rol !== 'administrador') {
     throw new ApiError('NO_AUTORIZADO', 'No tienes permiso para modificar.');
   }
 }
 
+export function exigirDescarga() {
+  if (usuarioActual().rol !== 'administrador') {
+    throw new ApiError('NO_AUTORIZADO', 'No tienes permiso para descargar archivos.');
+  }
+}
+
 export function puedeVerConfidencial() {
-  return USUARIO.rol === 'capturista';
+  return usuarioActual().rol === 'administrador';
 }
 
 export function fechaISO(d) {
@@ -402,7 +409,7 @@ export function validarArchivos(archivos, yaAdjuntos = 0) {
 
 export function prepararArchivos(puntoId, archivos) {
   const ahora = new Date().toISOString();
-  const creadoPor = USUARIO.id;
+  const creadoPor = usuarioActual().id;
   const registros = archivos.map((a) => ({
     id: crypto.randomUUID(), puntoId, nombre: a.name, tipo: a.type, tamano: a.size, creadoEn: ahora, creadoPor, blob: a,
   }));

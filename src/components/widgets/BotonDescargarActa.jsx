@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -10,6 +11,7 @@ import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/BotonDescargarActa.css';
 
 export default function BotonDescargarActa() {
+  const { puedeDescargar } = useAuth();
   const { sesionSeleccionada, PUNTOS, SECCIONES_DOCUMENTO, ASISTENCIA } = useProyecto();
   const { INTEGRANTES } = useOrgano();
   const [generando, setGenerando] = useState(false);
@@ -42,6 +44,8 @@ export default function BotonDescargarActa() {
       setGenerando(false);
     }
   }
+
+  if (!puedeDescargar) return null;
 
   return (
     <div className="widget-boton-descargar-acta">

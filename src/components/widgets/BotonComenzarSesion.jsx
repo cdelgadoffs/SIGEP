@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -6,6 +7,7 @@ import { nombreTipoSesion } from '../../utils/sesiones.js';
 import '../../styles/widgets/BotonComenzarSesion.css';
 
 export default function BotonComenzarSesion() {
+  const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, listaCerrada, comenzarSesion } = useProyecto();
   const [comenzando, setComenzando] = useState(false);
   const [error, setError] = useState(null);
@@ -25,6 +27,8 @@ export default function BotonComenzarSesion() {
   if (!listaCerrada) {
     return <div className="widget-boton-comenzar-aviso">Debes cerrar la lista de puntos antes de poder comenzar la sesión.</div>;
   }
+
+  if (!puedeEscribir) return null;
 
   return (
     <div className="widget-boton-comenzar">

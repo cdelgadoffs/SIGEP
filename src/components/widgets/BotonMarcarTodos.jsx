@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 
 export default function BotonMarcarTodos() {
+  const { puedeEscribir } = useAuth();
   const { PUNTOS, sesionFinalizada, marcarTodosPuntos } = useProyecto();
   const [guardando, setGuardando] = useState(false);
   const [errorAccion, setErrorAccion] = useState(null);
@@ -20,6 +22,8 @@ export default function BotonMarcarTodos() {
       setGuardando(false);
     }
   }
+
+  if (!puedeEscribir) return null;
 
   return (
     <>

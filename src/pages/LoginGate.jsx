@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/pages/Gates.css';
 
 export default function LoginGate() {
-  const { iniciarSesion } = useAuth();
+  const { iniciarSesion, error } = useAuth();
   const [fechaHoy, setFechaHoy] = useState('');
 
   useEffect(() => {
@@ -42,6 +42,7 @@ export default function LoginGate() {
           <p className="lg-box-sub">Acceso restringido a cuentas institucionales autorizadas.</p>
 
           <button className="lg-btn" onClick={iniciarSesion}>Iniciar sesión con Microsoft</button>
+          {error && <p className="lg-error">{error}</p>}
 
           <div className="lg-box-footer">Órgano de Administración Judicial</div>
         </div>

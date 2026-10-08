@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import ListaExpandible from '../base/ListaExpandible.jsx';
@@ -24,6 +25,7 @@ export default function ListaEngroses() {
     sesionSeleccionada, enviarEngrose, cargando, error,
   } = useProyecto();
   const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta } = useUI();
+  const { puedeEscribir, puedeDescargar } = useAuth();
   const [filtroRemitente, setFiltroRemitente] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [desmarcados, setDesmarcados] = useState(() => new Set());
@@ -113,9 +115,11 @@ export default function ListaEngroses() {
       </div>
       <div className="widget-lista-engroses-barra">
         <div className="widget-lista-engroses-barra-izq">
-          <BotonS variant="claro" onClick={enviarSeleccionados} disabled={enviandoTodos || enviandoId !== null || pendientesMarcados.length === 0}>
-            {enviandoTodos ? 'Enviando...' : `Enviar engroses seleccionados (${pendientesMarcados.length})`}
-          </BotonS>
+          {puedeEscribir && (
+            <BotonS variant="claro" onClick={enviarSeleccionados} disabled={enviandoTodos || enviandoId !== null || pendientesMarcados.length === 0}>
+              {enviandoTodos ? 'Enviando...' : `Enviar engroses seleccionados (${pendientesMarcados.length})`}
+            </BotonS>
+          )}
           <ListaExpandible
             valorActual={filtroRemitente}
             etiquetaActual={opcionesRemitente.find((o) => o.id === filtroRemitente)?.label ?? 'Todos los remitentes'}
@@ -143,7 +147,7 @@ export default function ListaEngroses() {
             }
             onClick={() => alternarVistaPrevia(punto.id)}
           >
-            {!punto.engroseEnviado && (
+            {puedeEscribir && !punto.engroseEnviado && (
               <span className="widget-lista-engroses-casilla" onClick={(e) => e.stopPropagation()}>
                 <Checkbox checked={!desmarcados.has(punto.id)} onChange={() => alternarSeleccion(punto.id)} />
               </span>
@@ -156,11 +160,13 @@ export default function ListaEngroses() {
               </div>
               <div className="widget-lista-engroses-resumen">{punto.contenido || 'Sin contenido'}</div>
             </div>
-            <span onClick={(e) => e.stopPropagation()}>
-              <BotonS variant="claro" onClick={() => enviarUno(punto.id)} disabled={enviandoTodos || enviandoId !== null}>
-                {enviandoId === punto.id ? 'Enviando...' : (punto.engroseEnviado ? 'Reenviar' : 'Enviar engrose')}
-              </BotonS>
-            </span>
+            {puedeEscribir && (
+              <span onClick={(e) => e.stopPropagation()}>
+                <BotonS variant="claro" onClick={() => enviarUno(punto.id)} disabled={enviandoTodos || enviandoId !== null}>
+                  {enviandoId === punto.id ? 'Enviando...' : (punto.engroseEnviado ? 'Reenviar' : 'Enviar engrose')}
+                </BotonS>
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -169,6 +175,7 @@ export default function ListaEngroses() {
           key={puntoVistaPrevia.id}
           abierto
           soloLectura
+          permitirDescarga={puedeDescargar}
           derecha={0}
           arriba={ALTO_TOPBAR}
           form={formDePunto(puntoVistaPrevia, PLANTILLAS_ACTA, TEXTOS_ACTA)}

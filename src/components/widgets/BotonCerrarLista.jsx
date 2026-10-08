@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import Modal from '../base/Modal.jsx';
 import BotonS from '../base/BotonS.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -6,6 +7,7 @@ import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/BotonCerrarLista.css';
 
 export default function BotonCerrarLista() {
+  const { puedeEscribir } = useAuth();
   const { sesionActivaFecha, listaCerrada, establecerListaCerrada, AVISOS_EDICION } = useProyecto();
   const { setAvisosEdicionExpandido } = useUI();
   const [confirmando, setConfirmando] = useState(false);
@@ -35,6 +37,8 @@ export default function BotonCerrarLista() {
   const mensaje = listaCerrada
     ? '¿Abrir el registro de puntos? Se permitirá añadir, editar y eliminar puntos.'
     : '¿Cerrar el registro de puntos? No se podrán añadir, editar ni eliminar puntos hasta reabrirlo.';
+
+  if (!puedeEscribir) return null;
 
   return (
     <>

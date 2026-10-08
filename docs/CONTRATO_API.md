@@ -135,7 +135,7 @@ Registro **único** (puede no existir). No cuenta en el quórum ni en los votos.
 
 ### Numeración y puntos fijos
 
-El **orden del documento** de una sesión es: las secciones en el orden de su catálogo; dentro de cada sección, primero los puntos fijos (en el orden de su catálogo) y después los puntos del capturista por `orden`. El `numero` de cada punto es su posición en ese orden (1…N), **contando también los confidenciales y los fijos**. Se calcula al leer: nunca se guarda, y cambia solo si el orden cambia (crear, eliminar, mover, cambiar de sección). El cliente lo presenta como `PLE/001`.
+El **orden del documento** de una sesión es: las secciones en el orden de su catálogo; dentro de cada sección, primero los puntos fijos (en el orden de su catálogo) y después los puntos del administrador por `orden`. El `numero` de cada punto es su posición en ese orden (1…N), **contando también los confidenciales y los fijos**. Se calcula al leer: nunca se guarda, y cambia solo si el orden cambia (crear, eliminar, mover, cambiar de sección). El cliente lo presenta como `PLE/001`.
 
 **Puntos fijos (autogenerados).** Los define el catálogo `puntosFijos`; el servidor los agrega a `listarPuntos` de cada sesión ordinaria. En este proyecto:
 
@@ -160,7 +160,7 @@ Son `fijo: true` de la sección `actas` (sin `encabezado`), con `id` `fijo:<sesi
 
 ### Lista cerrada
 
-Cada sesión tiene un registro de puntos que el capturista puede **cerrar** (`listaCerrada: true`) para congelar el orden del día antes de celebrar. Reglas del servidor:
+Cada sesión tiene un registro de puntos que el administrador puede **cerrar** (`listaCerrada: true`) para congelar el orden del día antes de celebrar. Reglas del servidor:
 
 - Con la lista cerrada **no se pueden crear, editar, eliminar ni mover puntos** (`LISTA_CERRADA`). La excepción son las secciones del catálogo con el atributo `admiteConListaCerrada: true` (hoy `asuntos-generales`), donde **sí se pueden crear** puntos; editarlos, eliminarlos y moverlos sigue prohibido. Adjuntar y quitar archivos, y marcar puntos como tratados, siguen permitidos.
 - La lista se puede **reabrir** mientras la sesión no esté celebrada. Una sesión celebrada es inmutable (`SESION_CELEBRADA`).
@@ -168,7 +168,7 @@ Cada sesión tiene un registro de puntos que el capturista puede **cerrar** (`li
 
 ### Avisos de edición (notificar cambios a los remitentes)
 
-Cuando el capturista edita un punto, queda pendiente avisar de ese cambio al remitente del punto. Es un dato de la sesión (persistido por el API), no estado de interfaz.
+Cuando el administrador edita un punto, queda pendiente avisar de ese cambio al remitente del punto. Es un dato de la sesión (persistido por el API), no estado de interfaz.
 
 | Campo | Tipo | Notas |
 |---|---|---|
@@ -181,7 +181,7 @@ Cuando el capturista edita un punto, queda pendiente avisar de ese cambio al rem
 
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
-| `listarAvisosEdicion(sesionId)` | id de sesión | `AvisoEdicion[]` (por antigüedad). Solo el capturista los ve: para los lectores es `[]`. | — |
+| `listarAvisosEdicion(sesionId)` | id de sesión | `AvisoEdicion[]` (por antigüedad). Solo el administrador los ve: para los lectores es `[]`. | — |
 | `enviarAvisoEdicion(id)` | id del aviso | — (el aviso desaparece) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SIN_CORREO_REMITENTE` |
 | `descartarAvisoEdicion(id)` | id del aviso | — | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
 
@@ -234,7 +234,7 @@ La precisión de un voto aplica solo cuando el tipo de voto **y** el tipo de vot
 
 ### Operaciones del órgano (integrantes y SEPLE)
 
-Lectura para cualquier usuario autenticado; escritura solo del capturista.
+Lectura para cualquier usuario autenticado; escritura solo del administrador.
 
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
@@ -266,7 +266,7 @@ Todos llevan `version`, `creadoEn` y `modificadoEn` del servidor.
 
 ### Operaciones de correo
 
-Lectura para cualquier usuario autenticado; escritura solo del capturista.
+Lectura para cualquier usuario autenticado; escritura solo del administrador.
 
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
@@ -357,7 +357,7 @@ La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada int
 | `marcarPuntos(sesionId, tratado)` | id de sesión + bool | `Punto[]` de la sesión (ordenados, ya filtrados según el usuario) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `adjuntarArchivos(puntoId, archivos)` | id de punto + archivos (binarios) | `Punto` actualizado (`version` + 1) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `ARCHIVO_INVALIDO` |
 | `eliminarArchivo(puntoId, archivoId)` | ids | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
-| `descargarArchivo(archivoId)` | id | `{ nombre, tipo, blob }` (en el servidor real, una URL firmada) | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
+| `descargarArchivo(archivoId)` | id | `{ nombre, tipo, blob }` (en el servidor real, una URL firmada) | `NO_AUTORIZADO` (rol `lector` o punto confidencial), `NO_ENCONTRADO` |
 | `reordenarPuntos(sesionId, seccion, ids)` | sesión, sección e **ids de la sección en el orden deseado** | `Punto[]` de esa sección, ya ordenados | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
 
 - `enviarEngrose(puntoId)` **simula** el envío del engrose (el servidor real mandará el correo al remitente): solo aplica a puntos con engrose (con hoja de acuerdo; no fijos ni confidenciales; si no, `VALIDACION`) de una sesión **celebrada** (`SESION_NO_CELEBRADA`), marca `engroseEnviado` y fija `engroseEnviadoEn`. Se puede repetir (reenviar: solo actualiza el timestamp y `version`). Es una excepción documentada a la inmutabilidad de la sesión celebrada, como `editarHorario`. Los correos de los remitentes aún no son parte del contrato.
@@ -372,7 +372,7 @@ La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada int
 - `crearPunto` acepta `archivos` (binarios) opcionales y los valida con las mismas reglas de `adjuntarArchivos`. El formato antiguo `[{ nombre }]` se rechaza con `ARCHIVO_INVALIDO`.
 - Las operaciones que tocan el punto y sus binarios (crear con archivos, adjuntar, quitar, y la cascada al eliminar el punto) son **atómicas**: o se aplican todas o ninguna.
 - `editarPunto` **no** modifica `archivos` ni `orden`: para eso están `adjuntarArchivos`, `eliminarArchivo` y `reordenarPuntos`.
-- `reordenarPuntos` recibe el orden **completo** de los puntos del capturista de la sección (**sin** los fijos, que siempre van primero) y devuelve todos los puntos de esa sección, fijos incluidos y con su `numero` nuevo; recibe el orden **completo** de la sección (atómico e idempotente: repetir el mismo orden no cambia nada). Si `ids` no es exactamente el conjunto actual de puntos de esa sección → `CONFLICTO` y el cliente recarga. Sección inexistente o `ids` que no es una lista → `VALIDACION`.
+- `reordenarPuntos` recibe el orden **completo** de los puntos del administrador de la sección (**sin** los fijos, que siempre van primero) y devuelve todos los puntos de esa sección, fijos incluidos y con su `numero` nuevo; recibe el orden **completo** de la sección (atómico e idempotente: repetir el mismo orden no cambia nada). Si `ids` no es exactamente el conjunto actual de puntos de esa sección → `CONFLICTO` y el cliente recarga. Sección inexistente o `ids` que no es una lista → `VALIDACION`.
 
 Notas de comportamiento:
 - `crearSesiones` es **idempotente**: las fechas que ya existen se ignoran (no resetea `celebrada`); devuelve siempre la lista completa porque los derivados de las demás sesiones pueden cambiar.
@@ -407,14 +407,25 @@ Notas de comportamiento:
 | `EN_USO` | El integrante figura en la votación de una sesión celebrada. |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
 
+## Autenticación y roles
+
+La identidad es **Microsoft Entra ID** (un solo tenant). El cliente inicia sesión con MSAL (código de autorización con PKCE, en ventana emergente) y el servidor valida el token en **cada** petición; el cliente nunca decide el rol.
+
+- **Token:** `Authorization: Bearer <access token>` con el scope del API (`access_as_user`). El servidor valida firma, tenant (`tid`), audiencia (`aud`) y el claim `roles`.
+- **App Roles** (definidos en Entra y asignados a usuarios en la Enterprise Application; con "asignación requerida" quien no tiene rol no entra): `Administrador` y `Lector`. Internamente son los roles `administrador` y `lector`. Sin ninguno de los dos no se puede usar la aplicación (el cliente muestra "Acceso restringido" y el servidor rechaza con `NO_AUTORIZADO`).
+- **Usuario:** `{ id, nombre, correo, rol }`, tomado del token.
+- **Modos del cliente** (`VITE_AUTH_MODE`, igual que `VITE_API_MODE` para el API): `local` (prototipo: usuario simulado, rol de `VITE_LOCAL_ROL`, por omisión `administrador`) y `entra` (`VITE_ENTRA_CLIENT_ID`, `VITE_ENTRA_TENANT_ID` y `VITE_ENTRA_API_SCOPE`). En modo `local`, `LocalAPI` toma el rol del mismo "token" simulado, como lo haría el servidor al validar el real.
+- **Fuera de alcance por ahora:** permisos finos dentro del rol `Administrador` (quién puede agregar, editar o eliminar), que definirá el API en su propia base; y Microsoft Graph para el correo y los archivos reales (los usará el API con su propia identidad, nunca el usuario).
+
 ## Permisos
 
-| Rol | Sesiones y puntos | Confidenciales |
-|---|---|---|
-| `capturista` | Lectura y escritura (único con CRUD de puntos y de sesiones) | Los ve |
-| Lectores (remitentes, colaboradores) | Solo lectura | **Ocultos**: reciben el punto con su `numero` y `confidencial: true`, pero con `contenido: "CONFIDENCIAL"`, sin acuerdo y sin archivos. Así la numeración es la misma para todos y no se filtra el contenido. |
+| Rol | Sesiones y puntos | Descarga de archivos | Confidenciales |
+|---|---|---|---|
+| `administrador` | Lectura y escritura (CRUD de puntos y de sesiones, lista, celebración, correo, panel de control) | Sí | Los ve |
+| `lector` | **Solo lectura**: ninguna operación de escritura (`NO_AUTORIZADO`), tampoco envíos de correo ni avisos | **No**: `descargarArchivo` responde `NO_AUTORIZADO`; la interfaz no ofrece descargas ni vistas previas de adjuntos | **Ocultos**: reciben el punto con su `numero` y `confidencial: true`, pero con `contenido: "CONFIDENCIAL"`, sin acuerdo y sin archivos. Así la numeración es la misma para todos y no se filtra el contenido. |
 
-Las restricciones finas de lectura por remitente/colaborador están por definir; la regla siempre se aplica en el servidor.
+- **Límite honesto:** el contenido de los puntos que el `lector` sí lee puede copiarse o capturarse, y los documentos Word automáticos (punto, orden del día, acta) se construyen en el cliente con datos que ya recibió; la interfaz le oculta sus descargas, pero impedirlas de verdad exige que el servidor real los genere. Lo mismo para "ver pero no descargar" un adjunto: los bytes llegan al navegador en cualquier caso.
+- Las restricciones finas de lectura por remitente/colaborador están por definir; la regla siempre se aplica en el servidor.
 
 ## Pendiente de definir
 

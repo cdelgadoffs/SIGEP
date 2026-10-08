@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../context/AuthContext.jsx';
 import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import Scrollbar from '../base/Scrollbar.jsx';
@@ -16,6 +17,7 @@ export default function ListaPuntosSesion() {
     sesionSeleccionada, sesionFinalizada, marcarPunto, cargando, error,
   } = useProyecto();
   const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta } = useUI();
+  const { puedeEscribir, puedeDescargar } = useAuth();
   const [errorAccion, setErrorAccion] = useState(null);
   const [guardandoId, setGuardandoId] = useState(null);
 
@@ -79,7 +81,7 @@ export default function ListaPuntosSesion() {
                 <span className="widget-lista-puntos-sesion-accion" onClick={(e) => e.stopPropagation()}>
                   <Checkbox
                     checked={!!punto.tratado}
-                    disabled={sesionFinalizada || guardandoId === punto.id}
+                    disabled={sesionFinalizada || !puedeEscribir || guardandoId === punto.id}
                     onChange={(valor) => marcar(punto.id, valor)}
                   />
                   {!sesionComenzada && !punto.fijo && (punto.tratado ? esPuntoConHoja(punto) : true) && (
@@ -108,6 +110,7 @@ export default function ListaPuntosSesion() {
           key={puntoVistaPrevia.id}
           abierto
           soloLectura
+          permitirDescarga={puedeDescargar}
           derecha={0}
           arriba={ALTO_TOPBAR}
           form={formDePunto(puntoVistaPrevia, PLANTILLAS_ACTA, TEXTOS_ACTA)}
