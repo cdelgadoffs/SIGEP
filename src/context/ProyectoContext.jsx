@@ -6,7 +6,7 @@ import {
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, listarPapelera,
-  adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
+  adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi, reordenarArchivos as reordenarArchivosEnApi,
   descargarArchivo as descargarArchivoEnApi,
   listarAvisosEdicion, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
 } from '../services/api.js';
@@ -359,6 +359,14 @@ export function ProyectoProvider({ children }) {
   async function adjuntarArchivos(puntoId, archivos) {
     reemplazarPunto(puntoId, await adjuntarArchivosEnApi(puntoId, archivos));
   }
+  async function reordenarArchivos(puntoId, ids) {
+    try {
+      reemplazarPunto(puntoId, await reordenarArchivosEnApi(puntoId, ids));
+    } catch (e) {
+      if (e.codigo === 'CONFLICTO') await refrescarPuntos();
+      throw e;
+    }
+  }
   async function eliminarArchivo(puntoId, archivoId) {
     reemplazarPunto(puntoId, await eliminarArchivoEnApi(puntoId, archivoId));
   }
@@ -402,7 +410,7 @@ export function ProyectoProvider({ children }) {
     listaCerrada, establecerListaCerrada,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion,
     PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
-    marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
+    marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, reordenarArchivos, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,

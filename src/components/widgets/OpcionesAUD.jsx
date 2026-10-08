@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import BotonIcono from '../base/BotonIcono.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
+import SelectorArchivos from './SelectorArchivos.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/OpcionesAUD.css';
@@ -14,17 +15,13 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
   const [error, setError] = useState(null);
   const [adjuntando, setAdjuntando] = useState(false);
   const [errorAdjuntar, setErrorAdjuntar] = useState(null);
-  const entradaArchivosRef = useRef(null);
 
   function cancelar() {
     setConfirmando(false);
     setError(null);
   }
 
-  async function adjuntar(e) {
-    const archivos = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (archivos.length === 0) return;
+  async function adjuntar(archivos) {
     setAdjuntando(true);
     try {
       await adjuntarArchivos(punto.id, archivos);
@@ -52,15 +49,7 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
   return (
     <div className="widget-opciones-aud">
       {!ocultar.includes('adjuntar') && (
-        <>
-          <BotonIcono
-            icono="ri-attachment-2"
-            ariaLabel="Adjuntar archivos"
-            onClick={() => entradaArchivosRef.current.click()}
-            disabled={adjuntando}
-          />
-          <input ref={entradaArchivosRef} type="file" multiple hidden onChange={adjuntar} />
-        </>
+        <SelectorArchivos compacto disabled={adjuntando} onSeleccionar={adjuntar} onAviso={setErrorAdjuntar} />
       )}
       {!ocultar.includes('editar') && (
         <BotonIcono icono="ri-edit-line" ariaLabel="Editar punto" onClick={() => abrirEdicionPunto(punto.id)} />
@@ -69,7 +58,7 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
         <BotonIcono icono="ri-delete-bin-line" ariaLabel="Eliminar punto" onClick={() => setConfirmando(true)} />
       )}
       {children}
-      <Modal abierto={!!errorAdjuntar} titulo="No se pudo adjuntar" onCerrar={() => setErrorAdjuntar(null)}>
+      <Modal abierto={!!errorAdjuntar} titulo="Adjuntar archivos" onCerrar={() => setErrorAdjuntar(null)}>
         <p className="widget-opciones-aud-mensaje">{errorAdjuntar}</p>
         <div className="widget-opciones-aud-acciones">
           <BotonS variant="claro" onClick={() => setErrorAdjuntar(null)}>Cerrar</BotonS>

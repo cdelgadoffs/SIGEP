@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
-import BadgeDinamico from '../base/BadgeDinamico.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
-import { estiloArchivo } from '../../utils/archivos.js';
+import ListaArchivosAdjuntos from './ListaArchivosAdjuntos.jsx';
 import { tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
@@ -56,18 +55,16 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
           </div>
           {punto.archivos.length > 0 && (
             <div className="widget-lista-puntos-columna widget-lista-puntos-archivos">
-              {punto.archivos.map((a, i) => {
-                const { icono, tono } = estiloArchivo(a.nombre);
-                return (
-                  <BadgeDinamico
-                    key={a.id ?? i}
-                    texto={a.nombre}
-                    icono={icono}
-                    tono={tono}
-                    onClick={a.id && onAbrir ? () => onAbrir(a) : undefined}
-                  />
-                );
-              })}
+              <ListaArchivosAdjuntos
+                alineacion="fin"
+                agrupar={false}
+                archivos={punto.archivos.map((a, i) => ({
+                  clave: a.id ?? i,
+                  nombre: a.nombre,
+                  ruta: a.ruta,
+                  onClick: a.id && onAbrir ? () => onAbrir(a) : undefined,
+                }))}
+              />
             </div>
           )}
         </div>

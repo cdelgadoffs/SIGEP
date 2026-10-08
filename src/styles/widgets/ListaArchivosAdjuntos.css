@@ -1,0 +1,35 @@
+.widget-archivos-adjuntos {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.widget-archivos-adjuntos-fin {
+  align-items: flex-end;
+}
+.widget-archivos-adjuntos-grupo {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+}
+.widget-archivos-adjuntos-fin .widget-archivos-adjuntos-grupo {
+  align-items: flex-end;
+}
+.widget-archivos-adjuntos-carpeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  color: #777;
+}
+.widget-archivos-adjuntos-carpeta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

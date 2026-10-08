@@ -26,6 +26,7 @@ export default function VistaPreviaFlotante({
   plantillas,
   tiposBloque,
   codigo,
+  numeroArchivo = 1,
   fecha,
   soloLectura = false,
   permitirDescarga = true,
@@ -99,7 +100,7 @@ export default function VistaPreviaFlotante({
         setErrorDescarga('El punto no tiene contenido para exportar.');
         return;
       }
-      guardarEnDisco(codigo ? (soloLectura && engrose ? nombreArchivoEngrose(codigo) : nombreArchivoPuntoAcuerdo(codigo)) : resultado.nombreArchivo, resultado.blob);
+      guardarEnDisco(codigo ? (soloLectura && engrose ? nombreArchivoEngrose(codigo) : nombreArchivoPuntoAcuerdo(codigo, numeroArchivo)) : resultado.nombreArchivo, resultado.blob);
     } catch (e) {
       setErrorDescarga(e?.message || 'No se pudo generar el documento.');
     } finally {

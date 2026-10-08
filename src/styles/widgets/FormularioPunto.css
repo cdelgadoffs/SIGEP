@@ -79,6 +79,10 @@
   gap: 6px;
   margin-top: 4px;
 }
+.widget-formulario-punto-aviso {
+  font-size: 12px;
+  color: #b26a00;
+}
 .widget-formulario-punto-error {
   flex-shrink: 0;
   font-size: 12.5px;
@@ -94,7 +98,14 @@
 }
 .widget-formulario-punto-acciones-grupo {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+.widget-formulario-punto-atajo {
+  margin-right: 4px;
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
 }
 .widget-formulario-punto-modal-mensaje {
   margin: 0 0 14px;

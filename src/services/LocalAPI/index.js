@@ -10,9 +10,9 @@ import {
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
-  validarArchivos, prepararArchivos,
+  entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
-  validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
+  numerarArchivos, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -360,11 +360,13 @@ async function armarPuntos(sesionId) {
   const nombreTipo = (tipo) => (catalogos.tiposSesion || []).find((t) => t.id === tipo)?.nombre ?? 'Ordinaria';
   return ordenarPuntosDocumento([...fijos, ...almacenados], catalogos.secciones || []).map((punto) => {
     const decorado = decorarPunto(punto, catalogos);
-    const conHoja = !!(catalogos.secciones || []).find((s) => s.id === punto.seccion)?.requiereAcuerdo;
-    const automaticos = archivosAutomaticosDe(decorado, { conHoja, sesion, sesiones, infoSesiones, nombreTipo });
+    const seccionPunto = (catalogos.secciones || []).find((s) => s.id === punto.seccion);
+    const conHoja = !!seccionPunto?.requiereAcuerdo;
+    const primero = seccionPunto?.primerNumeroArchivo ?? 1;
+    const automaticos = archivosAutomaticosDe(decorado, { conHoja, primero, sesion, sesiones, infoSesiones, nombreTipo });
     return {
       ...decorado,
-      archivos: [...automaticos, ...(decorado.archivos || [])],
+      archivos: numerarArchivos([...automaticos, ...(decorado.archivos || [])], primero),
       engrose: conHoja ? engroseDePunto(decorado, contexto, catalogos) : null,
     };
   });
@@ -448,7 +450,7 @@ export async function crearPunto(sesionId, datos) {
   const catalogos = await listarCatalogos();
   validarPunto(datos, catalogos);
   exigirListaAbierta(sesion, datos.seccion, catalogos);
-  const archivos = Array.from(datos.archivos || []);
+  const archivos = entradasDeArchivos(Array.from(datos.archivos || []));
   validarArchivos(archivos);
   const id = crypto.randomUUID();
   const { registros, metadatos } = prepararArchivos(id, archivos);
@@ -624,9 +626,10 @@ export async function adjuntarArchivos(puntoId, archivos) {
   const actual = await obtener(STORE_PUNTOS, puntoId);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
-  const nuevos = Array.from(archivos || []);
+  const nuevos = entradasDeArchivos(Array.from(archivos || []));
   validarArchivos(nuevos, actual.archivos.length);
-  const { registros, metadatos } = prepararArchivos(puntoId, nuevos);
+  const ordenBase = Math.max(0, ...actual.archivos.map((a, i) => a.orden ?? i + 1));
+  const { registros, metadatos } = prepararArchivos(puntoId, nuevos, ordenBase);
   const punto = {
     ...actual,
     archivos: [...actual.archivos, ...metadatos],
@@ -659,6 +662,35 @@ export async function eliminarArchivo(puntoId, archivoId) {
     poner: [{ store: STORE_PUNTOS, valor: punto }],
     borrar: [{ store: STORE_ARCHIVOS, id: archivoId }],
   });
+  return puntoArmado(actual.sesionId, puntoId);
+}
+
+export async function reordenarArchivos(puntoId, ids) {
+  exigirEscritura();
+  exigirNoFijo(puntoId);
+  const actual = await obtener(STORE_PUNTOS, puntoId);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  await exigirSesionAbierta(actual.sesionId);
+  if (!Array.isArray(ids)) throw new ApiError('VALIDACION', 'El orden debe ser una lista de ids.');
+  const sueltos = actual.archivos
+    .map((a, i) => ({ a, o: a.orden ?? i + 1 }))
+    .filter(({ a }) => a.id && !a.ruta)
+    .sort((x, y) => x.o - y.o);
+  const mismoConjunto = ids.length === sueltos.length
+    && new Set(ids).size === ids.length
+    && ids.every((id) => sueltos.some(({ a }) => a.id === id));
+  if (!mismoConjunto) throw new ApiError('CONFLICTO', 'Los archivos del punto cambiaron. Recarga e intenta de nuevo.');
+  const ranuras = sueltos.map(({ o }) => o);
+  const nuevos = new Map(ids.map((id, i) => [id, ranuras[i]]));
+  const cambia = sueltos.some(({ a, o }) => nuevos.get(a.id) !== o);
+  if (cambia) {
+    await guardar(STORE_PUNTOS, {
+      ...actual,
+      archivos: actual.archivos.map((a) => (nuevos.has(a.id) ? { ...a, orden: nuevos.get(a.id) } : a)),
+      version: actual.version + 1,
+      modificadoEn: new Date().toISOString(),
+    });
+  }
   return puntoArmado(actual.sesionId, puntoId);
 }
 

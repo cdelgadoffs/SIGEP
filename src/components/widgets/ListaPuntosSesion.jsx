@@ -134,6 +134,7 @@ export default function ListaPuntosSesion() {
           plantillas={PLANTILLAS_ACTA}
           tiposBloque={TIPOS_BLOQUE_ACTA}
           codigo={tituloPunto(puntoVistaPrevia.numero)}
+          numeroArchivo={puntoVistaPrevia.archivos?.find((a) => a.origen === 'punto')?.numero ?? 1}
           engrose={puntoVistaPrevia.engrose}
           remitente={REMITENTES.find((r) => r.id === puntoVistaPrevia.remitente)?.nombre ?? puntoVistaPrevia.remitente}
           fecha={sesionSeleccionada?.id ?? ''}

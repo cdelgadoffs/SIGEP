@@ -390,13 +390,36 @@ export function validarPunto(p, catalogos) {
   if (typeof p.confidencial !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de confidencialidad inválido.');
 }
 
-export function validarArchivos(archivos, yaAdjuntos = 0) {
+const MAX_NIVELES_RUTA = 8;
+const MAX_LARGO_RUTA = 260;
+
+function normalizarRuta(ruta) {
+  if (ruta === undefined || ruta === null || ruta === '') return '';
+  if (typeof ruta !== 'string') throw new ApiError('ARCHIVO_INVALIDO', 'La carpeta del archivo es inválida.');
+  const limpia = ruta.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  if (limpia === '') return '';
+  const tramos = limpia.split('/');
+  if (limpia.length > MAX_LARGO_RUTA || tramos.length > MAX_NIVELES_RUTA || tramos.some((t) => t === '' || t === '.' || t === '..')) {
+    throw new ApiError('ARCHIVO_INVALIDO', `La carpeta «${ruta}» no es válida (máximo ${MAX_NIVELES_RUTA} niveles y ${MAX_LARGO_RUTA} caracteres, sin «..»).`);
+  }
+  return limpia;
+}
+
+export function entradasDeArchivos(archivos) {
   if (!Array.isArray(archivos)) throw new ApiError('ARCHIVO_INVALIDO', 'Lista de archivos inválida.');
-  if (yaAdjuntos + archivos.length > MAX_ARCHIVOS_PUNTO) {
+  return archivos.map((item) => {
+    if (item instanceof File) return { archivo: item, ruta: '' };
+    if (item && item.archivo instanceof File) return { archivo: item.archivo, ruta: normalizarRuta(item.ruta) };
+    throw new ApiError('ARCHIVO_INVALIDO', 'Archivo inválido.');
+  });
+}
+
+export function validarArchivos(entradas, yaAdjuntos = 0) {
+  if (yaAdjuntos + entradas.length > MAX_ARCHIVOS_PUNTO) {
     throw new ApiError('ARCHIVO_INVALIDO', `Un punto admite como máximo ${MAX_ARCHIVOS_PUNTO} archivos.`);
   }
-  archivos.forEach((a) => {
-    if (!(a instanceof File) || a.name.length === 0) throw new ApiError('ARCHIVO_INVALIDO', 'Archivo inválido.');
+  entradas.forEach(({ archivo: a }) => {
+    if (a.name.length === 0) throw new ApiError('ARCHIVO_INVALIDO', 'Archivo inválido.');
     const extension = a.name.split('.').pop().toLowerCase();
     if (!EXTENSIONES_PERMITIDAS.includes(extension)) {
       throw new ApiError('ARCHIVO_INVALIDO', `«${a.name}»: tipo de archivo no permitido.`);
@@ -407,14 +430,14 @@ export function validarArchivos(archivos, yaAdjuntos = 0) {
   });
 }
 
-export function prepararArchivos(puntoId, archivos) {
+export function prepararArchivos(puntoId, entradas, ordenBase = 0) {
   const ahora = new Date().toISOString();
   const creadoPor = usuarioActual().id;
-  const registros = archivos.map((a) => ({
-    id: crypto.randomUUID(), puntoId, nombre: a.name, tipo: a.type, tamano: a.size, creadoEn: ahora, creadoPor, blob: a,
+  const registros = entradas.map(({ archivo: a, ruta }, i) => ({
+    id: crypto.randomUUID(), puntoId, nombre: a.name, tipo: a.type, tamano: a.size, ...(ruta ? { ruta } : null), orden: ordenBase + i + 1, creadoEn: ahora, creadoPor, blob: a,
   }));
   const metadatos = registros.map((r) => ({
-    id: r.id, nombre: r.nombre, tipo: r.tipo, tamano: r.tamano, creadoEn: r.creadoEn, creadoPor: r.creadoPor,
+    id: r.id, nombre: r.nombre, tipo: r.tipo, tamano: r.tamano, ...(r.ruta ? { ruta: r.ruta } : null), orden: r.orden, creadoEn: r.creadoEn, creadoPor: r.creadoPor,
   }));
   return { registros, metadatos };
 }
@@ -903,8 +926,21 @@ export function archivoAutomatico(origen, clave, nombre) {
   };
 }
 
-export function nombreArchivoPunto(numero) {
-  return `01-Punto de acuerdo_PLE${String(numero).padStart(3, '0')}.docx`;
+export function nombreArchivoPunto(numero, primero = 1) {
+  return `${String(primero).padStart(2, '0')}-Punto de acuerdo_PLE${String(numero).padStart(3, '0')}.docx`;
+}
+
+export function numerarArchivos(archivos, primero = 1) {
+  const guardados = archivos.filter((a) => !a.autogenerado).map((a, i) => ({ a, o: a.orden ?? i + 1 }));
+  const porOrden = (x, y) => x.o - y.o;
+  const sueltos = guardados.filter(({ a }) => !a.ruta).sort(porOrden).map(({ a }) => a);
+  const enCarpeta = guardados.filter(({ a }) => a.ruta);
+  const rutas = [...new Set(enCarpeta.map(({ a }) => a.ruta))].sort((x, y) => x.localeCompare(y));
+  const resultado = [...archivos.filter((a) => a.autogenerado), ...sueltos].map((a, i) => ({ ...a, numero: primero + i }));
+  rutas.forEach((ruta) => {
+    enCarpeta.filter(({ a }) => a.ruta === ruta).sort(porOrden).forEach(({ a }, i) => resultado.push({ ...a, numero: i + 1 }));
+  });
+  return resultado;
 }
 
 export function nombreArchivoOrdenDia(numeroSesion, nombreTipo) {
@@ -917,9 +953,9 @@ export function nombreArchivoActa(numeroSesion, nombreTipo) {
   return `Acta - ${titulo}.docx`;
 }
 
-export function archivosAutomaticosDe(punto, { conHoja, sesion, sesiones, infoSesiones, nombreTipo }) {
+export function archivosAutomaticosDe(punto, { conHoja, primero = 1, sesion, sesiones, infoSesiones, nombreTipo }) {
   if (!punto.fijo) {
-    return conHoja ? [archivoAutomatico('punto', punto.id, nombreArchivoPunto(punto.numero))] : [];
+    return conHoja ? [archivoAutomatico('punto', punto.id, nombreArchivoPunto(punto.numero, primero))] : [];
   }
   const { clave } = analizarPuntoFijo(punto.id);
   if (clave === 'orden-dia') {

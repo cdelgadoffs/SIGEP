@@ -42,6 +42,7 @@ export const {
   eliminarSecretarioEjecutivo,
   adjuntarArchivos,
   eliminarArchivo,
+  reordenarArchivos,
   descargarArchivo,
   listarContactosCorreo,
   crearContactoCorreo,

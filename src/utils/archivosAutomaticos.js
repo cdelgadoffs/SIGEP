@@ -28,7 +28,7 @@ export async function generarArchivoAutomatico(id, { punto, sesion, puntos, secc
       fecha: punto.sesionId,
     });
     if (!resultado) throw new Error('El punto no tiene contenido para exportar.');
-    return { nombre: nombreArchivoPuntoAcuerdo(tituloPunto(punto.numero)), tipo: MIME_WORD, blob: resultado.blob };
+    return { nombre: nombreArchivoPuntoAcuerdo(tituloPunto(punto.numero), punto.archivos?.find((a) => a.id === id)?.numero ?? 1), tipo: MIME_WORD, blob: resultado.blob };
   }
 
   if (origen === 'ordenDia') {

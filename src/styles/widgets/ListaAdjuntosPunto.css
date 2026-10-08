@@ -1,0 +1,159 @@
+.widget-adjuntos-punto {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+.widget-adjuntos-punto-titulo {
+  flex-shrink: 0;
+  padding: 12px 16px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #777;
+}
+.widget-adjuntos-punto-cuerpo {
+  flex: 1;
+  min-height: 0;
+}
+.widget-adjuntos-punto-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+.widget-adjuntos-punto-codigo {
+  padding: 2px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.widget-adjuntos-punto-carpeta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 16px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #777;
+}
+.widget-adjuntos-punto-carpeta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-adjuntos-punto-nombre {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-adjuntos-punto-vacio {
+  color: #aaa;
+  font-size: 13px;
+  font-style: italic;
+  padding: 4px 16px;
+}
+.widget-adjuntos-punto .base-boton-seleccionable-menu {
+  font-size: 13px;
+  font-weight: 400;
+  border-left: 3px solid transparent;
+  background: #efefef;
+  color: #1a1a1a;
+}
+.widget-adjuntos-punto .base-boton-seleccionable-menu > span:not([class]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.widget-adjuntos-punto .base-boton-seleccionable-menu:hover:not(.base-boton-seleccionable-menu-deshabilitado) {
+  background: #e6e6e6;
+  border-left-color: #1a1a1a;
+  color: #1a1a1a;
+}
+.widget-adjuntos-punto .base-boton-seleccionable-menu.base-boton-seleccionable-menu-activo {
+  border-left-color: #1a1a1a;
+  background: #efefef;
+  color: #1a1a1a;
+  font-weight: 400;
+}
+.widget-adjuntos-punto .base-boton-seleccionable-menu .base-boton-seleccionable-menu-punto {
+  display: none;
+}
+.widget-adjuntos-punto-boton {
+  display: inline-flex;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: width 0.18s ease, opacity 0.18s ease;
+}
+.widget-adjuntos-punto .base-boton-seleccionable-menu:hover .widget-adjuntos-punto-boton {
+  width: 18px;
+  opacity: 1;
+}
+@media (hover: none) {
+  .widget-adjuntos-punto-boton {
+    width: 18px;
+    opacity: 1;
+  }
+}
+.widget-adjuntos-punto-acciones .base-boton-icono {
+  width: 18px;
+  height: 18px;
+  font-size: 13px;
+  border-radius: 3px;
+}
+
+.widget-adjuntos-punto .base-boton-seleccionable-menu-rojo { background: #fdecea; color: #c62828; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-azul { background: #e8f0fe; color: #1a56db; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-verde { background: #e6f4ea; color: #1e7d34; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-morado { background: #f1eafd; color: #6a3fc1; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-gris { background: #f0f0f0; color: #555; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-rojo:hover:not(.base-boton-seleccionable-menu-deshabilitado),
+.widget-adjuntos-punto .base-boton-seleccionable-menu-rojo.base-boton-seleccionable-menu-activo { background: #f9d9d5; color: #c62828; border-left-color: #c62828; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-azul:hover:not(.base-boton-seleccionable-menu-deshabilitado),
+.widget-adjuntos-punto .base-boton-seleccionable-menu-azul.base-boton-seleccionable-menu-activo { background: #d6e3fc; color: #1a56db; border-left-color: #1a56db; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-verde:hover:not(.base-boton-seleccionable-menu-deshabilitado),
+.widget-adjuntos-punto .base-boton-seleccionable-menu-verde.base-boton-seleccionable-menu-activo { background: #d3ecda; color: #1e7d34; border-left-color: #1e7d34; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-morado:hover:not(.base-boton-seleccionable-menu-deshabilitado),
+.widget-adjuntos-punto .base-boton-seleccionable-menu-morado.base-boton-seleccionable-menu-activo { background: #e4d8fa; color: #6a3fc1; border-left-color: #6a3fc1; }
+.widget-adjuntos-punto .base-boton-seleccionable-menu-gris:hover:not(.base-boton-seleccionable-menu-deshabilitado),
+.widget-adjuntos-punto .base-boton-seleccionable-menu-gris.base-boton-seleccionable-menu-activo { background: #e4e4e4; color: #333; border-left-color: #555; }
+.widget-adjuntos-punto-acciones {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 2px;
+}
+.widget-adjuntos-punto-modal-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-adjuntos-punto-error {
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  color: #c62828;
+}
+.widget-adjuntos-punto-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.widget-adjuntos-punto-numero {
+  flex-shrink: 0;
+  min-width: 18px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+.widget-adjuntos-punto-error-lista {
+  padding: 0 16px;
+}

@@ -129,10 +129,10 @@ export default function EditorTexto({ value, onChange, placeholder, ordinal, sol
   }, [value, editor]);
 
   useEffect(() => {
-    if (!editor || !autoFocus) return;
+    if (!editor || (!autoFocus && resetToken === undefined)) return;
     editor.commands.setContent(value, { emitUpdate: false });
     ultimoValorRef.current = claveDeDoc(value);
-    editor.chain().focus('end').run();
+    if (autoFocus) editor.chain().focus('end').run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, autoFocus, resetToken]);
 

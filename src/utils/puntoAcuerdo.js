@@ -4,8 +4,8 @@ import { esDocVacio } from './documento.js';
 const BASE = { size: 24, color: '000000', font: 'Arial' };
 const ANCHO_LOGO = 100;
 
-export function nombreArchivoPuntoAcuerdo(codigo) {
-  return `01-Punto de acuerdo_${(codigo || '').replace(/\//g, '')}.docx`;
+export function nombreArchivoPuntoAcuerdo(codigo, numeroArchivo = 1) {
+  return `${String(numeroArchivo).padStart(2, '0')}-Punto de acuerdo_${(codigo || '').replace(/\//g, '')}.docx`;
 }
 
 export function nombreArchivoEngrose(codigo) {

@@ -10,6 +10,7 @@ import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
 import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsueto.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
+import ListaAdjuntosPunto from '../components/widgets/ListaAdjuntosPunto.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
@@ -72,7 +73,10 @@ export default function ProyectoOrdenDia() {
           </div>
         ) : null}
       >
-        <MenuPrincipalSesion />
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+          <MenuPrincipalSesion />
+          {sidebar3Abierto && <ListaAdjuntosPunto />}
+        </div>
       </Sidebar1>
       <Sidebar3
         abierto={sidebar3Abierto}

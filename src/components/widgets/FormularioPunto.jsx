@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import SelectorArchivos from './SelectorArchivos.jsx';
 import ListaExpandible from '../base/ListaExpandible.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import BotonS from '../base/BotonS.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
-import BadgeDinamico from '../base/BadgeDinamico.jsx';
-import Modal from '../base/Modal.jsx';
 import EditorTexto from './EditorTexto.jsx';
 import VistaPreviaFlotante from './VistaPreviaFlotante.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../../context/UIContext.jsx';
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
-import { estiloArchivo } from '../../utils/archivos.js';
 import { docDesdeTexto, docVacio, esDocVacio } from '../../utils/documento.js';
 import { contenidoPorOmision, hojaPorOmision } from '../../utils/plantillasActa.js';
 import { tituloPunto } from '../../utils/puntos.js';
@@ -43,8 +41,8 @@ function aDocumentos(borrador) {
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, eliminarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, abrirVistaArchivo } = useUI();
+  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, archivosNuevoPunto, setArchivosNuevoPunto } = useUI();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
   const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision);
   const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
@@ -55,8 +53,7 @@ export default function FormularioPunto() {
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
-  const [archivoAQuitar, setArchivoAQuitar] = useState(null);
-  const [errorQuitar, setErrorQuitar] = useState(null);
+  const [avisoArchivos, setAvisoArchivos] = useState(null);
   const claveGuardadaRef = useRef(null);
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   const punto = puntoEnEdicionId ? PUNTOS.find((p) => p.id === puntoEnEdicionId) : null;
@@ -94,6 +91,7 @@ export default function FormularioPunto() {
     let vigente = true;
     const seccion = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
     setForm(formularioVacio(seccion));
+    setArchivosNuevoPunto([]);
     setAporte(false);
     setPreviaVisible(false);
     reiniciarEditor();
@@ -160,29 +158,8 @@ export default function FormularioPunto() {
     actualizar(campo, doc);
   }
 
-  function adjuntarArchivos(e) {
-    const nuevos = Array.from(e.target.files || []);
-    setForm((f) => ({ ...f, archivos: [...f.archivos, ...nuevos] }));
-    e.target.value = '';
-  }
-
-  function quitarArchivoPendiente(indice) {
-    setForm((f) => ({ ...f, archivos: f.archivos.filter((_, i) => i !== indice) }));
-  }
-
-  function cancelarQuitar() {
-    setArchivoAQuitar(null);
-    setErrorQuitar(null);
-  }
-
-  async function quitarArchivo() {
-    setErrorQuitar(null);
-    try {
-      await eliminarArchivo(punto.id, archivoAQuitar.id);
-      setArchivoAQuitar(null);
-    } catch (e) {
-      setErrorQuitar(e.mensaje || 'No se pudo quitar el archivo.');
-    }
+  function agregarArchivos(entradas) {
+    setArchivosNuevoPunto((actuales) => [...actuales, ...entradas]);
   }
 
   function cancelar() {
@@ -190,6 +167,8 @@ export default function FormularioPunto() {
   }
 
   function borrar() {
+    setAvisoArchivos(null);
+    setArchivosNuevoPunto([]);
     setForm(formularioVacio(form.seccion));
     setAporte(false);
     setPreviaVisible(false);
@@ -215,7 +194,9 @@ export default function FormularioPunto() {
         await editarPunto(punto.id, punto.version, datos);
         cerrarSidebar3();
       } else {
-        await agregarPunto({ ...datos, archivos: form.archivos });
+        await agregarPunto({ ...datos, archivos: archivosNuevoPunto });
+        setAvisoArchivos(null);
+        setArchivosNuevoPunto([]);
         setForm(formularioVacio(form.seccion));
         setAporte(false);
         setPreviaVisible(false);
@@ -230,9 +211,42 @@ export default function FormularioPunto() {
 
   const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && !esDocVacio(form.contenidoDoc) && (esInforme || !esDocVacio(form.acuerdoDoc));
 
+  function atajoConfirmar(e) {
+    if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (puedeConfirmar) confirmar();
+  }
+
   return (
-    <div className="widget-formulario-punto-wrap">
+    <div className="widget-formulario-punto-wrap" onKeyDownCapture={atajoConfirmar}>
       <div className="widget-formulario-punto" key={form.seccion} ref={contenedorRef} onScroll={onScroll}>
+      <div className="widget-formulario-punto-campo widget-formulario-punto-editor widget-formulario-punto-editor-contenido">
+        <label className="widget-formulario-punto-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</label>
+        <EditorTexto
+          value={form.contenidoDoc}
+          onChange={(doc) => cambiarDoc('contenidoDoc', doc)}
+          placeholder={esInforme ? 'Informe' : '...por el que/cual se...'}
+          autoFocus={sidebar3Abierto && !editando}
+          resetToken={reinicioEditor}
+          ariaLabel={esInforme ? 'Informe' : 'Punto de acuerdo'}
+        />
+      </div>
+
+      {!esInforme && (
+        <div className="widget-formulario-punto-campo widget-formulario-punto-editor">
+          <label className="widget-formulario-punto-label">Acuerdo</label>
+          <EditorTexto
+            value={form.acuerdoDoc}
+            onChange={(doc) => cambiarDoc('acuerdoDoc', doc)}
+            placeholder="Acuerdos"
+            ordinal="acuerdo"
+            resetToken={reinicioEditor}
+            ariaLabel="Acuerdo"
+          />
+        </div>
+      )}
+
       <div className="widget-formulario-punto-fila">
         <div className="widget-formulario-punto-campo">
           <label className="widget-formulario-punto-label">Categoría</label>
@@ -266,67 +280,11 @@ export default function FormularioPunto() {
         </div>
       )}
 
-      {(!editando || punto.archivos.length > 0) && (
+      {!editando && (
         <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">{editando ? 'Archivos' : 'Adjuntar archivos'}</label>
-          {!editando && (
-            <input type="file" className="widget-formulario-punto-archivo-input" multiple onChange={adjuntarArchivos} />
-          )}
-          {(editando ? punto.archivos : form.archivos).length > 0 && (
-            <div className="widget-formulario-punto-archivos">
-              {editando
-                ? punto.archivos.map((a, i) => {
-                    const { icono, tono } = estiloArchivo(a.nombre);
-                    return (
-                      <BadgeDinamico
-                        key={a.id ?? i}
-                        texto={a.nombre}
-                        icono={icono}
-                        tono={tono}
-                        onClick={a.id ? () => abrirVistaArchivo(a) : undefined}
-                        onEliminar={a.id && !a.autogenerado ? () => setArchivoAQuitar(a) : undefined}
-                      />
-                    );
-                  })
-                : form.archivos.map((a, i) => {
-                    const { icono, tono } = estiloArchivo(a.name);
-                    return (
-                      <BadgeDinamico
-                        key={`${a.name}-${i}`}
-                        texto={a.name}
-                        icono={icono}
-                        tono={tono}
-                        onEliminar={() => quitarArchivoPendiente(i)}
-                      />
-                    );
-                  })}
-            </div>
-          )}
-        </div>
-      )}
-
-      <div className="widget-formulario-punto-campo widget-formulario-punto-editor widget-formulario-punto-editor-contenido">
-        <label className="widget-formulario-punto-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</label>
-        <EditorTexto
-          value={form.contenidoDoc}
-          onChange={(doc) => cambiarDoc('contenidoDoc', doc)}
-          placeholder={esInforme ? 'Informe' : '...por el que/cual se...'}
-          autoFocus={sidebar3Abierto && !editando}
-          resetToken={reinicioEditor}
-          ariaLabel={esInforme ? 'Informe' : 'Punto de acuerdo'}
-        />
-      </div>
-
-      {!esInforme && (
-        <div className="widget-formulario-punto-campo widget-formulario-punto-editor">
-          <label className="widget-formulario-punto-label">Acuerdo</label>
-          <EditorTexto
-            value={form.acuerdoDoc}
-            onChange={(doc) => cambiarDoc('acuerdoDoc', doc)}
-            placeholder="Acuerdos"
-            ordinal="acuerdo"
-            ariaLabel="Acuerdo"
-          />
+          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
+          <SelectorArchivos arrastrar onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
+          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
         </div>
       )}
 
@@ -345,21 +303,12 @@ export default function FormularioPunto() {
       <div className="widget-formulario-punto-acciones">
         {editando ? <span></span> : <BotonIcono icono="ri-eraser-line" ariaLabel="Borrar formulario" onClick={borrar} />}
         <div className="widget-formulario-punto-acciones-grupo">
+          <span className="widget-formulario-punto-atajo">Ctrl + Enter para {editando ? 'guardar' : 'añadir'}</span>
           <BotonS variant="claro" onClick={cancelar}>Cancelar</BotonS>
           <BotonS variant="claro" onClick={confirmar} disabled={!puedeConfirmar}>{editando ? 'Guardar' : 'Añadir'}</BotonS>
         </div>
       </div>
       </div>
-      <Modal abierto={!!archivoAQuitar} titulo="Quitar archivo" onCerrar={cancelarQuitar}>
-        <p className="widget-formulario-punto-modal-mensaje">
-          ¿Quieres quitar «{archivoAQuitar?.nombre}» de este punto? Esta acción no se puede deshacer.
-        </p>
-        {errorQuitar && <div className="widget-formulario-punto-error">{errorQuitar}</div>}
-        <div className="widget-formulario-punto-modal-acciones">
-          <BotonS variant="claro" onClick={cancelarQuitar}>Cancelar</BotonS>
-          <BotonS variant="claro" onClick={quitarArchivo}>Quitar</BotonS>
-        </div>
-      </Modal>
       <VistaPreviaFlotante
         abierto={sidebar3Abierto && !esInforme && previaVisible}
         izquierda={izquierdaSidebar3 + ANCHO_SIDEBAR3}
@@ -370,6 +319,7 @@ export default function FormularioPunto() {
         plantillas={PLANTILLAS_ACTA}
         tiposBloque={TIPOS_BLOQUE_ACTA}
         codigo={editando ? tituloPunto(punto.numero) : undefined}
+        numeroArchivo={seccionActual?.primerNumeroArchivo ?? 1}
         fecha={sesionActivaFecha ?? ''}
       />
       {thumb.visible && (
