@@ -11,6 +11,7 @@ import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsuet
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import ListaAdjuntosPunto from '../components/widgets/ListaAdjuntosPunto.jsx';
+import TituloFormularioPunto from '../components/widgets/TituloFormularioPunto.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
@@ -28,7 +29,7 @@ import '../styles/pages/ProyectoOrdenDia.css';
 export default function ProyectoOrdenDia() {
   const {
     izquierdaSidebar1, izquierdaSidebar3,
-    sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
+    sidebar3Abierto, cerrarSidebar3,
     sidebar4Abierto, setSidebar4Abierto,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
@@ -82,7 +83,7 @@ export default function ProyectoOrdenDia() {
         abierto={sidebar3Abierto}
         izquierda={izquierdaSidebar3}
         arriba={arribaSidebar}
-        badge={puntoEnEdicionId ? 'Editar punto' : 'Nuevo punto'}
+        badge={<TituloFormularioPunto />}
         onCerrar={cerrarSidebar3}
       >
         <FormularioPunto />

@@ -13,14 +13,14 @@ const rellenar = (numero) => String(numero).padStart(2, '0');
 
 export default function ListaAdjuntosPunto() {
   const { PUNTOS, SECCIONES_DOCUMENTO, eliminarArchivo, reordenarArchivos } = useProyecto();
-  const { puntoEnEdicionId, seccionNuevoPunto, archivosNuevoPunto, setArchivosNuevoPunto } = useUI();
+  const { puntoEnEdicionId, seccionNuevoPunto, seccionFormulario, archivosNuevoPunto, setArchivosNuevoPunto } = useUI();
   const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [archivoAQuitar, setArchivoAQuitar] = useState(null);
   const [errorQuitar, setErrorQuitar] = useState(null);
   const [errorOrden, setErrorOrden] = useState(null);
 
   const punto = puntoEnEdicionId ? PUNTOS.find((p) => p.id === puntoEnEdicionId) : null;
-  const seccion = SECCIONES_DOCUMENTO.find((s) => s.id === seccionNuevoPunto);
+  const seccion = SECCIONES_DOCUMENTO.find((s) => s.id === (seccionFormulario ?? seccionNuevoPunto));
 
   const items = punto
     ? punto.archivos.map((a, i) => ({

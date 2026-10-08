@@ -16,6 +16,7 @@ export function UIProvider({ children }) {
   const [sidebar3Abierto, setSidebar3Abierto] = useState(false);
   const [sidebar4Abierto, setSidebar4AbiertoInterno] = useState(false);
   const [archivosNuevoPunto, setArchivosNuevoPunto] = useState([]);
+  const [seccionFormulario, setSeccionFormulario] = useState(null);
   const [sidebar5Abierto, setSidebar5Abierto] = useState(false);
   const [sidebar5Ancho, setSidebar5Ancho] = useState(false);
   const [sidebar5Amplio, setSidebar5Amplio] = useState(false);
@@ -57,6 +58,7 @@ export function UIProvider({ children }) {
   function cerrarSidebar3() {
     setSidebar3Abierto(false);
     setPuntoEnEdicionId(null);
+    setSeccionFormulario(null);
   }
   function abrirVistaArchivo(archivo) {
     setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo });
@@ -79,6 +81,7 @@ export function UIProvider({ children }) {
     sidebar3Abierto, setSidebar3Abierto, cerrarSidebar3,
     sidebar4Abierto, setSidebar4Abierto,
     archivosNuevoPunto, setArchivosNuevoPunto,
+    seccionFormulario, setSeccionFormulario,
     sidebar5Abierto, toggleSidebar5, cerrarSidebar5,
     sidebar5Ancho, setSidebar5Ancho,
     sidebar5Amplio, setSidebar5Amplio,

@@ -254,6 +254,13 @@ export function exigirListaAbierta(sesion, seccion, catalogos) {
   }
 }
 
+export function exigirSeccionAbierta(seccion, catalogos) {
+  const encontrada = (catalogos.secciones || []).find((s) => s.id === seccion);
+  if (encontrada?.soloPuntosFijos) {
+    throw new ApiError('VALIDACION', `La sección «${encontrada.nombre}» solo contiene puntos fijos y no admite puntos nuevos.`);
+  }
+}
+
 export function exigirNoFijo(id) {
   if (esPuntoFijo(id)) {
     throw new ApiError('VALIDACION', 'Los puntos fijos se generan automáticamente y no se pueden modificar.');

@@ -18,3 +18,11 @@ export function puntosOrdenados(puntos, secciones) {
 export function puntoActivo(items, id) {
   return items.find((i) => i.punto.id === id) ?? items[0] ?? null;
 }
+
+export function numeroSiguientePunto(puntos, secciones, seccionId) {
+  const limite = secciones.findIndex((s) => s.id === seccionId);
+  if (limite < 0) return null;
+  const orden = (id) => secciones.findIndex((s) => s.id === id);
+  const numeros = puntos.filter((p) => orden(p.seccion) <= limite && Number.isInteger(p.numero)).map((p) => p.numero);
+  return Math.max(0, ...numeros) + 1;
+}

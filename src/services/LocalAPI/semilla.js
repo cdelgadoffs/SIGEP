@@ -1,6 +1,6 @@
 export const CATALOGOS_SEMILLA = {
   secciones: [
-    { id: 'actas', nombre: 'Actas', requiereAcuerdo: true, sinTituloEnDocumento: true },
+    { id: 'actas', nombre: 'Actas', requiereAcuerdo: true, sinTituloEnDocumento: true, soloPuntosFijos: true },
     { id: 'proyectos-de-acuerdo', nombre: 'Proyectos de acuerdo', requiereAcuerdo: true },
     { id: 'tomas-de-nota-licencias', nombre: 'Tomas de nota/Licencias', requiereAcuerdo: true, plantillaPorOmision: 'proyecto', primerNumeroArchivo: 2 },
     { id: 'informes', nombre: 'Informes', requiereAcuerdo: false },

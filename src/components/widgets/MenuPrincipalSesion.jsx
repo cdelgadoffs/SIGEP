@@ -35,7 +35,7 @@ export default function MenuPrincipalSesion() {
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
     badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado).length,
-    sinAgregar: !puedeEscribir || (listaCerrada && !s.admiteConListaCerrada),
+    sinAgregar: !puedeEscribir || s.soloPuntosFijos || (listaCerrada && !s.admiteConListaCerrada),
   }));
 
   const avisoSecciones = seccionesConBadge.length > 0

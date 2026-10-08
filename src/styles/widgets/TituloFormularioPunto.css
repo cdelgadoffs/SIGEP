@@ -1,0 +1,13 @@
+.widget-titulo-formulario-punto {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+.widget-titulo-formulario-punto-detalle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+  color: #1a1a1a;
+}

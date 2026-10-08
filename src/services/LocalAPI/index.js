@@ -12,7 +12,7 @@ import {
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
-  numerarArchivos, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
+  numerarArchivos, exigirSeccionAbierta, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -449,6 +449,7 @@ export async function crearPunto(sesionId, datos) {
   const sesion = await exigirSesionAbierta(sesionId);
   const catalogos = await listarCatalogos();
   validarPunto(datos, catalogos);
+  exigirSeccionAbierta(datos.seccion, catalogos);
   exigirListaAbierta(sesion, datos.seccion, catalogos);
   const archivos = entradasDeArchivos(Array.from(datos.archivos || []));
   validarArchivos(archivos);
@@ -492,6 +493,7 @@ export async function editarPunto(id, version, cambios) {
   const catalogos = await listarCatalogos();
   validarPunto(combinado, catalogos);
   const cambiaSeccion = combinado.seccion !== actual.seccion;
+  if (cambiaSeccion) exigirSeccionAbierta(combinado.seccion, catalogos);
   const almacenado = { ...actual };
   delete almacenado.contenido;
   delete almacenado.acuerdo;

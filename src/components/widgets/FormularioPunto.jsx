@@ -42,7 +42,7 @@ function aDocumentos(borrador) {
 
 export default function FormularioPunto() {
   const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, archivosNuevoPunto, setArchivosNuevoPunto } = useUI();
+  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, archivosNuevoPunto, setArchivosNuevoPunto, setSeccionFormulario } = useUI();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
   const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision);
   const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
@@ -111,6 +111,10 @@ export default function FormularioPunto() {
   }, [sidebar3Abierto, seccionNuevoPunto, puntoEnEdicionId]);
 
   useEffect(() => {
+    if (sidebar3Abierto) setSeccionFormulario(form.seccion);
+  }, [sidebar3Abierto, form.seccion, setSeccionFormulario]);
+
+  useEffect(() => {
     if (!restaurado) return;
     const clave = claveBorrador(form.seccion);
     const temporizador = setTimeout(() => {
@@ -128,7 +132,7 @@ export default function FormularioPunto() {
   }, [form, restaurado, aporte]);
 
   const opcionesSeccion = SECCIONES_DOCUMENTO
-    .filter((s) => !listaCerrada || s.admiteConListaCerrada)
+    .filter((s) => !s.soloPuntosFijos && (!listaCerrada || s.admiteConListaCerrada))
     .map((s) => ({ id: s.id, label: s.nombre }));
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
@@ -247,6 +251,14 @@ export default function FormularioPunto() {
         </div>
       )}
 
+      {!editando && (
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
+          <SelectorArchivos arrastrar botones={false} onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
+          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
+        </div>
+      )}
+
       <div className="widget-formulario-punto-fila">
         <div className="widget-formulario-punto-campo">
           <label className="widget-formulario-punto-label">Categoría</label>
@@ -277,14 +289,6 @@ export default function FormularioPunto() {
             opciones={opcionesSeccion}
             onSeleccionar={(id) => actualizar('seccion', id)}
           />
-        </div>
-      )}
-
-      {!editando && (
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
-          <SelectorArchivos arrastrar onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
-          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
         </div>
       )}
 

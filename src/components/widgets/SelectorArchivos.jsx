@@ -4,7 +4,7 @@ import BotonIcono from '../base/BotonIcono.jsx';
 import { entradasDeArrastre, entradasDeLista, separarPermitidos } from '../../utils/archivos.js';
 import '../../styles/widgets/SelectorArchivos.css';
 
-export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = false, arrastrar = false, disabled = false }) {
+export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = false, arrastrar = false, botones = true, disabled = false }) {
   const entradaArchivos = useRef(null);
   const entradaCarpeta = useRef(null);
   const [encima, setEncima] = useState(false);
@@ -50,13 +50,15 @@ export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = fa
 
   return (
     <div className="widget-selector-archivos">
+      {botones && (
       <div className="widget-selector-archivos-botones">
         <BotonS variant="claro" disabled={disabled} onClick={() => entradaArchivos.current.click()}>Archivos</BotonS>
         <BotonS variant="claro" disabled={disabled} onClick={() => entradaCarpeta.current.click()}>Carpeta</BotonS>
       </div>
+      )}
       {arrastrar && (
         <div
-          className={'widget-selector-archivos-zona' + (encima ? ' widget-selector-archivos-zona-encima' : '')}
+          className={'widget-selector-archivos-zona' + (botones ? '' : ' widget-selector-archivos-zona-grande') + (encima ? ' widget-selector-archivos-zona-encima' : '')}
           role="button"
           tabIndex={0}
           onClick={() => !disabled && entradaArchivos.current.click()}
