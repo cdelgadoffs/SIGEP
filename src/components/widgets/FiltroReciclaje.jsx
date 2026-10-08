@@ -1,11 +1,15 @@
 import ListaExpandible from '../base/ListaExpandible.jsx';
-import { useUI } from '../../context/UIContext.jsx';
+import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import '../../styles/widgets/FiltroReciclaje.css';
 
-const OPCIONES = [{ id: 'todos', label: 'Todos los puntos' }];
+const OPCIONES = [
+  { id: 'todos', label: 'Todos los puntos' },
+  { id: 'pendiente', label: 'Puntos pendientes' },
+  { id: 'eliminado', label: 'Puntos eliminados' },
+];
 
 export default function FiltroReciclaje() {
-  const { filtroReciclaje, setFiltroReciclaje } = useUI();
+  const { filtroReciclaje, cambiarAjuste } = useAjustesVisuales();
   const actual = OPCIONES.find((o) => o.id === filtroReciclaje) ?? OPCIONES[0];
   return (
     <div className="widget-filtro-reciclaje">
@@ -13,7 +17,7 @@ export default function FiltroReciclaje() {
         valorActual={actual.id}
         etiquetaActual={actual.label}
         opciones={OPCIONES}
-        onSeleccionar={setFiltroReciclaje}
+        onSeleccionar={(id) => cambiarAjuste('filtroReciclaje', id)}
       />
     </div>
   );

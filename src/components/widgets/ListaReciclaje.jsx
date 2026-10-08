@@ -4,17 +4,25 @@ import Scrollbar from '../base/Scrollbar.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
+import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
+import { etiquetaFecha } from '../../utils/fechas.js';
 import '../../styles/widgets/ListaReciclaje.css';
 
 const MAX_RESUMEN = 140;
+const MOTIVOS = {
+  pendiente: 'Pendiente',
+  eliminado: 'Eliminado',
+};
 
 export default function ListaReciclaje() {
-  const { RETIRADOS, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, restaurarPunto, cargando } = useProyecto();
+  const { PAPELERA, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, restaurarPunto, cargando } = useProyecto();
+  const { filtroReciclaje } = useAjustesVisuales();
   const { puedeEscribir } = useAuth();
   const [error, setError] = useState(null);
   const [restaurandoId, setRestaurandoId] = useState(null);
 
-  const puedeRestaurar = puedeEscribir && !sesionFinalizada && !sesionSeleccionada?.horaInicio;
+  const puedeRestaurar = puedeEscribir && !!sesionSeleccionada && !sesionFinalizada && !sesionSeleccionada.horaInicio;
+  const visibles = PAPELERA.filter((p) => filtroReciclaje === 'todos' || p.motivo === filtroReciclaje);
 
   async function restaurar(id) {
     setError(null);
@@ -35,22 +43,25 @@ export default function ListaReciclaje() {
       <Scrollbar>
         <div className="widget-lista-reciclaje-contenido">
           {error && <div className="widget-lista-reciclaje-error">{error}</div>}
-          {RETIRADOS.length === 0 && (
-            <div className="widget-lista-reciclaje-vacio">{cargando ? 'Cargando…' : 'No hay puntos retirados.'}</div>
+          {visibles.length === 0 && (
+            <div className="widget-lista-reciclaje-vacio">{cargando ? 'Cargando…' : 'No hay puntos en esta lista.'}</div>
           )}
-          {RETIRADOS.map((p) => (
-            <div key={p.id} className="widget-lista-reciclaje-item">
+          {visibles.map((p) => (
+            <div key={p.id} className={`widget-lista-reciclaje-item widget-lista-reciclaje-item-${p.motivo}`}>
               <div className="widget-lista-reciclaje-cabecera">
-                <BadgeDinamico texto={REMITENTES.find((r) => r.id === p.remitente)?.nombre ?? p.remitente} tono="azul" />
+                <div className="widget-lista-reciclaje-etiquetas">
+                  <BadgeDinamico texto={REMITENTES.find((r) => r.id === p.remitente)?.nombre ?? p.remitente} tono="azul" />
+                  <span className={`widget-lista-reciclaje-motivo widget-lista-reciclaje-motivo-${p.motivo}`}>{MOTIVOS[p.motivo] ?? MOTIVOS.pendiente}</span>
+                </div>
                 <BotonIcono
                   icono="ri-arrow-go-back-line"
-                  ariaLabel="Reintegrar a la lista"
+                  ariaLabel="Reintegrar a la sesión"
                   disabled={!puedeRestaurar || restaurandoId === p.id}
                   onClick={() => restaurar(p.id)}
                 />
               </div>
               <span className="widget-lista-reciclaje-seccion">
-                {SECCIONES_DOCUMENTO.find((s) => s.id === p.seccion)?.nombre ?? p.seccion}
+                {SECCIONES_DOCUMENTO.find((s) => s.id === p.seccion)?.nombre ?? p.seccion} · Sesión del {etiquetaFecha(p.sesionOrigenId)}
               </span>
               <p className="widget-lista-reciclaje-texto">{resumen(p.contenido)}</p>
             </div>

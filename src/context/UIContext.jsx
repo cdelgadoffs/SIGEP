@@ -15,7 +15,6 @@ const UIContext = createContext(null);
 export function UIProvider({ children }) {
   const [sidebar3Abierto, setSidebar3Abierto] = useState(false);
   const [sidebar4Abierto, setSidebar4Abierto] = useState(false);
-  const [filtroReciclaje, setFiltroReciclaje] = useState('todos');
   const [sidebar5Abierto, setSidebar5Abierto] = useState(false);
   const [sidebar5Ancho, setSidebar5Ancho] = useState(false);
   const [sidebar5Amplio, setSidebar5Amplio] = useState(false);
@@ -72,7 +71,6 @@ export function UIProvider({ children }) {
   const value = {
     sidebar3Abierto, setSidebar3Abierto, cerrarSidebar3,
     sidebar4Abierto, setSidebar4Abierto,
-    filtroReciclaje, setFiltroReciclaje,
     sidebar5Abierto, toggleSidebar5, cerrarSidebar5,
     sidebar5Ancho, setSidebar5Ancho,
     sidebar5Amplio, setSidebar5Amplio,

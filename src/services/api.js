@@ -27,7 +27,7 @@ export const {
   eliminarPunto,
   retirarPunto,
   restaurarPunto,
-  listarPuntosRetirados,
+  listarPapelera,
   reordenarPuntos,
   marcarPunto,
   marcarPuntos,

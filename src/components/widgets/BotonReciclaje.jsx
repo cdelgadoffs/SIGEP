@@ -3,11 +3,11 @@ import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/BotonReciclaje.css';
 
 export default function BotonReciclaje() {
-  const { RETIRADOS } = useProyecto();
+  const { PAPELERA } = useProyecto();
   const { setSidebar4Abierto } = useUI();
   return (
     <button type="button" className="widget-boton-reciclaje" onClick={() => setSidebar4Abierto(true)}>
-      Reciclaje{RETIRADOS.length > 0 ? ` (${RETIRADOS.length})` : ''}
+      Reciclaje{PAPELERA.length > 0 ? ` (${PAPELERA.length})` : ''}
     </button>
   );
 }

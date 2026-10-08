@@ -2,10 +2,11 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 27;
+const DB_VERSION = 28;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
+export const STORE_PAPELERA = 'papelera';
 export const STORE_CATALOGOS = 'catalogos';
 export const STORE_ARCHIVOS = 'archivos';
 export const STORE_CALENDARIOS = 'calendarios';
@@ -32,6 +33,9 @@ function abrirDB() {
       }
       if (!db.objectStoreNames.contains(STORE_PUNTOS)) {
         db.createObjectStore(STORE_PUNTOS, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(STORE_PAPELERA)) {
+        db.createObjectStore(STORE_PAPELERA, { keyPath: 'id' });
       }
       if (!db.objectStoreNames.contains(STORE_ARCHIVOS)) {
         db.createObjectStore(STORE_ARCHIVOS, { keyPath: 'id' });
@@ -60,6 +64,21 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 28) {
+        const tx = req.transaction;
+        tx.objectStore(STORE_PUNTOS).openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          const punto = cursor.value;
+          if (punto.retirado) {
+            const entrada = { ...punto, motivo: 'pendiente', sesionOrigenId: punto.sesionId, movidoEn: punto.retiradoEn, movidoPor: punto.retiradoPor };
+            ['sesionId', 'retirado', 'retiradoEn', 'retiradoPor'].forEach((campo) => delete entrada[campo]);
+            tx.objectStore(STORE_PAPELERA).put(entrada);
+            cursor.delete();
+          }
+          cursor.continue();
+        };
       }
       if (evento.oldVersion < 26) {
         const tx = req.transaction;

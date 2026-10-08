@@ -5,7 +5,7 @@ import {
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
-  retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, listarPuntosRetirados,
+  retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, listarPapelera,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
   descargarArchivo as descargarArchivoEnApi,
   listarAvisosEdicion, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
@@ -25,7 +25,7 @@ const CACHE_SESIONES = 'sesiones';
 const cachePuntos = (sesionId) => `puntos:${sesionId}`;
 const cacheAsistencia = (sesionId) => `asistencia:${sesionId}`;
 const cacheAvisos = (sesionId) => `avisos:${sesionId}`;
-const cacheRetirados = (sesionId) => `retirados:${sesionId}`;
+const CACHE_PAPELERA = 'papelera';
 const cacheCalendario = (anio) => `calendario:${anio}`;
 
 const ANIO_CALENDARIO = new Date().getFullYear();
@@ -44,7 +44,7 @@ export function ProyectoProvider({ children }) {
   const [calendario, setCalendario] = useState(null);
   const [asistencia, setAsistencia] = useState([]);
   const [avisos, setAvisos] = useState([]);
-  const [retirados, setRetirados] = useState([]);
+  const [papelera, setPapelera] = useState([]);
   const [sesionDeDatos, setSesionDeDatos] = useState(null);
   const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, calendario: { cargando: true }, puntos: {} });
 
@@ -62,9 +62,8 @@ export function ProyectoProvider({ children }) {
     setPuntos([]);
     setAsistencia([]);
     setAvisos([]);
-    setRetirados([]);
     const estado = sesionActivaFecha ? { cargando: true } : {};
-    setCargas((c) => ({ ...c, puntos: estado, asistencia: estado, avisos: estado, retirados: estado }));
+    setCargas((c) => ({ ...c, puntos: estado, asistencia: estado, avisos: estado }));
   }
 
   useEffect(() => {
@@ -187,24 +186,22 @@ export function ProyectoProvider({ children }) {
   }, [sesionActivaFecha]);
 
   useEffect(() => {
-    if (!sesionActivaFecha) return;
     let vigente = true;
     let servidorListo = false;
-    const clave = cacheRetirados(sesionActivaFecha);
-    obtenerCache(clave).then((c) => {
-      if (vigente && !servidorListo && Array.isArray(c)) setRetirados(c);
+    obtenerCache(CACHE_PAPELERA).then((cache) => {
+      if (vigente && !servidorListo && Array.isArray(cache)) setPapelera(cache);
     });
-    listarPuntosRetirados(sesionActivaFecha)
+    listarPapelera()
       .then((lista) => {
         if (!vigente) return;
         servidorListo = true;
-        setRetirados(lista);
-        guardarCache(clave, lista);
-        marcarCarga('retirados', {});
+        setPapelera(lista);
+        guardarCache(CACHE_PAPELERA, lista);
+        marcarCarga('papelera', {});
       })
-      .catch((e) => vigente && marcarCarga('retirados', { error: e }));
+      .catch((e) => vigente && marcarCarga('papelera', { error: e }));
     return () => { vigente = false; };
-  }, [sesionActivaFecha]);
+  }, []);
 
   function aplicarSesiones(sesiones) {
     const lista = conEtiqueta(sesiones);
@@ -263,23 +260,21 @@ export function ProyectoProvider({ children }) {
   async function refrescarAvisos() {
     if (sesionActivaFecha) aplicarAvisos(await listarAvisosEdicion(sesionActivaFecha));
   }
-  function aplicarRetirados(lista) {
-    setRetirados(lista);
-    guardarCache(cacheRetirados(sesionActivaFecha), lista);
-  }
-  async function refrescarRetirados() {
-    if (sesionActivaFecha) aplicarRetirados(await listarPuntosRetirados(sesionActivaFecha));
+  async function refrescarPapelera() {
+    const lista = await listarPapelera();
+    setPapelera(lista);
+    guardarCache(CACHE_PAPELERA, lista);
   }
   async function retirarPunto(id) {
     await retirarPuntoEnApi(id);
     await refrescarPuntos();
-    await refrescarRetirados();
+    await refrescarPapelera();
     await refrescarAvisos();
   }
   async function restaurarPunto(id) {
-    await restaurarPuntoEnApi(id);
+    await restaurarPuntoEnApi(id, sesionActivaFecha);
     await refrescarPuntos();
-    await refrescarRetirados();
+    await refrescarPapelera();
   }
   async function enviarAvisoEdicion(id) {
     await enviarAvisoEdicionEnApi(id);
@@ -304,6 +299,8 @@ export function ProyectoProvider({ children }) {
   async function finalizarSesion() {
     await celebrarSesion(sesionActivaFecha);
     aplicarSesiones(await listarSesiones());
+    await refrescarPuntos();
+    await refrescarPapelera();
   }
   function aplicarPuntos(lista) {
     const ordenada = porNumero(lista);
@@ -333,6 +330,7 @@ export function ProyectoProvider({ children }) {
   async function eliminarPunto(id) {
     await eliminarPuntoEnApi(id);
     await refrescarPuntos();
+    await refrescarPapelera();
     await refrescarAvisos();
   }
   async function reordenarPuntos(seccion, ids) {
@@ -402,7 +400,7 @@ export function ProyectoProvider({ children }) {
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
     listaCerrada, establecerListaCerrada,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion,
-    PUNTOS: puntos, RETIRADOS: retirados, retirarPunto, restaurarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
+    PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,

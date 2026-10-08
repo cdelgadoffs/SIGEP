@@ -46,3 +46,30 @@
   font-size: 12px;
   color: #c0392b;
 }
+.widget-lista-reciclaje-etiquetas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.widget-lista-reciclaje-etiquetas .base-badge-dinamico {
+  padding: 2px 7px;
+  font-size: 10.5px;
+}
+.widget-lista-reciclaje-motivo {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.widget-lista-reciclaje-motivo-pendiente {
+  color: #d9822b;
+}
+.widget-lista-reciclaje-motivo-eliminado {
+  color: #d9534f;
+}
+.widget-lista-reciclaje-item-pendiente {
+  border-left-color: #f0a030;
+}
+.widget-lista-reciclaje-item-eliminado {
+  border-left-color: #d9534f;
+}

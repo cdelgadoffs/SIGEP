@@ -3,6 +3,8 @@ import { leerAjustesVisuales, guardarAjustesVisuales } from '../services/Ajustes
 
 const AjustesVisualesContext = createContext(null);
 
+const FILTROS_RECICLAJE = ['todos', 'pendiente', 'eliminado'];
+
 export function AjustesVisualesProvider({ children }) {
   const [ajustes, setAjustes] = useState(leerAjustesVisuales);
 
@@ -14,6 +16,7 @@ export function AjustesVisualesProvider({ children }) {
   const value = {
     vistaCompletaProyecto: ajustes.vistaCompletaProyecto === true,
     vistaCompletaSesion: ajustes.vistaCompletaSesion === true,
+    filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'todos',
     cambiarAjuste,
   };
   return <AjustesVisualesContext.Provider value={value}>{children}</AjustesVisualesContext.Provider>;
