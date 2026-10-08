@@ -14,7 +14,7 @@ import '../../styles/widgets/ListaPuntosSesion.css';
 export default function ListaPuntosSesion() {
   const {
     PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA,
-    sesionSeleccionada, sesionFinalizada, marcarPunto, cargando, error,
+    sesionSeleccionada, sesionFinalizada, marcarPunto, retirarPunto, cargando, error,
   } = useProyecto();
   const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta } = useUI();
   const { puedeEscribir, puedeDescargar } = useAuth();
@@ -60,6 +60,18 @@ export default function ListaPuntosSesion() {
     }
   }
 
+  async function retirar(id) {
+    setErrorAccion(null);
+    setGuardandoId(id);
+    try {
+      await retirarPunto(id);
+    } catch (e) {
+      setErrorAccion(e.mensaje || 'No se pudo retirar el punto.');
+    } finally {
+      setGuardandoId(null);
+    }
+  }
+
   const aviso = error ? `No se pudo cargar la información: ${error.mensaje}` : errorAccion;
   const vacio = items.length === 0
     ? (cargando ? 'Cargando…' : error ? null : 'Esta sesión no tiene puntos.')
@@ -93,7 +105,12 @@ export default function ListaPuntosSesion() {
                           onClick={() => alternarVistaPrevia(punto.id)}
                         />
                       ) : (
-                        <BotonIcono icono="ri-close-line" ariaLabel="Retirar de la lista (próximamente)" disabled />
+                        <BotonIcono
+                          icono="ri-close-line"
+                          ariaLabel="Retirar de la lista"
+                          disabled={!puedeEscribir || guardandoId === punto.id}
+                          onClick={() => retirar(punto.id)}
+                        />
                       )}
                     </span>
                   )}

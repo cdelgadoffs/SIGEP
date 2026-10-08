@@ -3,6 +3,7 @@ import { createContext, useContext, useState } from 'react';
 export const ANCHO_SIDEBAR1 = 270;
 export const ANCHO_SIDEBAR2 = 250;
 export const ANCHO_SIDEBAR3 = 500;
+export const ANCHO_SIDEBAR4 = 320;
 export const ANCHO_SIDEBAR5 = 300;
 export const ANCHO_SIDEBAR5_ANCHO = 420;
 export const ANCHO_VISTA_PREVIA = 650;
@@ -14,6 +15,7 @@ const UIContext = createContext(null);
 export function UIProvider({ children }) {
   const [sidebar3Abierto, setSidebar3Abierto] = useState(false);
   const [sidebar4Abierto, setSidebar4Abierto] = useState(false);
+  const [filtroReciclaje, setFiltroReciclaje] = useState('todos');
   const [sidebar5Abierto, setSidebar5Abierto] = useState(false);
   const [sidebar5Ancho, setSidebar5Ancho] = useState(false);
   const [sidebar5Amplio, setSidebar5Amplio] = useState(false);
@@ -56,7 +58,10 @@ export function UIProvider({ children }) {
   }
   function setVistaActual(vista) {
     cerrarVistaArchivo();
-    if (vista !== 'proyecto') cerrarSidebar3();
+    if (vista !== 'proyecto') {
+      cerrarSidebar3();
+      setSidebar4Abierto(false);
+    }
     setVistaActualInterna(vista);
   }
   function cerrarSidebar5() {
@@ -67,6 +72,7 @@ export function UIProvider({ children }) {
   const value = {
     sidebar3Abierto, setSidebar3Abierto, cerrarSidebar3,
     sidebar4Abierto, setSidebar4Abierto,
+    filtroReciclaje, setFiltroReciclaje,
     sidebar5Abierto, toggleSidebar5, cerrarSidebar5,
     sidebar5Ancho, setSidebar5Ancho,
     sidebar5Amplio, setSidebar5Amplio,

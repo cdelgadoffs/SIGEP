@@ -1,0 +1,23 @@
+.widget-boton-reciclaje {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 6px 0 0 6px;
+  padding: 10px 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  writing-mode: vertical-rl;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 49;
+  transition: background 0.2s;
+}
+.widget-boton-reciclaje:hover {
+  background: #333;
+}

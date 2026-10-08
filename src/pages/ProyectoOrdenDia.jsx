@@ -3,6 +3,7 @@ import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
 import CintaSesiones from '../components/widgets/CintaSesiones.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
 import Sidebar3 from '../components/base/Sidebar3.jsx';
+import Sidebar4 from '../components/base/Sidebar4.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
 import Sidebar6 from '../components/base/Sidebar6.jsx';
 import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
@@ -13,8 +14,11 @@ import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
 import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
+import BotonReciclaje from '../components/widgets/BotonReciclaje.jsx';
+import FiltroReciclaje from '../components/widgets/FiltroReciclaje.jsx';
+import ListaReciclaje from '../components/widgets/ListaReciclaje.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
-import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
+import { useUI, ANCHO_SIDEBAR3, ANCHO_SIDEBAR4, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
@@ -24,6 +28,7 @@ export default function ProyectoOrdenDia() {
   const {
     izquierdaSidebar1, izquierdaSidebar3,
     sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
+    sidebar4Abierto, setSidebar4Abierto,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
     sidebar5Amplio,
@@ -98,7 +103,17 @@ export default function ProyectoOrdenDia() {
       >
         <ListaAsuetos />
       </Sidebar6>
-      <PanelPrincipal izquierda={panelIzquierda} arriba={arriba}>
+      <Sidebar4
+        abierto={sidebar4Abierto}
+        arriba={ALTO_TOPBAR}
+        titulo="Reciclaje"
+        encabezado={<FiltroReciclaje />}
+        onCerrar={() => setSidebar4Abierto(false)}
+      >
+        <ListaReciclaje />
+      </Sidebar4>
+      {!sidebar4Abierto && <BotonReciclaje />}
+      <PanelPrincipal izquierda={panelIzquierda} derecha={sidebar4Abierto ? ANCHO_SIDEBAR4 : 0} arriba={arriba}>
         <ListaPuntosProyecto />
       </PanelPrincipal>
     </>

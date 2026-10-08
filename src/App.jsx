@@ -1,5 +1,4 @@
 import Skeleton from './components/Skeleton.jsx';
-import Sidebar4 from './components/base/Sidebar4.jsx';
 import AvisoEdicionCorreo from './components/widgets/AvisoEdicionCorreo.jsx';
 import Inicio from './pages/Inicio.jsx';
 import ProyectoOrdenDia from './pages/ProyectoOrdenDia.jsx';
@@ -15,7 +14,7 @@ const PAGES = {
 };
 
 function App() {
-  const { vistaActual, sidebar4Abierto, setSidebar4Abierto } = useUI();
+  const { vistaActual } = useUI();
   const Page = PAGES[vistaActual];
 
   return (
@@ -23,7 +22,6 @@ function App() {
       <Skeleton>
         {Page && <Page />}
       </Skeleton>
-      <Sidebar4 abierto={sidebar4Abierto} onCerrar={() => setSidebar4Abierto(false)} />
       <AvisoEdicionCorreo />
     </>
   );

@@ -69,6 +69,8 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 | `numero` | int | **Derivado.** Posición del punto en el orden del documento de su sesión, empezando en 1 (ver "Numeración y puntos fijos"). Todo `Punto` que el API devuelve lo lleva. |
 | `fijo` | bool | **Derivado.** `true` en los puntos autogenerados (no se guardan como puntos; ver abajo). |
 | `encabezado` | bool | **Derivado.** Solo en puntos fijos que funcionan como título de una sección (cuentan en la numeración, pero no son puntos a tratar). |
+| `retirado` | bool | Hecho persistido: el punto se retiró de la lista de la sesión (ver "Puntos retirados"). Empieza en `false`; `listarPuntos` nunca devuelve un punto retirado. |
+| `retiradoEn`, `retiradoPor` | string | Timestamp y usuario del retiro (solo en puntos retirados). |
 | `version` | int | |
 | `creadoPor`, `creadoEn`, `modificadoEn` | string | Autoría y fechas, del servidor. |
 
@@ -347,6 +349,20 @@ La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada int
 - **Asuetos sin regenerar el calendario.** `agregarAsueto` exige que el año ya tenga calendario (`NO_ENCONTRADO` si no). Valida que `fecha` sea del año y caiga en `diaSemana`, que `destino` sea `fecha ± 1` y no caiga en vacaciones, y que no haya ya un asueto en esa `fecha`. La sesión de `fecha` debe existir, no estar celebrada (`SESION_CELEBRADA`) ni tener puntos (`VALIDACION`): se elimina y se crea la del `destino` (si no existía). `quitarAsueto` revierte: elimina la sesión del `destino` (que no debe estar celebrada ni tener puntos) y recrea la de `fecha` si no cae en vacaciones. Ambas son atómicas y suben la `version` del calendario.
 - `crearSesiones(fechas)` sigue en el contrato (crea sesiones **ordinarias** sueltas), pero el cliente no la usa; las extraordinarias se crean con `crearSesionExtraordinaria`.
 
+### Puntos retirados (reciclaje)
+
+Un punto de la lista de una sesión que aún no se trata puede **retirarse** sin perderse: queda guardado en el servidor, fuera de la lista (y de la numeración), y puede reintegrarse.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `retirarPunto(id)` | id de punto | `Punto` retirado (`retirado: true`, sin `numero`) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_VENCIDA`, `SESION_COMENZADA`, `PUNTO_TRATADO`, `VALIDACION` |
+| `restaurarPunto(id)` | id de punto | `Punto` (de nuevo en la lista, al final de su sección) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_VENCIDA`, `SESION_COMENZADA`, `VALIDACION` |
+| `listarPuntosRetirados(sesionId)` | id de sesión | `Punto[]` retirados, el más reciente primero (ya filtrados según el usuario; sin `numero`) | `NO_ENCONTRADO` |
+
+- Solo antes de **comenzar** la sesión (`SESION_COMENZADA` después) y no aplican a puntos fijos (`VALIDACION`). `retirarPunto` rechaza un punto ya tratado (`PUNTO_TRATADO`), es idempotente y borra su aviso de edición pendiente. `restaurarPunto` es idempotente y **no** exige la lista abierta (deshace el retiro, que se hace con la lista ya cerrada).
+- Retirar y restaurar **renumeran**: el cliente vuelve a pedir `listarPuntos`. Un punto retirado no se puede editar, marcar, votar, adjuntar ni eliminar (`PUNTO_RETIRADO`).
+- Alimenta la futura papelería de reciclaje y la lista de puntos por asignar.
+
 ### Operaciones de archivos, de orden y de celebración
 
 | Operación | Entrada | Salida | Errores |
@@ -398,6 +414,9 @@ Notas de comportamiento:
 | `AVISOS_PENDIENTES` | La sesión tiene avisos de edición sin enviar ni descartar y no se puede cerrar su lista. |
 | `SESION_NO_CELEBRADA` | La operación exige una sesión ya celebrada (`enviarEngrose`). |
 | `SESION_NO_COMENZADA` | Se intentó celebrar una sesión que aún no ha comenzado. |
+| `SESION_COMENZADA` | La operación solo aplica antes de comenzar la sesión (`retirarPunto`, `restaurarPunto`). |
+| `PUNTO_TRATADO` | El punto ya se marcó como tratado y no se puede retirar. |
+| `PUNTO_RETIRADO` | El punto está retirado de la lista y no admite esa operación. |
 | `HORARIO_INVALIDO` | La hora de inicio quedaría posterior a la de fin. |
 | `FECHA_NO_DISPONIBLE` | La fecha no está entre las disponibles para una sesión extraordinaria. |
 | `SESION_ORDINARIA` | La operación solo aplica a sesiones extraordinarias. |

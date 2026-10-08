@@ -8,7 +8,7 @@ import {
 import {
   usuarioActual, exigirEscritura, exigirDescarga, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
-  camposPunto, validarPunto, normalizarPunto,
+  validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
@@ -339,7 +339,7 @@ async function armarPuntos(sesionId) {
   const sesion = sesiones.find((s) => s.id === sesionId);
   if (!sesion) return [];
   const catalogos = await catalogosConIntegrantes();
-  const almacenados = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === sesionId);
+  const almacenados = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === sesionId && !p.retirado);
   const fijos = generarPuntosFijos(sesion, sesiones, catalogos.puntosFijos);
   const secretario = sesion.secretarioEjecutivo ?? await obtenerSecretarioEjecutivo();
   const presidente = sesion.asistentes
@@ -367,6 +367,65 @@ async function puntoArmado(sesionId, id) {
 export async function listarPuntos(sesionId) {
   const lista = await armarPuntos(sesionId);
   return puedeVerConfidencial() ? lista : lista.map(ocultarConfidencial);
+}
+
+async function armarRetirados(sesionId) {
+  const catalogos = await catalogosConIntegrantes();
+  return (await obtenerTodos(STORE_PUNTOS))
+    .filter((p) => p.sesionId === sesionId && p.retirado)
+    .sort((a, b) => (a.retiradoEn < b.retiradoEn ? 1 : -1))
+    .map((p) => decorarPunto(p, catalogos));
+}
+
+export async function listarPuntosRetirados(sesionId) {
+  if (!await obtener(STORE_SESIONES, sesionId)) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
+  const lista = await armarRetirados(sesionId);
+  return puedeVerConfidencial() ? lista : lista.map(ocultarConfidencial);
+}
+
+function exigirEnLista(punto) {
+  if (punto.retirado) throw new ApiError('PUNTO_RETIRADO', 'El punto está retirado de la lista.');
+}
+
+async function exigirRetiroPosible(id) {
+  exigirEscritura();
+  exigirNoFijo(id);
+  const actual = await obtener(STORE_PUNTOS, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  const sesion = await exigirSesionAbierta(actual.sesionId);
+  if (sesion.horaInicio) throw new ApiError('SESION_COMENZADA', 'La sesión ya comenzó y no admite retirar ni reintegrar puntos.');
+  return actual;
+}
+
+export async function retirarPunto(id) {
+  const actual = await exigirRetiroPosible(id);
+  if (actual.retirado) return (await armarRetirados(actual.sesionId)).find((p) => p.id === id);
+  if (actual.tratado) throw new ApiError('PUNTO_TRATADO', 'El punto ya se marcó como tratado y no se puede retirar.');
+  const ahora = new Date().toISOString();
+  await escribirVarios({
+    poner: [{
+      store: STORE_PUNTOS,
+      valor: { ...actual, retirado: true, retiradoEn: ahora, retiradoPor: usuarioActual().id, version: actual.version + 1, modificadoEn: ahora },
+    }],
+    borrar: [{ store: STORE_AVISOS_EDICION, id }],
+  });
+  const retirado = (await armarRetirados(actual.sesionId)).find((p) => p.id === id);
+  return puedeVerConfidencial() ? retirado : ocultarConfidencial(retirado);
+}
+
+export async function restaurarPunto(id) {
+  const actual = await exigirRetiroPosible(id);
+  if (actual.retirado) {
+    const resto = { ...actual };
+    delete resto.retirado;
+    delete resto.retiradoEn;
+    delete resto.retiradoPor;
+    const orden = siguienteOrden((await obtenerTodos(STORE_PUNTOS)).filter((p) => !p.retirado), actual.sesionId, actual.seccion);
+    await escribirVarios({
+      poner: [{ store: STORE_PUNTOS, valor: { ...resto, orden, version: actual.version + 1, modificadoEn: new Date().toISOString() } }],
+    });
+  }
+  return puntoArmado(actual.sesionId, id).then((p) => (puedeVerConfidencial() ? p : ocultarConfidencial(p)));
 }
 
 export async function crearPunto(sesionId, datos) {
@@ -409,6 +468,7 @@ export async function editarPunto(id, version, cambios) {
   exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   const sesion = await exigirSesionAbierta(actual.sesionId);
   exigirListaAbierta(sesion);
   if (actual.version !== version) {
@@ -418,7 +478,9 @@ export async function editarPunto(id, version, cambios) {
   const catalogos = await listarCatalogos();
   validarPunto(combinado, catalogos);
   const cambiaSeccion = combinado.seccion !== actual.seccion;
-  const { contenido: _contenido, acuerdo: _acuerdo, ...almacenado } = actual;
+  const almacenado = { ...actual };
+  delete almacenado.contenido;
+  delete almacenado.acuerdo;
   const punto = {
     ...almacenado,
     ...normalizarPunto(combinado, catalogos),
@@ -466,6 +528,7 @@ export async function marcarPunto(id, tratado) {
   if (esPuntoFijo(id)) return marcarFijo(id, tratado);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   await exigirSesionAbierta(actual.sesionId);
   if (!!actual.tratado !== tratado) {
     await guardar(STORE_PUNTOS, { ...actual, tratado, version: actual.version + 1, modificadoEn: new Date().toISOString() });
@@ -478,6 +541,7 @@ export async function enviarEngrose(id) {
   exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   const sesion = await obtener(STORE_SESIONES, actual.sesionId);
   if (!sesion?.celebrada) throw new ApiError('SESION_NO_CELEBRADA', 'El engrose solo se envía cuando la sesión ya fue celebrada.');
   const armado = await puntoArmado(actual.sesionId, id);
@@ -493,6 +557,7 @@ export async function registrarVotacion(id, votacion) {
   exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   await exigirSesionAbierta(actual.sesionId);
   const catalogos = await catalogosConIntegrantes();
   const seccion = (catalogos.secciones || []).find((x) => x.id === actual.seccion);
@@ -513,7 +578,7 @@ export async function marcarPuntos(sesionId, tratado) {
   const lista = await armarPuntos(sesionId);
   const ahora = new Date().toISOString();
   const cambiados = (await obtenerTodos(STORE_PUNTOS))
-    .filter((p) => p.sesionId === sesionId && !!p.tratado !== tratado)
+    .filter((p) => p.sesionId === sesionId && !p.retirado && !!p.tratado !== tratado)
     .map((p) => ({ ...p, tratado, version: p.version + 1, modificadoEn: ahora }));
   const clavesFijas = lista.filter((p) => p.fijo && !p.encabezado).map((p) => analizarPuntoFijo(p.id).clave);
   const sesion = await obtener(STORE_SESIONES, sesionId);
@@ -537,6 +602,7 @@ export async function eliminarPunto(id) {
   exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   exigirListaAbierta(await exigirSesionAbierta(actual.sesionId));
   await escribirVarios({
     borrar: [
@@ -552,6 +618,7 @@ export async function adjuntarArchivos(puntoId, archivos) {
   exigirNoFijo(puntoId);
   const actual = await obtener(STORE_PUNTOS, puntoId);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   await exigirSesionAbierta(actual.sesionId);
   const nuevos = Array.from(archivos || []);
   validarArchivos(nuevos, actual.archivos.length);
@@ -576,6 +643,7 @@ export async function eliminarArchivo(puntoId, archivoId) {
   exigirNoFijo(puntoId);
   const actual = await obtener(STORE_PUNTOS, puntoId);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirEnLista(actual);
   await exigirSesionAbierta(actual.sesionId);
   if (!actual.archivos.some((a) => a.id === archivoId)) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
   const punto = {
@@ -610,7 +678,7 @@ export async function reordenarPuntos(sesionId, seccion, ids) {
   if (!catalogos.secciones.some((s) => s.id === seccion)) throw new ApiError('VALIDACION', 'Sección inválida.');
   if (!Array.isArray(ids)) throw new ApiError('VALIDACION', 'El orden debe ser una lista de ids.');
   const actuales = (await obtenerTodos(STORE_PUNTOS))
-    .filter((p) => p.sesionId === sesionId && p.seccion === seccion)
+    .filter((p) => p.sesionId === sesionId && p.seccion === seccion && !p.retirado)
     .sort(porOrden);
   const mismoConjunto = ids.length === actuales.length
     && new Set(ids).size === ids.length
@@ -729,7 +797,8 @@ const ID_SECRETARIO = 'seple';
 export async function obtenerSecretarioEjecutivo() {
   const actual = await obtener(STORE_SECRETARIO, ID_SECRETARIO);
   if (!actual) return null;
-  const { id, ...secretario } = actual;
+  const secretario = { ...actual };
+  delete secretario.id;
   return secretario;
 }
 

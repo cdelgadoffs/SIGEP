@@ -1,15 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/pages/Gates.css';
 
 export default function LoginGate() {
   const { iniciarSesion, error } = useAuth();
-  const [fechaHoy, setFechaHoy] = useState('');
-
-  useEffect(() => {
+  const [fechaHoy] = useState(() => {
     const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
-    setFechaHoy(new Date().toLocaleDateString('es-ES', opciones));
-  }, []);
+    return new Date().toLocaleDateString('es-ES', opciones);
+  });
 
   return (
     <div className="lg-gate">
