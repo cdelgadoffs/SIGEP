@@ -82,7 +82,7 @@ export default function MenuPrincipalSesion() {
               <SubMenuDD
                 items={seccionesConBadge}
                 subtitulo={avisoSecciones}
-                activoId={seccionActivaProyecto}
+                activoId={seccionActivaProyecto ?? SECCIONES_DOCUMENTO[0]?.id}
                 onSeleccionar={seleccionarSeccion}
                 onAgregar={(seccionId) => { setSeccionActivaProyecto(seccionId); setPuntoEnEdicionId(null); setSeccionNuevoPunto(seccionId); setSidebar3Abierto(true); }}
                 iconoAgregar="+"

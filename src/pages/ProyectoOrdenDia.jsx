@@ -106,7 +106,7 @@ export default function ProyectoOrdenDia() {
       <Sidebar4
         abierto={sidebar4Abierto}
         arriba={ALTO_TOPBAR}
-        titulo="Reciclaje"
+        titulo="Papelería de reciclaje"
         encabezado={<FiltroReciclaje />}
         onCerrar={() => setSidebar4Abierto(false)}
       >

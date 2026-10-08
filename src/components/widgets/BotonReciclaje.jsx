@@ -7,7 +7,7 @@ export default function BotonReciclaje() {
   const { setSidebar4Abierto } = useUI();
   return (
     <button type="button" className="widget-boton-reciclaje" onClick={() => setSidebar4Abierto(true)}>
-      Reciclaje{PAPELERA.length > 0 ? ` (${PAPELERA.length})` : ''}
+      Papelería de reciclaje{PAPELERA.length > 0 ? ` (${PAPELERA.length})` : ''}
     </button>
   );
 }

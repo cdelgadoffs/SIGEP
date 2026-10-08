@@ -287,6 +287,7 @@ export function ProyectoProvider({ children }) {
   async function establecerListaCerrada(cerrada) {
     await establecerListaCerradaEnApi(sesionActivaFecha, cerrada);
     aplicarSesiones(await listarSesiones());
+    await refrescarPuntos();
   }
   async function comenzarSesion() {
     await comenzarSesionEnApi(sesionActivaFecha);

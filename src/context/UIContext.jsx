@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 export const ANCHO_SIDEBAR1 = 270;
 export const ANCHO_SIDEBAR2 = 250;
@@ -14,7 +14,7 @@ const UIContext = createContext(null);
 
 export function UIProvider({ children }) {
   const [sidebar3Abierto, setSidebar3Abierto] = useState(false);
-  const [sidebar4Abierto, setSidebar4Abierto] = useState(false);
+  const [sidebar4Abierto, setSidebar4AbiertoInterno] = useState(false);
   const [sidebar5Abierto, setSidebar5Abierto] = useState(false);
   const [sidebar5Ancho, setSidebar5Ancho] = useState(false);
   const [sidebar5Amplio, setSidebar5Amplio] = useState(false);
@@ -32,7 +32,15 @@ export function UIProvider({ children }) {
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
   const [seccionActivaProyecto, setSeccionActivaProyecto] = useState(null);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
-  const [vistaPreviaAbierta, setVistaPreviaAbierta] = useState(false);
+  const [vistaPreviaAbierta, setVistaPreviaAbiertaInterna] = useState(false);
+  const setSidebar4Abierto = useCallback((abierto) => {
+    if (abierto) setVistaPreviaAbiertaInterna(false);
+    setSidebar4AbiertoInterno(abierto);
+  }, []);
+  const setVistaPreviaAbierta = useCallback((abierta) => {
+    if (abierta) setSidebar4AbiertoInterno(false);
+    setVistaPreviaAbiertaInterna(abierta);
+  }, []);
   const izquierdaSidebar1 = 0;
   const izquierdaSidebar3 = izquierdaSidebar1 + ANCHO_SIDEBAR1;
   const izquierdaSidebar6 = sidebar5Ancho ? ANCHO_SIDEBAR5_ANCHO : ANCHO_SIDEBAR5;
@@ -57,10 +65,8 @@ export function UIProvider({ children }) {
   }
   function setVistaActual(vista) {
     cerrarVistaArchivo();
-    if (vista !== 'proyecto') {
-      cerrarSidebar3();
-      setSidebar4Abierto(false);
-    }
+    if (vista !== 'proyecto') cerrarSidebar3();
+    if (vista !== 'proyecto' && vista !== 'sesion') setSidebar4Abierto(false);
     setVistaActualInterna(vista);
   }
   function cerrarSidebar5() {
