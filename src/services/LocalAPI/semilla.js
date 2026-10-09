@@ -36,9 +36,19 @@ export const CATALOGOS_SEMILLA = {
     { id: 'concurrente', nombre: 'votación concurrente', admitePrecision: true },
   ],
   plantillasActa: [
-    { id: 'introduccion', nombre: 'Introducción', bloques: ['considerando'], orden: ['intro', 'bloques', 'puente', 'contenido', 'acuerdo'] },
-    { id: 'proyecto', nombre: 'Proyecto', bloques: ['antecedente', 'considerando'], orden: ['contenido', 'bloques', 'tituloAcuerdo', 'acuerdo'] },
+    { id: 'introduccion', nombre: 'Introducción', bloques: ['considerando'], considerandosFijos: true, orden: ['intro', 'bloques', 'puente', 'contenido', 'acuerdo'] },
+    { id: 'proyecto', nombre: 'Proyecto', bloques: ['antecedente', 'considerando'], considerandosFijos: true, orden: ['contenido', 'bloques', 'tituloAcuerdo', 'acuerdo'] },
     { id: 'personalizada', nombre: 'Personalizada', bloques: [], orden: ['bloques', 'contenido', 'acuerdo'] },
+  ],
+  considerandosFijos: [
+    {
+      id: 'reforma-judicial',
+      texto: 'Que el 15 de septiembre de 2024 se publicó en el Diario Oficial de la Federación el Decreto por el que se reforman, adicionan y derogan diversas disposiciones de la Constitución Política de los Estados Unidos Mexicanos, en materia de reforma del Poder Judicial, a partir del cual se estableció que la administración de todos los órganos del Poder Judicial de la Federación estará a cargo del Órgano de Administración Judicial.',
+    },
+    {
+      id: 'ley-organica',
+      texto: 'Que el 20 de diciembre de 2024 se publicó en el Diario Oficial de la Federación el Decreto por el que se expide la Ley Orgánica del Poder Judicial de la Federación, cuyo artículo 70 dispone que el Órgano de Administración Judicial contará con independencia técnica y de gestión y tendrá a su cargo la administración de todos los órganos del Poder Judicial de la Federación y velará por su buen funcionamiento, autonomía, independencia, imparcialidad y legitimidad.',
+    },
   ],
   tiposBloqueActa: [
     { id: 'considerando', nombre: 'Considerando', titulo: 'CONSIDERANDO' },

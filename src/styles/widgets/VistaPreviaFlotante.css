@@ -147,6 +147,14 @@
   font-weight: 700;
   text-align: center;
 }
+.widget-vista-previa-fijo {
+  position: relative;
+  padding-right: 24px;
+  margin-bottom: 8px;
+}
+.widget-vista-previa-fijo .widget-vista-previa-bloque-quitar {
+  top: 2px;
+}
 .widget-vista-previa-bloque-quitar {
   position: absolute;
   right: 0;

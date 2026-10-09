@@ -34,7 +34,7 @@ const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFe
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 const porNumero = (lista) => [...lista].sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0));
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], generos: [], grados: [], tiposConocimiento: [], tiposSesion: [], plantillasActa: [], tiposBloqueActa: [], textosActa: [] };
+const CATALOGOS_VACIOS = { secciones: [], remitentes: [], categorias: [], tiposVoto: [], tiposVotacion: [], estadosVoto: [], generos: [], grados: [], tiposConocimiento: [], tiposSesion: [], plantillasActa: [], tiposBloqueActa: [], textosActa: [], considerandosFijos: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
@@ -401,7 +401,7 @@ export function ProyectoProvider({ children }) {
     sesionSeleccionada,
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes, CATEGORIAS: catalogos.categorias,
     TIPOS_VOTO: catalogos.tiposVoto, TIPOS_VOTACION: catalogos.tiposVotacion, ESTADOS_VOTO: catalogos.estadosVoto, TIPOS_CONOCIMIENTO: catalogos.tiposConocimiento, GENEROS: catalogos.generos, GRADOS: catalogos.grados,
-    PLANTILLAS_ACTA: catalogos.plantillasActa, TIPOS_BLOQUE_ACTA: catalogos.tiposBloqueActa, TEXTOS_ACTA: catalogos.textosActa,
+    PLANTILLAS_ACTA: catalogos.plantillasActa, TIPOS_BLOQUE_ACTA: catalogos.tiposBloqueActa, TEXTOS_ACTA: catalogos.textosActa, CONSIDERANDOS_FIJOS: catalogos.considerandosFijos,
     FECHAS_SESIONES: fechasSesiones,
     ASISTENCIA: asistencia, registrarAsistencia, refrescarAsistencia,
     sesionActivaFecha, cargarSesion, obtenerFechasExtraordinaria, crearSesionExtraordinaria, eliminarSesion,

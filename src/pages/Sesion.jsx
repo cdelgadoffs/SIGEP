@@ -1,6 +1,7 @@
 import Topbar from '../components/widgets/Topbar.jsx';
 import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
 import Sidebar1 from '../components/base/Sidebar1.jsx';
+import BadgeDinamico from '../components/base/BadgeDinamico.jsx';
 import Sidebar2 from '../components/base/Sidebar2.jsx';
 import Sidebar4 from '../components/base/Sidebar4.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
@@ -66,6 +67,7 @@ export default function Sesion() {
         ancho={ANCHO_SIDEBAR1_SESION}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
+        accionesHeader={sesionSeleccionada ? <BadgeDinamico grande texto={sesionFinalizada ? 'Celebrada' : 'Previa'} tono={sesionFinalizada ? 'verde' : 'azul'} /> : null}
         pie={sesionSeleccionada ? (sesionFinalizada ? <BotonDescargarActa /> : (sesionSeleccionada.horaInicio ? <BotonFinalizarSesion /> : <BotonComenzarSesion />)) : null}
       >
         <MenuPrincipalSesion />

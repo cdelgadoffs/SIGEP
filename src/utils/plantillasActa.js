@@ -1,4 +1,5 @@
 import { docDesdeTexto, docVacio } from './documento.js';
+import { itemsDeNivelSuperior } from './ordinales.js';
 
 export function nuevoIdBloque() {
   return 'blq_' + crypto.randomUUID();
@@ -17,7 +18,7 @@ function bloquesVacios(plantilla) {
   return (plantilla?.bloques || []).map((tipo) => ({ id: nuevoIdBloque(), tipo, doc: docVacio() }));
 }
 
-export function hojaPorOmision(plantillasActa, textosActa, plantillaId) {
+export function hojaPorOmision(plantillasActa, textosActa, plantillaId, considerandosFijos = []) {
   const plantilla = (plantillasActa || []).find((x) => x.id === plantillaId) || (plantillasActa || [])[0];
   const intro = textoActa(textosActa, 'intro');
   const introContenido = [];
@@ -28,7 +29,25 @@ export function hojaPorOmision(plantillasActa, textosActa, plantillaId) {
     introDoc: introContenido.length ? { type: 'doc', content: [{ type: 'paragraph', content: introContenido }] } : docVacio(),
     puenteDoc: docDesdeTexto(textoActa(textosActa, 'puente')?.texto),
     bloquesActa: bloquesVacios(plantilla),
+    considerandosFijos: (considerandosFijos || []).map((c) => ({ id: c.id, doc: docDesdeTexto(c.texto) })),
   };
+}
+
+export function considerandosFijosVisibles(plantilla, form) {
+  return plantilla?.considerandosFijos ? (form.considerandosFijos || []) : [];
+}
+
+export function numerarConsiderandosFijos(fijos) {
+  let desde = 0;
+  return fijos.map((c) => {
+    const fila = { ...c, desde };
+    desde += itemsDeNivelSuperior(c.doc).length;
+    return fila;
+  });
+}
+
+export function totalConsiderandosFijos(fijos) {
+  return fijos.reduce((n, c) => n + itemsDeNivelSuperior(c.doc).length, 0);
 }
 
 export function bloquesParaPlantilla(plantilla, bloques) {
@@ -54,5 +73,6 @@ export function formDePunto(punto, plantillasActa, textosActa) {
     introDoc: punto.introDoc ?? hoja.introDoc,
     puenteDoc: punto.puenteDoc ?? hoja.puenteDoc,
     bloquesActa: punto.bloquesActa ?? hoja.bloquesActa,
+    considerandosFijos: punto.considerandosFijos ?? [],
   };
 }

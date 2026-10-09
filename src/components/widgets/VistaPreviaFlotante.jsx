@@ -5,7 +5,7 @@ import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import EditorTexto from './EditorTexto.jsx';
 import BarraHerramientasTexto from './BarraHerramientasTexto.jsx';
-import { bloquesParaPlantilla, nuevoIdBloque, tiposBloqueDisponibles } from '../../utils/plantillasActa.js';
+import { bloquesParaPlantilla, considerandosFijosVisibles, numerarConsiderandosFijos, totalConsiderandosFijos, nuevoIdBloque, tiposBloqueDisponibles } from '../../utils/plantillasActa.js';
 import { docVacio } from '../../utils/documento.js';
 import { generarWordPuntoAcuerdo, nombreArchivoPuntoAcuerdo, nombreArchivoEngrose } from '../../utils/puntoAcuerdo.js';
 import { cargarLogo, URL_LOGO_DOCUMENTO } from '../../utils/logo.js';
@@ -43,6 +43,9 @@ export default function VistaPreviaFlotante({
 
   const plantilla = plantillas.find((p) => p.id === form.plantilla) || plantillas[0];
   const bloques = form.bloquesActa || [];
+  const fijos = considerandosFijosVisibles(plantilla, form);
+  const totalFijos = totalConsiderandosFijos(fijos);
+  const anfitrionFijos = bloques.find((b) => b.tipo === 'considerando');
   const disponibles = tiposBloqueDisponibles(tiposBloque, bloques);
   const tipoElegido = disponibles.find((t) => t.id === tipoNuevo) || disponibles[0];
   const esPersonalizada = !!tipoElegido && tipoElegido.titulo === null;
@@ -86,6 +89,35 @@ export default function VistaPreviaFlotante({
     aporte({ bloquesActa: bloques.map((b) => (b.id === id ? { ...b, doc } : b)) });
   }
 
+  function cambiarFijo(id, doc) {
+    aporte({ considerandosFijos: form.considerandosFijos.map((c) => (c.id === id ? { ...c, doc } : c)) });
+  }
+
+  function quitarFijo(id) {
+    onCambiar({ considerandosFijos: form.considerandosFijos.filter((c) => c.id !== id) });
+  }
+
+  function filasFijas() {
+    return numerarConsiderandosFijos(fijos).map((c) => (
+      <div key={c.id} className="widget-vista-previa-fijo">
+        <EditorTexto
+          value={c.doc}
+          onChange={(doc) => cambiarFijo(c.id, doc)}
+          placeholder="Considerando..."
+          ordinal="bloque"
+          ordinalDesde={c.desde}
+          soloLectura={soloLectura}
+          onFocusEditor={(ed) => { editorActivoRef.current = ed; }}
+        />
+        {!soloLectura && (
+          <button type="button" className="widget-vista-previa-bloque-quitar" title="Quitar considerando" onClick={() => quitarFijo(c.id)}>
+            <i className="ri-close-line"></i>
+          </button>
+        )}
+      </div>
+    ));
+  }
+
   function quitarBloque(id) {
     onCambiar({ bloquesActa: bloques.filter((b) => b.id !== id) });
   }
@@ -124,8 +156,15 @@ export default function VistaPreviaFlotante({
       );
     }
     if (seccion === 'bloques') {
-      return bloques.map((bloque) => {
+      const sueltos = fijos.length > 0 && !anfitrionFijos ? (
+        <div key="considerandos-fijos" className="widget-vista-previa-bloque">
+          <div className="widget-vista-previa-bloque-titulo">{tiposBloque.find((t) => t.id === 'considerando')?.titulo ?? 'CONSIDERANDO'}</div>
+          {filasFijas()}
+        </div>
+      ) : null;
+      const lista = bloques.map((bloque) => {
         const tipo = tiposBloque.find((t) => t.id === bloque.tipo);
+        const alojaFijos = fijos.length > 0 && bloque === anfitrionFijos;
         return (
           <div key={bloque.id} className="widget-vista-previa-bloque">
             <div className="widget-vista-previa-bloque-titulo">
@@ -136,17 +175,20 @@ export default function VistaPreviaFlotante({
                 </button>
               )}
             </div>
+            {alojaFijos && filasFijas()}
             <EditorTexto
               value={bloque.doc}
               onChange={(doc) => cambiarBloque(bloque.id, doc)}
               placeholder={PLACEHOLDERS_BLOQUE[bloque.tipo] ?? PLACEHOLDERS_BLOQUE.personalizada}
               ordinal="bloque"
+              ordinalDesde={alojaFijos ? totalFijos : 0}
               soloLectura={soloLectura}
               onFocusEditor={(ed) => { editorActivoRef.current = ed; }}
             />
           </div>
         );
       });
+      return [sueltos, ...lista];
     }
     if (seccion === 'contenido') {
       return (

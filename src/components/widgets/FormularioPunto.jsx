@@ -14,7 +14,7 @@ import { contenidoPorOmision, hojaPorOmision } from '../../utils/plantillasActa.
 import { tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/FormularioPunto.css';
 
-function estadoVacio(seccion, esInforme, plantillas, textosActa, plantillaId) {
+function estadoVacio(seccion, esInforme, plantillas, textosActa, plantillaId, considerandosFijos) {
   return {
     seccion: seccion || '',
     categoria: '',
@@ -23,7 +23,7 @@ function estadoVacio(seccion, esInforme, plantillas, textosActa, plantillaId) {
     acuerdoDoc: docVacio(),
     confidencial: false,
     archivos: [],
-    ...hojaPorOmision(plantillas, textosActa, plantillaId),
+    ...hojaPorOmision(plantillas, textosActa, plantillaId, considerandosFijos),
   };
 }
 
@@ -41,10 +41,11 @@ function aDocumentos(borrador) {
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, CONSIDERANDOS_FIJOS, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
   const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, archivosNuevoPunto, setArchivosNuevoPunto, setSeccionFormulario } = useUI();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
-  const formularioVacio = (seccion) => estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision);
+  const [ultimaSeleccion, setUltimaSeleccion] = useState({ categoria: '', remitente: '' });
+  const formularioVacio = (seccion) => ({ ...estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision, CONSIDERANDOS_FIJOS), ...ultimaSeleccion });
   const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
   const [aporte, setAporte] = useState(false);
   const [previaVisible, setPreviaVisible] = useState(false);
@@ -82,6 +83,7 @@ export default function FormularioPunto() {
           introDoc: original.introDoc,
           puenteDoc: original.puenteDoc,
           bloquesActa: original.bloquesActa,
+          considerandosFijos: original.considerandosFijos ?? [],
         });
         setAporte(true);
         setPreviaVisible(false);
@@ -101,7 +103,8 @@ export default function FormularioPunto() {
         if (!vigente) return;
         claveGuardadaRef.current = borrador ? claveBorrador(seccion) : null;
         if (borrador) {
-          setForm({ ...formularioVacio(seccion), ...aDocumentos(borrador), seccion });
+          const base = formularioVacio(seccion);
+          setForm({ ...base, ...aDocumentos(borrador), categoria: borrador.categoria || base.categoria, remitente: borrador.remitente || base.remitente, seccion });
           setAporte(true);
           reiniciarEditor();
         }
@@ -145,7 +148,14 @@ export default function FormularioPunto() {
   const mostrarSeccion = editando || !!seccionOrigen?.permiteCambiarSeccion;
 
   function cambiarCategoria(id) {
-    setForm((f) => ({ ...f, categoria: id, remitente: REMITENTES.find((r) => r.categoria === id)?.id || '' }));
+    const remitente = REMITENTES.find((r) => r.categoria === id)?.id || '';
+    if (!editando) setUltimaSeleccion({ categoria: id, remitente });
+    setForm((f) => ({ ...f, categoria: id, remitente }));
+  }
+
+  function cambiarRemitente(id) {
+    if (!editando) setUltimaSeleccion({ categoria: categoriaActual?.id ?? '', remitente: id });
+    actualizar('remitente', id);
   }
 
   function actualizar(campo, valor) {
@@ -193,6 +203,7 @@ export default function FormularioPunto() {
         introDoc: form.introDoc,
         puenteDoc: form.puenteDoc,
         bloquesActa: form.bloquesActa,
+        considerandosFijos: form.considerandosFijos,
       };
       if (editando) {
         await editarPunto(punto.id, punto.version, datos);
@@ -215,16 +226,71 @@ export default function FormularioPunto() {
 
   const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && !esDocVacio(form.contenidoDoc) && (esInforme || !esDocVacio(form.acuerdoDoc));
 
-  function atajoConfirmar(e) {
-    if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (puedeConfirmar) confirmar();
-  }
+  const atajoRef = useRef(null);
+  useEffect(() => {
+    atajoRef.current = () => {
+      if (puedeConfirmar) confirmar();
+      else if (!enviando) setError(esInforme ? 'Escribe el informe para añadir el punto.' : 'Escribe el punto de acuerdo y el acuerdo para añadir el punto.');
+    };
+  });
+
+  useEffect(() => {
+    if (!sidebar3Abierto) return;
+    function alPulsar(e) {
+      if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey) || e.repeat) return;
+      if (document.querySelector('.base-modal-fondo')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      atajoRef.current();
+    }
+    window.addEventListener('keydown', alPulsar, true);
+    return () => window.removeEventListener('keydown', alPulsar, true);
+  }, [sidebar3Abierto]);
 
   return (
-    <div className="widget-formulario-punto-wrap" onKeyDownCapture={atajoConfirmar}>
+    <div className="widget-formulario-punto-wrap">
       <div className="widget-formulario-punto" key={form.seccion} ref={contenedorRef} onScroll={onScroll}>
+      <div className="widget-formulario-punto-fila">
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Categoría</label>
+          <ListaExpandible
+            valorActual={categoriaActual?.id}
+            etiquetaActual={categoriaActual?.nombre ?? ''}
+            opciones={CATEGORIAS.map((c) => ({ id: c.id, label: c.nombre }))}
+            onSeleccionar={cambiarCategoria}
+          />
+        </div>
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Remitente</label>
+          <ListaExpandible
+            valorActual={remitenteActual}
+            etiquetaActual={remitentesDeCategoria.find((r) => r.id === remitenteActual)?.nombre ?? ''}
+            opciones={remitentesDeCategoria.map((r) => ({ id: r.id, label: r.nombre }))}
+            onSeleccionar={cambiarRemitente}
+          />
+        </div>
+      </div>
+
+      {mostrarSeccion && (
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Sección</label>
+          <ListaExpandible
+            valorActual={form.seccion}
+            etiquetaActual={seccionActual ? seccionActual.nombre : ''}
+            opciones={opcionesSeccion}
+            onSeleccionar={(id) => actualizar('seccion', id)}
+          />
+        </div>
+      )}
+
+      {!editando && (
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
+          <SelectorArchivos arrastrar botones={false} onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
+          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
+        </div>
+      )}
+
       <div className="widget-formulario-punto-campo widget-formulario-punto-editor widget-formulario-punto-editor-contenido">
         <label className="widget-formulario-punto-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</label>
         <EditorTexto
@@ -243,51 +309,9 @@ export default function FormularioPunto() {
           <EditorTexto
             value={form.acuerdoDoc}
             onChange={(doc) => cambiarDoc('acuerdoDoc', doc)}
-            placeholder="Acuerdos"
             ordinal="acuerdo"
             resetToken={reinicioEditor}
             ariaLabel="Acuerdo"
-          />
-        </div>
-      )}
-
-      {!editando && (
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
-          <SelectorArchivos arrastrar botones={false} onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
-          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
-        </div>
-      )}
-
-      <div className="widget-formulario-punto-fila">
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Categoría</label>
-          <ListaExpandible
-            valorActual={categoriaActual?.id}
-            etiquetaActual={categoriaActual?.nombre ?? ''}
-            opciones={CATEGORIAS.map((c) => ({ id: c.id, label: c.nombre }))}
-            onSeleccionar={cambiarCategoria}
-          />
-        </div>
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Remitente</label>
-          <ListaExpandible
-            valorActual={remitenteActual}
-            etiquetaActual={remitentesDeCategoria.find((r) => r.id === remitenteActual)?.nombre ?? ''}
-            opciones={remitentesDeCategoria.map((r) => ({ id: r.id, label: r.nombre }))}
-            onSeleccionar={(id) => actualizar('remitente', id)}
-          />
-        </div>
-      </div>
-
-      {mostrarSeccion && (
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Sección</label>
-          <ListaExpandible
-            valorActual={form.seccion}
-            etiquetaActual={seccionActual ? seccionActual.nombre : ''}
-            opciones={opcionesSeccion}
-            onSeleccionar={(id) => actualizar('seccion', id)}
           />
         </div>
       )}

@@ -460,7 +460,7 @@ export async function crearPunto(sesionId, datos) {
   const punto = {
     id,
     sesionId,
-    ...normalizarPunto(datos, catalogos),
+    ...normalizarPunto(datos, catalogos, true),
     archivos: metadatos,
     orden,
     tratado: true,

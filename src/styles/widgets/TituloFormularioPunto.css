@@ -8,6 +8,8 @@
 .widget-titulo-formulario-punto-detalle {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: #1a1a1a;
 }

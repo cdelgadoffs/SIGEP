@@ -66,7 +66,7 @@ export async function generarWordPuntoAcuerdo({ punto, plantillas, tiposBloque, 
         if (!tieneTexto(nodo)) return;
         const runs = runsDeParrafo(nodo, { mayusculas, negrita });
         const k = items.findIndex((it) => it.indice === indice);
-        if (prefijos && k >= 0) runs.unshift(corrida(`${prefijoOrdinal(k, items.length, prefijos.sinUnico)}. `, { bold: true }));
+        if (prefijos && k >= 0) { const desde = prefijos.desde || 0; runs.unshift(corrida(`${prefijoOrdinal(desde + k, desde + items.length, prefijos.sinUnico)}. `, { bold: true })); }
         piezas.push({ alineacion: ALINEACION[nodo.attrs?.textAlign] ?? AlignmentType.JUSTIFIED, runs });
       } else if (nodo.type === 'orderedList') {
         let n = 0;
@@ -118,11 +118,28 @@ export async function generarWordPuntoAcuerdo({ punto, plantillas, tiposBloque, 
       parrafos.push(new Paragraph({ spacing: { after: 200 }, children: [corrida('')] }));
       parrafos.push(...aParrafos(piezasDeDoc(punto.puenteDoc), 200));
     } else if (seccion === 'bloques') {
-      (punto.bloquesActa || []).forEach((bloque) => {
-        if (esDocVacio(bloque.doc)) return;
+      const bloques = punto.bloquesActa || [];
+      const fijos = plantilla?.considerandosFijos ? (punto.considerandosFijos || []).filter((c) => !esDocVacio(c.doc)) : [];
+      const anfitrion = bloques.find((b) => b.tipo === 'considerando');
+      const totalFijos = fijos.reduce((n, c) => n + itemsDeNivelSuperior(c.doc).length, 0);
+      const escribirFijos = () => {
+        let desde = 0;
+        fijos.forEach((c) => {
+          parrafos.push(...aParrafos(piezasDeDoc(c.doc, { prefijos: { sinUnico: true, desde } }), 120));
+          desde += itemsDeNivelSuperior(c.doc).length;
+        });
+      };
+      if (fijos.length > 0 && !anfitrion) {
+        parrafos.push(tituloCentrado(tiposBloque.find((t) => t.id === 'considerando')?.titulo ?? 'CONSIDERANDO'));
+        escribirFijos();
+      }
+      bloques.forEach((bloque) => {
+        const alojaFijos = fijos.length > 0 && bloque === anfitrion;
+        if (esDocVacio(bloque.doc) && !alojaFijos) return;
         const tipo = tiposBloque.find((t) => t.id === bloque.tipo);
         parrafos.push(tituloCentrado(tipo?.titulo ?? bloque.titulo ?? 'SECCIÓN'));
-        parrafos.push(...aParrafos(piezasDeDoc(bloque.doc, { prefijos: { sinUnico: true } }), 300));
+        if (alojaFijos) escribirFijos();
+        parrafos.push(...aParrafos(piezasDeDoc(bloque.doc, { prefijos: { sinUnico: true, desde: alojaFijos ? totalFijos : 0 } }), 300));
       });
     } else if (seccion === 'contenido') {
       if (!esDocVacio(punto.contenidoDoc)) {

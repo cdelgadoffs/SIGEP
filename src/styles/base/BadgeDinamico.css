@@ -9,6 +9,12 @@
   font-size: 11px;
   line-height: 1.3;
 }
+.base-badge-dinamico-grande {
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
 .base-badge-dinamico-texto {
   overflow: hidden;
   text-overflow: ellipsis;

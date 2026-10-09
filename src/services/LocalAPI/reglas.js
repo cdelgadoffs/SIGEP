@@ -1,7 +1,7 @@
 import { ApiError } from '../ApiError.js';
 import { usuarioActual as usuarioDelToken } from '../auth.js';
 
-const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa'];
+const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa', 'considerandosFijos'];
 const MAX_TEXTO = 20000;
 const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
@@ -350,7 +350,7 @@ export function ocultarConfidencial(p) {
   if (!p.confidencial) return p;
   return {
     ...p, contenido: 'CONFIDENCIAL', acuerdo: '', archivos: [], votacion: null, acuerdoLineas: [], textoVotacion: null,
-    contenidoDoc: null, acuerdoDoc: null, introDoc: null, puenteDoc: null, bloquesActa: [], engrose: null,
+    contenidoDoc: null, acuerdoDoc: null, introDoc: null, puenteDoc: null, bloquesActa: [], considerandosFijos: [], engrose: null,
   };
 }
 
@@ -740,13 +740,31 @@ function normalizarBloques(bloques, catalogos) {
   });
 }
 
+function considerandosPorOmision(catalogos) {
+  return (catalogos.considerandosFijos || []).map((c) => ({ id: c.id, doc: docDesdeTexto(c.texto) }));
+}
+
+function normalizarConsiderandosFijos(lista, catalogos) {
+  const catalogo = catalogos.considerandosFijos || [];
+  if (!Array.isArray(lista) || lista.length > catalogo.length) throw invalido('Lista de considerandos inválida.');
+  const vistos = new Set();
+  lista.forEach((c) => {
+    if (!c || !catalogo.some((x) => x.id === c.id) || vistos.has(c.id)) throw invalido('Considerando inválido.');
+    vistos.add(c.id);
+  });
+  return catalogo
+    .map((x) => lista.find((c) => c.id === x.id))
+    .filter(Boolean)
+    .map((c) => ({ id: c.id, doc: validarDocumento(c.doc ?? docVacio()) }));
+}
+
 function docDeEntrada(p, campo) {
   const doc = p[campo + 'Doc'];
   if (doc !== undefined && doc !== null) return validarDocumento(doc);
   return docDesdeTexto(typeof p[campo] === 'string' ? p[campo].trim() : '');
 }
 
-export function normalizarPunto(p, catalogos) {
+export function normalizarPunto(p, catalogos, esNuevo = false) {
   const seccion = buscarSeccion(catalogos, p.seccion);
   const omision = hojaPorOmision(catalogos, p.plantilla ?? seccion.plantillaPorOmision);
   const plantilla = p.plantilla ?? omision.plantilla;
@@ -761,6 +779,9 @@ export function normalizarPunto(p, catalogos) {
     introDoc: p.introDoc != null ? validarDocumento(p.introDoc) : omision.introDoc,
     puenteDoc: p.puenteDoc != null ? validarDocumento(p.puenteDoc) : omision.puenteDoc,
     bloquesActa: p.bloquesActa != null ? normalizarBloques(p.bloquesActa, catalogos) : omision.bloquesActa,
+    considerandosFijos: p.considerandosFijos != null
+      ? normalizarConsiderandosFijos(p.considerandosFijos, catalogos)
+      : esNuevo ? considerandosPorOmision(catalogos) : [],
   };
 }
 

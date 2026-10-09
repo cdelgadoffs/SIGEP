@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { Extension, Mark } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
@@ -43,10 +43,10 @@ const TamanoFuente = Mark.create({
 const PrefijoOrdinal = Extension.create({
   name: 'prefijoOrdinal',
   addOptions() {
-    return { activo: false, sinUnico: false };
+    return { activo: false, sinUnico: false, obtenerDesde: () => 0 };
   },
   addProseMirrorPlugins() {
-    const { activo, sinUnico } = this.options;
+    const { activo, sinUnico, obtenerDesde } = this.options;
     if (!activo) return [];
     return [
       new Plugin({
@@ -57,8 +57,9 @@ const PrefijoOrdinal = Extension.create({
             estado.doc.forEach((nodo, desplazamiento) => {
               if (nodo.type.name === 'paragraph' && nodo.textContent.trim() !== '') posiciones.push(desplazamiento);
             });
+            const desde = obtenerDesde();
             const decoraciones = posiciones.map((desplazamiento, k) => {
-              const texto = `${prefijoOrdinal(k, posiciones.length, sinUnico)}. `;
+              const texto = `${prefijoOrdinal(desde + k, desde + posiciones.length, sinUnico)}. `;
               return Decoration.widget(desplazamiento + 1, () => {
                 const marca = document.createElement('span');
                 marca.className = 'texto-ordinal';
@@ -74,7 +75,7 @@ const PrefijoOrdinal = Extension.create({
   },
 });
 
-function extensiones(placeholder, ordinal) {
+function extensiones(placeholder, ordinal, obtenerDesde) {
   return [
     StarterKit.configure({
       heading: false,
@@ -95,15 +96,17 @@ function extensiones(placeholder, ordinal) {
     TableCell.configure({ HTMLAttributes: { class: 'acta-celda' } }),
     MarcaOculta,
     TamanoFuente,
-    PrefijoOrdinal.configure({ activo: !!ordinal, sinUnico: ordinal === 'bloque' }),
+    PrefijoOrdinal.configure({ activo: !!ordinal, sinUnico: ordinal === 'bloque', obtenerDesde }),
   ];
 }
 
-export default function EditorTexto({ value, onChange, placeholder, ordinal, soloLectura = false, onFocusEditor, autoFocus = false, resetToken, ariaLabel }) {
+export default function EditorTexto({ value, onChange, placeholder, ordinal, ordinalDesde = 0, soloLectura = false, onFocusEditor, autoFocus = false, resetToken, ariaLabel }) {
   const ultimoValorRef = useRef(claveDeDoc(value));
+  const desdeRef = useRef(ordinalDesde);
+  const [obtenerDesde] = useState(() => () => desdeRef.current);
 
   const editor = useEditor({
-    extensions: extensiones(placeholder, ordinal),
+    extensions: extensiones(placeholder, ordinal, obtenerDesde),
     content: value,
     editable: !soloLectura,
     editorProps: { attributes: { class: 'widget-editor-texto-contenido', ...(ariaLabel ? { 'aria-label': ariaLabel } : null) } },
@@ -135,6 +138,11 @@ export default function EditorTexto({ value, onChange, placeholder, ordinal, sol
     if (autoFocus) editor.chain().focus('end').run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor, autoFocus, resetToken]);
+
+  useEffect(() => {
+    desdeRef.current = ordinalDesde;
+    if (editor && ordinal) editor.view.dispatch(editor.state.tr);
+  }, [ordinalDesde, ordinal, editor]);
 
   useEffect(() => {
     if (editor) editor.setEditable(!soloLectura);

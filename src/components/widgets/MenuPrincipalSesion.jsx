@@ -5,11 +5,12 @@ import SubMenuDD from './SubMenuDD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { contarPuntos } from '../../utils/puntos.js';
+import { nombreTipoSesion } from '../../utils/sesiones.js';
 
 const VISTAS_MENU_PRINCIPAL = [
   { id: 'inicio', label: 'Inicio' },
   { id: 'proyecto', label: 'Proyecto del orden del día', expandible: true, mostrarTotalPuntos: true, estados: ['proxima', 'pendiente'] },
-  { id: 'sesion', label: 'Celebrar sesión', labelFinalizada: 'Sesión celebrada', estados: ['proxima', 'celebrada'] },
+  { id: 'sesion', label: 'Celebrar sesión', estados: ['proxima', 'celebrada'] },
   { id: 'historial', label: 'Historial' },
 ];
 
@@ -31,6 +32,12 @@ export default function MenuPrincipalSesion() {
   useEffect(() => {
     if (!vistaDisponible) setVistaActual('inicio');
   }, [vistaDisponible, setVistaActual]);
+
+  const enCurso = !!sesionSeleccionada?.horaInicio && !sesionFinalizada;
+  const nombreSesion = `${nombreTipoSesion(sesionSeleccionada?.tipo)} N° ${sesionSeleccionada?.numeroSesion ?? '—'}`;
+  const etiquetaCelebrar = sesionFinalizada
+    ? `Sesión ${nombreSesion} celebrada`
+    : enCurso ? `Celebrando sesión ${nombreSesion}` : `Celebrar sesión ${nombreSesion}`;
 
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
@@ -65,7 +72,7 @@ export default function MenuPrincipalSesion() {
       {disponibles.map((v) => {
         const activo = vistaActual === v.id;
         const expandido = v.expandible && activo && acordeonAbierto;
-        const label = v.labelFinalizada && sesionFinalizada ? v.labelFinalizada : v.label;
+        const label = v.id === 'sesion' && sesionSeleccionada ? etiquetaCelebrar : v.label;
         return (
           <div key={v.id}>
             <BotonSeleccionableMenu
@@ -73,7 +80,7 @@ export default function MenuPrincipalSesion() {
               badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS) : undefined}
               expandible={v.expandible}
               expandido={expandido}
-              deshabilitado={v.id === 'sesion' && !listaCerrada && !sesionFinalizada}
+              deshabilitado={v.id === 'sesion' ? !listaCerrada && !sesionFinalizada && !enCurso : enCurso}
               onClick={() => seleccionarVista(v)}
             >
               {label}
