@@ -190,3 +190,61 @@
   border-top: 1px dashed #ccc;
   margin: 6px 0;
 }
+.widget-lista-puntos-grupo-ag {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.widget-lista-puntos-grupo-ag-titulo {
+  padding: 8px 4px 4px;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888;
+}
+.widget-lista-puntos-badge-ag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 2px dashed #b0c4e8;
+  border-radius: 8px;
+  background: #f0f4ff;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.widget-lista-puntos-badge-ag:hover,
+.widget-lista-puntos-badge-ag:focus-visible {
+  background: #e8f0fe;
+  border-color: #1a56db;
+  outline: none;
+}
+.widget-lista-puntos-badge-ag-codigo {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a56db;
+}
+.widget-lista-puntos-badge-ag-seccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1a56db;
+  opacity: 0.7;
+}
+.widget-lista-puntos-badge-ag-remitente {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: 5px;
+  background: #e8f0fe;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #1a56db;
+}

@@ -8,7 +8,7 @@ import {
 import {
   usuarioActual, exigirEscritura, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
-  validarPunto, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta,
+  validarPunto, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta, seccionParaLista,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
@@ -424,7 +424,10 @@ export async function restaurarPunto(id, sesionId) {
   if (!sesionId) throw new ApiError('VALIDACION', 'Debes indicar la sesión a la que se reintegra el punto.');
   const sesion = await exigirSesionAbierta(sesionId);
   if (sesion.horaInicio) throw new ApiError('SESION_COMENZADA', 'La sesión ya comenzó y no admite reintegrar puntos.');
-  if (sesionId !== entrada.sesionOrigenId) exigirListaAbierta(sesion, entrada.seccion, await listarCatalogos());
+  if (sesionId !== entrada.sesionOrigenId) {
+    const catalogos = await listarCatalogos();
+    exigirListaAbierta(sesion, seccionParaLista(entrada, catalogos), catalogos);
+  }
   const punto = {
     ...entrada,
     sesionId,
@@ -450,7 +453,7 @@ export async function crearPunto(sesionId, datos) {
   const catalogos = await listarCatalogos();
   validarPunto(datos, catalogos);
   exigirSeccionAbierta(datos.seccion, catalogos);
-  exigirListaAbierta(sesion, datos.seccion, catalogos);
+  exigirListaAbierta(sesion, seccionParaLista(datos, catalogos), catalogos);
   const archivos = entradasDeArchivos(Array.from(datos.archivos || []));
   validarArchivos(archivos);
   const id = crypto.randomUUID();
@@ -498,6 +501,7 @@ export async function editarPunto(id, version, cambios) {
   delete almacenado.contenido;
   delete almacenado.acuerdo;
   delete almacenado.nombreCarpeta;
+  delete almacenado.origenAG;
   const punto = {
     ...almacenado,
     ...normalizarPunto(combinado, catalogos),
@@ -538,7 +542,8 @@ export async function trasladarPunto(id, sesionDestinoId) {
   exigirListaAbierta(origen);
   const destino = await exigirSesionAbierta(sesionDestinoId);
   if (destino.horaInicio) throw new ApiError('SESION_COMENZADA', 'La sesión de destino ya comenzó y no admite recibir puntos.');
-  exigirListaAbierta(destino, actual.seccion, await listarCatalogos());
+  const catalogos = await listarCatalogos();
+  exigirListaAbierta(destino, seccionParaLista(actual, catalogos), catalogos);
   const ahora = new Date().toISOString();
   const punto = {
     ...actual,

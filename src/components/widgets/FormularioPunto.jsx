@@ -138,7 +138,7 @@ export default function FormularioPunto() {
   }, [form, restaurado, aporte]);
 
   const opcionesSeccion = SECCIONES_DOCUMENTO
-    .filter((s) => !s.soloPuntosFijos && (!listaCerrada || s.admiteConListaCerrada))
+    .filter((s) => s.id !== form.seccion && !s.soloPuntosFijos && (!listaCerrada || s.admiteConListaCerrada || (!editando && !!SECCIONES_DOCUMENTO.find((x) => x.id === seccionNuevoPunto)?.permiteCambiarSeccion)))
     .map((s) => ({ id: s.id, label: s.nombre }));
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
@@ -213,7 +213,8 @@ export default function FormularioPunto() {
         await editarPunto(punto.id, punto.version, datos);
         cerrarSidebar3();
       } else {
-        await agregarPunto({ ...datos, archivos: archivosNuevoPunto });
+        const origenAG = !!seccionOrigen?.permiteCambiarSeccion && form.seccion !== seccionOrigen.id;
+        await agregarPunto({ ...datos, origenAG, archivos: archivosNuevoPunto });
         setAvisoArchivos(null);
         setArchivosNuevoPunto([]);
         setForm(formularioVacio(form.seccion));

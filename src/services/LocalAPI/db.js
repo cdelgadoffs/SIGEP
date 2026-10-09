@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 32;
+const DB_VERSION = 33;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -64,6 +64,9 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 33) {
+        req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'textosActa', items: CATALOGOS_SEMILLA.textosActa });
       }
       if (evento.oldVersion < 32) {
         const catalogos = req.transaction.objectStore(STORE_CATALOGOS);

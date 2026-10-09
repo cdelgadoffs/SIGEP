@@ -1,7 +1,7 @@
 import { ApiError } from '../ApiError.js';
 import { usuarioActual as usuarioDelToken } from '../auth.js';
 
-const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa', 'considerandosFijos', 'nombreCarpeta'];
+const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa', 'considerandosFijos', 'nombreCarpeta', 'origenAG'];
 const MAX_TEXTO = 20000;
 const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
@@ -366,6 +366,19 @@ function buscarSeccion(catalogos, id) {
   return (catalogos.secciones || []).find((s) => s.id === id);
 }
 
+function seccionAsuntosGenerales(catalogos) {
+  return (catalogos.secciones || []).find((s) => s.permiteCambiarSeccion);
+}
+
+function esOrigenAG(p, catalogos) {
+  const ag = seccionAsuntosGenerales(catalogos);
+  return p.origenAG === true && !!ag && p.seccion !== ag.id;
+}
+
+export function seccionParaLista(p, catalogos) {
+  return esOrigenAG(p, catalogos) ? seccionAsuntosGenerales(catalogos).id : p.seccion;
+}
+
 function textoDeEntrada(p, campo) {
   const doc = p[campo + 'Doc'];
   if (doc !== undefined && doc !== null) return textoPlanoDeDoc(validarDocumento(doc));
@@ -395,6 +408,7 @@ export function validarPunto(p, catalogos) {
   }
   if (acuerdo.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El acuerdo es demasiado largo.');
   if (typeof p.confidencial !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de confidencialidad inválido.');
+  if (p.origenAG !== undefined && typeof p.origenAG !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de origen en Asuntos generales inválido.');
 }
 
 const MAX_NIVELES_RUTA = 8;
@@ -792,6 +806,7 @@ export function normalizarPunto(p, catalogos, esNuevo = false) {
     seccion: p.seccion,
     remitente: p.remitente,
     ...(nombreCarpeta ? { nombreCarpeta: validarNombreCarpeta(nombreCarpeta) } : null),
+    ...(esOrigenAG(p, catalogos) ? { origenAG: true } : null),
     contenidoDoc: docDeEntrada(p, 'contenido'),
     acuerdoDoc: seccion.requiereAcuerdo ? docDeEntrada(p, 'acuerdo') : docVacio(),
     confidencial: p.confidencial,

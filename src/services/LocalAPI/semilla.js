@@ -71,7 +71,7 @@ export const CATALOGOS_SEMILLA = {
     },
     { id: 'puente', nombre: 'Frase puente', texto: 'Por lo anterior, se emite el siguiente:' },
     { id: 'contenido', nombre: 'Punto de acuerdo nuevo', texto: 'Proyecto de Acuerdo del Pleno del Órgano de Administración Judicial ' },
-    { id: 'contenidoInforme', nombre: 'Informe nuevo', texto: 'Informe' },
+    { id: 'contenidoInforme', nombre: 'Informe nuevo', texto: 'Informe ' },
   ],
   tiposConocimiento: [
     { id: 'simple', nombre: 'El Pleno toma conocimiento del informe presentado.', texto: 'El Pleno toma conocimiento del informe presentado.' },
