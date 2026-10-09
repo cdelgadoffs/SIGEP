@@ -1,7 +1,7 @@
 import { ApiError } from '../ApiError.js';
 import { usuarioActual as usuarioDelToken } from '../auth.js';
 
-const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa', 'considerandosFijos'];
+const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial', 'contenidoDoc', 'acuerdoDoc', 'plantilla', 'introDoc', 'puenteDoc', 'bloquesActa', 'considerandosFijos', 'nombreCarpeta'];
 const MAX_TEXTO = 20000;
 const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
@@ -787,9 +787,11 @@ export function normalizarPunto(p, catalogos, esNuevo = false) {
   const omision = hojaPorOmision(catalogos, p.plantilla ?? seccion.plantillaPorOmision);
   const plantilla = p.plantilla ?? omision.plantilla;
   if (!(catalogos.plantillasActa || []).some((x) => x.id === plantilla)) throw invalido('Plantilla inválida.');
+  const nombreCarpeta = typeof p.nombreCarpeta === 'string' ? p.nombreCarpeta.trim() : '';
   return {
     seccion: p.seccion,
     remitente: p.remitente,
+    ...(nombreCarpeta ? { nombreCarpeta: validarNombreCarpeta(nombreCarpeta) } : null),
     contenidoDoc: docDeEntrada(p, 'contenido'),
     acuerdoDoc: seccion.requiereAcuerdo ? docDeEntrada(p, 'acuerdo') : docVacio(),
     confidencial: p.confidencial,

@@ -21,11 +21,46 @@ function fechaCorta(iso) {
   return iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 }
 
+function normalizar(texto) {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function buscarEnCarpetas(carpetas, consulta) {
+  const q = normalizar(consulta);
+  const carpetasEncontradas = [];
+  const archivosEncontrados = [];
+  carpetas.forEach((c) => {
+    if (normalizar(c.nombre).includes(q)) {
+      carpetasEncontradas.push({ clave: `c:${c.id}`, nombre: c.nombre, origen: '', cantidad: c.archivos.length, rutaDestino: [c.id] });
+    }
+    const vistas = new Set();
+    c.archivos.forEach((entrada) => {
+      const segmentos = (entrada.archivo.ruta || '').split('/').filter(Boolean);
+      segmentos.forEach((segmento, i) => {
+        const rutaSub = segmentos.slice(0, i + 1).join('/');
+        if (vistas.has(rutaSub) || !normalizar(segmento).includes(q)) return;
+        vistas.add(rutaSub);
+        carpetasEncontradas.push({
+          clave: `c:${c.id}/${rutaSub}`,
+          nombre: segmento,
+          origen: [c.nombre, ...segmentos.slice(0, i)].join(' / '),
+          cantidad: c.archivos.filter((e) => { const r = e.archivo.ruta || ''; return r === rutaSub || r.startsWith(`${rutaSub}/`); }).length,
+          rutaDestino: [c.id, ...segmentos.slice(0, i + 1)],
+        });
+      });
+      if (normalizar(nombreConNumero(entrada.archivo)).includes(q)) {
+        archivosEncontrados.push({ ...entrada, origen: [c.nombre, ...segmentos].join(' / ') });
+      }
+    });
+  });
+  return { carpetasEncontradas, archivosEncontrados };
+}
+
 export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, PUNTOS, listaCerrada, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
   const { abrirVistaArchivo } = useUI();
-  const [posicion, setPosicion] = useState({ sesionId: null, ruta: [] });
+  const [posicion, setPosicion] = useState({ sesionId: null, ruta: [], busqueda: '' });
   const [renombrando, setRenombrando] = useState(null);
   const [textoNuevo, setTextoNuevo] = useState('');
   const [errorRenombrar, setErrorRenombrar] = useState(null);
@@ -33,6 +68,8 @@ export default function VistaNavegador() {
 
   const sesionId = sesionSeleccionada?.id ?? null;
   const ruta = posicion.sesionId === sesionId ? posicion.ruta : [];
+  const busqueda = posicion.sesionId === sesionId ? posicion.busqueda : '';
+  const buscando = busqueda.trim() !== '';
   const carpetas = carpetasDeSesion(PUNTOS, listaCerrada);
   const carpeta = ruta.length ? carpetas.find((c) => c.id === ruta[0]) : null;
   const subruta = carpeta ? ruta.slice(1) : [];
@@ -42,7 +79,25 @@ export default function VistaNavegador() {
 
   function ir(nuevaRuta) {
     setRenombrando(null);
-    setPosicion({ sesionId, ruta: nuevaRuta });
+    setPosicion({ sesionId, ruta: nuevaRuta, busqueda: '' });
+  }
+
+  function buscar(texto) {
+    setRenombrando(null);
+    setPosicion({ sesionId, ruta, busqueda: texto });
+  }
+
+  function subir() {
+    if (buscando) ir(ruta);
+    else if (ruta.length) ir(ruta.slice(0, -1));
+  }
+
+  function teclaNavegador(e) {
+    if (errorRenombrar || e.target.tagName === 'INPUT') return;
+    if (e.key === 'Backspace' || (e.altKey && e.key === 'ArrowLeft')) {
+      e.preventDefault();
+      subir();
+    }
   }
 
   function empezarRenombrar(clave, base) {
@@ -98,7 +153,15 @@ export default function VistaNavegador() {
     ...subruta.map((segmento, i) => ({ clave: `${i}-${segmento}`, texto: segmento, alIr: () => ir([carpeta.id, ...subruta.slice(0, i + 1)]) })),
   ];
 
-  const filasCarpetas = carpeta
+  const resultados = buscando ? buscarEnCarpetas(carpetas, busqueda.trim()) : null;
+
+  const filasCarpetas = buscando
+    ? resultados.carpetasEncontradas.map((r) => ({
+      clave: r.clave, nombre: r.nombre, base: r.nombre, prefijo: '', origen: r.origen, cantidad: r.cantidad,
+      alAbrir: () => ir(r.rutaDestino),
+      renombrable: false,
+    }))
+    : carpeta
     ? nivel.subcarpetas.map((sub) => {
       const rutaSub = [...subruta, sub.nombre].join('/');
       return {
@@ -114,25 +177,45 @@ export default function VistaNavegador() {
       renombrable: !!c.renombrable,
       aplicar: (nuevo) => renombrarCarpeta(c.puntoId, '', nuevo),
     }));
-  const filasArchivos = nivel ? nivel.archivos : [];
+  const filasArchivos = buscando ? resultados.archivosEncontrados : nivel ? nivel.archivos : [];
   const vacio = filasCarpetas.length === 0 && filasArchivos.length === 0;
 
   return (
-    <div className="widget-vista-navegador">
-      <div className="widget-vista-navegador-migas">
-        {migas.map((m, i) => (
-          <span key={m.clave} className="widget-vista-navegador-miga-envoltorio">
-            {i > 0 && <i className="ri-arrow-right-s-line widget-vista-navegador-separador"></i>}
-            <button
-              type="button"
-              className={'widget-vista-navegador-miga' + (i === migas.length - 1 ? ' widget-vista-navegador-miga-actual' : '')}
-              onClick={m.alIr}
-              disabled={i === migas.length - 1}
-            >
-              {m.texto}
+    <div className="widget-vista-navegador" tabIndex={-1} onKeyDown={teclaNavegador}>
+      <div className="widget-vista-navegador-barra">
+        <BotonIcono icono="ri-arrow-up-line" ariaLabel="Subir un nivel" onClick={subir} disabled={!buscando && ruta.length === 0} />
+        <div className="widget-vista-navegador-migas">
+          {migas.map((m, i) => (
+            <span key={m.clave} className="widget-vista-navegador-miga-envoltorio">
+              {i > 0 && <i className="ri-arrow-right-s-line widget-vista-navegador-separador"></i>}
+              <button
+                type="button"
+                className={'widget-vista-navegador-miga' + (i === migas.length - 1 ? ' widget-vista-navegador-miga-actual' : '')}
+                onClick={m.alIr}
+                disabled={i === migas.length - 1}
+              >
+                {m.texto}
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="widget-vista-navegador-busqueda">
+          <i className="ri-search-line"></i>
+          <input
+            className="widget-vista-navegador-busqueda-entrada"
+            value={busqueda}
+            placeholder="Buscar en la sesión"
+            disabled={!sesionSeleccionada}
+            onChange={(e) => buscar(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Escape') buscar(''); }}
+            aria-label="Buscar en la sesión"
+          />
+          {busqueda && (
+            <button type="button" className="widget-vista-navegador-busqueda-limpiar" onClick={() => buscar('')} aria-label="Limpiar búsqueda" title="Limpiar búsqueda">
+              <i className="ri-close-line"></i>
             </button>
-          </span>
-        ))}
+          )}
+        </div>
       </div>
 
       <div className="widget-vista-navegador-encabezado">
@@ -147,7 +230,7 @@ export default function VistaNavegador() {
           {!sesionSeleccionada && <div className="widget-vista-navegador-vacio">Selecciona una sesión para ver sus archivos.</div>}
           {sesionSeleccionada && cargando && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">Cargando…</div>}
           {sesionSeleccionada && error && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">No se pudieron cargar los archivos.</div>}
-          {sesionSeleccionada && !cargando && !error && vacio && <div className="widget-vista-navegador-vacio">{carpeta ? 'Esta carpeta está vacía.' : 'Esta sesión aún no tiene archivos.'}</div>}
+          {sesionSeleccionada && !cargando && !error && vacio && <div className="widget-vista-navegador-vacio">{buscando ? `Sin resultados para «${busqueda.trim()}».` : carpeta ? 'Esta carpeta está vacía.' : 'Esta sesión aún no tiene archivos.'}</div>}
 
           {filasCarpetas.map((f) => {
             const editando = renombrando === f.clave;
@@ -156,6 +239,7 @@ export default function VistaNavegador() {
                 <span className="widget-vista-navegador-col-nombre">
                   <i className="ri-folder-3-fill widget-vista-navegador-icono-carpeta"></i>
                   {editando ? campoEdicion(f.clave, f.base, f.prefijo, '', f.aplicar) : <span className="widget-vista-navegador-nombre">{f.nombre}</span>}
+                  {f.origen && <span className="widget-vista-navegador-origen" title={f.origen}>{f.origen}</span>}
                 </span>
                 <span className="widget-vista-navegador-col-fecha"></span>
                 <span className="widget-vista-navegador-col-tamano">{f.cantidad} {f.cantidad === 1 ? 'elemento' : 'elementos'}</span>
@@ -190,11 +274,12 @@ export default function VistaNavegador() {
                   {editando ? campoEdicion(claveArchivo, base, prefijo, extension, aplicarArchivo) : (
                     <span className="widget-vista-navegador-nombre" title={`${prefijo}${base}${extension}`}>{nombreConNumero(archivo)}</span>
                   )}
+                  {entrada.origen && <span className="widget-vista-navegador-origen" title={entrada.origen}>{entrada.origen}</span>}
                 </span>
                 <span className="widget-vista-navegador-col-fecha">{fechaCorta(archivo.creadoEn)}</span>
                 <span className="widget-vista-navegador-col-tamano">{archivo.tamano ? formatoTamano(archivo.tamano) : '—'}</span>
                 <span className="widget-vista-navegador-col-acciones" onClick={(e) => e.stopPropagation()}>
-                  {puedeRenombrar && !archivo.autogenerado && !editando && (
+                  {puedeRenombrar && !buscando && !archivo.autogenerado && !editando && (
                     <BotonIcono icono="ri-pencil-line" ariaLabel="Renombrar archivo" onClick={() => empezarRenombrar(claveArchivo, base)} />
                   )}
                 </span>

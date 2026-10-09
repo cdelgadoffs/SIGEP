@@ -497,6 +497,7 @@ export async function editarPunto(id, version, cambios) {
   const almacenado = { ...actual };
   delete almacenado.contenido;
   delete almacenado.acuerdo;
+  delete almacenado.nombreCarpeta;
   const punto = {
     ...almacenado,
     ...normalizarPunto(combinado, catalogos),

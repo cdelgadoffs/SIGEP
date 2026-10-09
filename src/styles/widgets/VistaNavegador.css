@@ -8,13 +8,70 @@
   box-sizing: border-box;
   align-self: stretch;
 }
+.widget-vista-navegador {
+  outline: none;
+}
+.widget-vista-navegador-barra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+}
 .widget-vista-navegador-migas {
   display: flex;
   align-items: center;
+  flex: 1;
   flex-wrap: wrap;
+  min-width: 0;
   min-height: 34px;
-  padding-bottom: 10px;
   font-size: 18px;
+}
+.widget-vista-navegador-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 260px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  color: #777;
+}
+.widget-vista-navegador-busqueda:focus-within {
+  border-color: #1a56db;
+}
+.widget-vista-navegador-busqueda-entrada {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  color: #222;
+}
+.widget-vista-navegador-busqueda-limpiar {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 16px;
+  cursor: pointer;
+}
+.widget-vista-navegador-busqueda-limpiar:hover {
+  color: #1a1a1a;
+}
+.widget-vista-navegador-origen {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #999;
 }
 .widget-vista-navegador-miga-envoltorio {
   display: inline-flex;

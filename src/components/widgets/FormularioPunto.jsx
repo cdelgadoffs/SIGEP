@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import SelectorArchivos from './SelectorArchivos.jsx';
 import ListaExpandible from '../base/ListaExpandible.jsx';
 import Checkbox from '../base/Checkbox.jsx';
+import CampoTexto from '../base/CampoTexto.jsx';
 import BotonS from '../base/BotonS.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import EditorTexto from './EditorTexto.jsx';
@@ -19,6 +20,7 @@ function estadoVacio(seccion, esInforme, plantillas, textosActa, plantillaId, co
     seccion: seccion || '',
     categoria: '',
     remitente: '',
+    nombreCarpeta: '',
     contenidoDoc: contenidoPorOmision(textosActa, esInforme),
     acuerdoDoc: docVacio(),
     confidencial: false,
@@ -75,6 +77,7 @@ export default function FormularioPunto() {
           seccion: original.seccion,
           categoria: '',
           remitente: original.remitente,
+          nombreCarpeta: original.nombreCarpeta ?? '',
           contenidoDoc: original.contenidoDoc ?? docDesdeTexto(original.contenido),
           acuerdoDoc: original.acuerdoDoc ?? docDesdeTexto(original.acuerdo),
           confidencial: original.confidencial,
@@ -196,6 +199,7 @@ export default function FormularioPunto() {
       const datos = {
         seccion: form.seccion,
         remitente: remitenteActual,
+        nombreCarpeta: form.nombreCarpeta.trim(),
         contenidoDoc: form.contenidoDoc,
         acuerdoDoc: esInforme ? docVacio() : form.acuerdoDoc,
         confidencial: form.confidencial,
@@ -224,7 +228,14 @@ export default function FormularioPunto() {
     }
   }
 
-  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && !esDocVacio(form.contenidoDoc) && (esInforme || !esDocVacio(form.acuerdoDoc));
+  const nombreCarpetaLimpio = form.nombreCarpeta.trim();
+  const errorNombreCarpeta = nombreCarpetaLimpio.length > 100
+    ? 'Máximo 100 caracteres.'
+    : nombreCarpetaLimpio === '.' || nombreCarpetaLimpio === '..' || /[\\/:*?"<>|]/.test(nombreCarpetaLimpio)
+      ? 'No puede incluir \\ / : * ? " < > |.'
+      : null;
+
+  const puedeConfirmar = !enviando && !errorNombreCarpeta && !!seccionActual && !!remitenteActual && !esDocVacio(form.contenidoDoc) && (esInforme || !esDocVacio(form.acuerdoDoc));
 
   const atajoRef = useRef(null);
   useEffect(() => {
@@ -282,6 +293,18 @@ export default function FormularioPunto() {
           />
         </div>
       )}
+
+      <div className="widget-formulario-punto-campo">
+        <label className="widget-formulario-punto-label">Nombre de carpeta</label>
+        <CampoTexto
+          variant="claro"
+          value={form.nombreCarpeta}
+          onChange={(v) => { setAporte(true); actualizar('nombreCarpeta', v); }}
+          placeholder="Opcional"
+          ariaLabel="Nombre de carpeta"
+        />
+        {errorNombreCarpeta && <div className="widget-formulario-punto-aviso">{errorNombreCarpeta}</div>}
+      </div>
 
       {!editando && (
         <div className="widget-formulario-punto-campo">
