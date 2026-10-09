@@ -1,8 +1,5 @@
 import { generarWordOrdenDia } from './ordenDia.js';
-
-function nombreSeguro(texto) {
-  return (texto || 'Sin nombre').replace(/[\\/:*?"<>|]/g, '-').slice(0, 60).trim();
-}
+import { carpetasDeSesion, ID_CARPETA_ORDEN_DIA, nombreConNumero, puntosConAdjuntos } from './arbolArchivos.js';
 
 function nombreUnico(nombre, usados) {
   if (!usados.has(nombre)) {
@@ -19,19 +16,6 @@ function nombreUnico(nombre, usados) {
   return nuevo;
 }
 
-function nombreConNumero(archivo) {
-  if (archivo.autogenerado || !archivo.numero) return archivo.nombre;
-  return `${String(archivo.numero).padStart(2, '0')}-${archivo.nombre}`;
-}
-
-export function archivosDescargables(punto) {
-  return (punto.archivos || []).filter((a) => a.id && a.origen !== 'ordenDia' && !a.informativo);
-}
-
-export function puntosConAdjuntos(puntos) {
-  return puntos.filter((p) => archivosDescargables(p).length > 0);
-}
-
 export async function generarZipArchivosSesion({ sesion, tipoSesion = 'Ordinaria', puntos, secciones, listaCerrada, binarios }) {
   const conAdjuntos = puntosConAdjuntos(puntos);
   const conOrdenDia = listaCerrada && puntos.length > 0;
@@ -45,13 +29,10 @@ export async function generarZipArchivosSesion({ sesion, tipoSesion = 'Ordinaria
     zip.folder('01-Aprobación del orden del día').file(nombreArchivo, blob);
   }
 
-  const desplazamiento = conOrdenDia ? 1 : 0;
-  conAdjuntos.forEach((punto, i) => {
-    const numero = String(i + 1 + desplazamiento).padStart(2, '0');
-    const resumen = punto.contenido ? punto.contenido.slice(0, 35).trim() : 'Punto';
-    const carpeta = zip.folder(nombreSeguro(`${numero}-${resumen}`));
+  carpetasDeSesion(puntos, listaCerrada).filter((c) => c.id !== ID_CARPETA_ORDEN_DIA).forEach((c) => {
+    const carpeta = zip.folder(c.nombre);
     const usados = new Set();
-    archivosDescargables(punto).filter((a) => binarios.has(a.id)).forEach((archivo) => {
+    c.archivos.filter(({ archivo }) => binarios.has(archivo.id)).forEach(({ archivo }) => {
       carpeta.file(nombreUnico(`${archivo.ruta ? `${archivo.ruta}/` : ''}${nombreConNumero(archivo)}`, usados), binarios.get(archivo.id));
     });
   });

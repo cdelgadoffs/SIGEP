@@ -6,13 +6,14 @@ import Sidebar6 from '../components/base/Sidebar6.jsx';
 import ListaAsuetos from '../components/widgets/panelcontrol/ListaAsuetos.jsx';
 import FormularioAsueto from '../components/widgets/panelcontrol/FormularioAsueto.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
+import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
+import VistaNavegador from '../components/widgets/VistaNavegador.jsx';
 import ResumenSesion from '../components/widgets/ResumenSesion.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
 import { useUI, ALTO_TOPBAR, ALTO_CINTA, ANCHO_SIDEBAR1 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
-import '../styles/pages/Inicio.css';
 
 const ANCHO_SIDEBAR1_CELEBRADA = 340;
 
@@ -34,6 +35,7 @@ export default function Inicio() {
 
   return (
     <>
+      <VisorArchivo />
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}
@@ -70,10 +72,7 @@ export default function Inicio() {
         <ListaAsuetos />
       </Sidebar6>
       <PanelPrincipal izquierda={panelIzquierda} arriba={arriba}>
-        <div className="pg-inicio">
-          <h1 className="pg-inicio-titulo">Inicio</h1>
-          <p className="pg-inicio-texto">Aún no hay una sesión en curso.</p>
-        </div>
+        <VistaNavegador />
       </PanelPrincipal>
     </>
   );

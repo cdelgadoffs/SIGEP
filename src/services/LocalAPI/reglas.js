@@ -437,6 +437,24 @@ export function validarArchivos(entradas, yaAdjuntos = 0) {
   });
 }
 
+export function validarNuevoNombreArchivo(nombre, actual) {
+  const limpio = typeof nombre === 'string' ? nombre.trim() : '';
+  if (!limpio) throw new ApiError('ARCHIVO_INVALIDO', 'El nombre del archivo es obligatorio.');
+  if (limpio.length > 200) throw new ApiError('ARCHIVO_INVALIDO', 'El nombre del archivo es demasiado largo (máx. 200 caracteres).');
+  if (/[\\/:*?"<>|]/.test(limpio)) throw new ApiError('ARCHIVO_INVALIDO', 'El nombre no puede incluir \\ / : * ? " < > |.');
+  const extension = (n) => (n.includes('.') ? n.split('.').pop().toLowerCase() : '');
+  if (extension(limpio) !== extension(actual)) throw new ApiError('ARCHIVO_INVALIDO', 'No se puede cambiar la extensión del archivo.');
+  return limpio;
+}
+
+export function validarNombreCarpeta(nombre) {
+  const limpio = typeof nombre === 'string' ? nombre.trim() : '';
+  if (!limpio) throw new ApiError('ARCHIVO_INVALIDO', 'El nombre de la carpeta es obligatorio.');
+  if (limpio.length > 100) throw new ApiError('ARCHIVO_INVALIDO', 'El nombre de la carpeta es demasiado largo (máx. 100 caracteres).');
+  if (limpio === '.' || limpio === '..' || /[\\/:*?"<>|]/.test(limpio)) throw new ApiError('ARCHIVO_INVALIDO', 'El nombre de la carpeta no es válido.');
+  return limpio;
+}
+
 export function prepararArchivos(puntoId, entradas, ordenBase = 0, informativo = false) {
   const ahora = new Date().toISOString();
   const creadoPor = usuarioActual().id;

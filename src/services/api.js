@@ -42,6 +42,8 @@ export const {
   eliminarSecretarioEjecutivo,
   adjuntarArchivos,
   eliminarArchivo,
+  renombrarArchivo,
+  renombrarCarpeta,
   reordenarArchivos,
   descargarArchivo,
   listarContactosCorreo,

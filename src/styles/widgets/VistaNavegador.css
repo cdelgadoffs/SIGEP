@@ -1,0 +1,160 @@
+.widget-vista-navegador {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 18px 28px 0;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+.widget-vista-navegador-migas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 34px;
+  padding-bottom: 10px;
+  font-size: 18px;
+}
+.widget-vista-navegador-miga-envoltorio {
+  display: inline-flex;
+  align-items: center;
+}
+.widget-vista-navegador-separador {
+  margin: 0 2px;
+  color: #999;
+  font-size: 20px;
+}
+.widget-vista-navegador-miga {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  color: #444;
+  cursor: pointer;
+}
+.widget-vista-navegador-miga:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+.widget-vista-navegador-miga-actual {
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: default;
+}
+.widget-vista-navegador-encabezado {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e3e3e3;
+  font-size: 12px;
+  color: #777;
+}
+.widget-vista-navegador-cuerpo {
+  flex: 1;
+  min-height: 0;
+}
+.widget-vista-navegador-fila {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13.5px;
+  color: #222;
+  cursor: pointer;
+}
+.widget-vista-navegador-fila:hover {
+  background: #f5f8ff;
+}
+.widget-vista-navegador-col-nombre {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+.widget-vista-navegador-col-fecha {
+  width: 130px;
+  flex-shrink: 0;
+  color: #666;
+}
+.widget-vista-navegador-col-tamano {
+  width: 110px;
+  flex-shrink: 0;
+  color: #666;
+}
+.widget-vista-navegador-col-acciones {
+  display: flex;
+  justify-content: flex-end;
+  width: 40px;
+  flex-shrink: 0;
+}
+.widget-vista-navegador-col-acciones .base-boton-icono {
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.widget-vista-navegador-fila:hover .widget-vista-navegador-col-acciones .base-boton-icono,
+.widget-vista-navegador-col-acciones .base-boton-icono:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .widget-vista-navegador-col-acciones .base-boton-icono {
+    opacity: 1;
+  }
+}
+.widget-vista-navegador-nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-vista-navegador-icono-carpeta {
+  font-size: 22px;
+  color: #f2b01e;
+}
+.widget-vista-navegador-icono {
+  font-size: 20px;
+}
+.widget-vista-navegador-icono-rojo { color: #c62828; }
+.widget-vista-navegador-icono-azul { color: #1a56db; }
+.widget-vista-navegador-icono-verde { color: #1e7d34; }
+.widget-vista-navegador-icono-morado { color: #6a3fc1; }
+.widget-vista-navegador-icono-gris { color: #777; }
+.widget-vista-navegador-edicion {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.widget-vista-navegador-prefijo,
+.widget-vista-navegador-extension {
+  flex-shrink: 0;
+  color: #666;
+}
+.widget-vista-navegador-entrada {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid #1a56db;
+  border-radius: 3px;
+  font: inherit;
+  outline: none;
+}
+.widget-vista-navegador-vacio {
+  padding: 40px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #999;
+}
+.widget-vista-navegador-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-vista-navegador-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+}

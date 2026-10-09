@@ -6,7 +6,7 @@ import {
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, listarPapelera,
-  adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi, reordenarArchivos as reordenarArchivosEnApi,
+  adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi, renombrarArchivo as renombrarArchivoEnApi, renombrarCarpeta as renombrarCarpetaEnApi, reordenarArchivos as reordenarArchivosEnApi,
   descargarArchivo as descargarArchivoEnApi,
   listarAvisosEdicion, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
 } from '../services/api.js';
@@ -370,6 +370,12 @@ export function ProyectoProvider({ children }) {
   async function eliminarArchivo(puntoId, archivoId) {
     reemplazarPunto(puntoId, await eliminarArchivoEnApi(puntoId, archivoId));
   }
+  async function renombrarArchivo(puntoId, archivoId, nombre) {
+    reemplazarPunto(puntoId, await renombrarArchivoEnApi(puntoId, archivoId, nombre));
+  }
+  async function renombrarCarpeta(puntoId, ruta, nombre) {
+    reemplazarPunto(puntoId, await renombrarCarpetaEnApi(puntoId, ruta, nombre));
+  }
   async function descargarArchivoAutomatico(archivoId) {
     const { origen, clave } = analizarIdAutomatico(archivoId);
     const logo = await cargarLogo();
@@ -410,7 +416,7 @@ export function ProyectoProvider({ children }) {
     listaCerrada, establecerListaCerrada,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion,
     PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
-    marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, reordenarArchivos, descargarArchivo,
+    marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, renombrarArchivo, renombrarCarpeta, reordenarArchivos, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,

@@ -43,6 +43,8 @@ export const guardarSecretarioEjecutivo = () => noImplementado();
 export const eliminarSecretarioEjecutivo = () => noImplementado();
 export const adjuntarArchivos = () => noImplementado();
 export const eliminarArchivo = () => noImplementado();
+export const renombrarArchivo = () => noImplementado();
+export const renombrarCarpeta = () => noImplementado();
 export const reordenarArchivos = () => noImplementado();
 export const descargarArchivo = () => noImplementado();
 export const listarContactosCorreo = () => noImplementado();

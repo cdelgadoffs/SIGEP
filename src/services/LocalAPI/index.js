@@ -8,7 +8,7 @@ import {
 import {
   usuarioActual, exigirEscritura, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
-  validarPunto, normalizarPunto,
+  validarPunto, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
@@ -663,6 +663,72 @@ export async function eliminarArchivo(puntoId, archivoId) {
   await escribirVarios({
     poner: [{ store: STORE_PUNTOS, valor: punto }],
     borrar: [{ store: STORE_ARCHIVOS, id: archivoId }],
+  });
+  return puntoArmado(actual.sesionId, puntoId);
+}
+
+export async function renombrarArchivo(puntoId, archivoId, nombre) {
+  exigirEscritura();
+  exigirNoFijo(puntoId);
+  const actual = await obtener(STORE_PUNTOS, puntoId);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  await exigirSesionAbierta(actual.sesionId);
+  const archivo = actual.archivos.find((a) => a.id === archivoId);
+  if (!archivo) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
+  const registro = await obtener(STORE_ARCHIVOS, archivoId);
+  const limpio = validarNuevoNombreArchivo(nombre, archivo.nombre);
+  const punto = {
+    ...actual,
+    archivos: actual.archivos.map((a) => (a.id === archivoId ? { ...a, nombre: limpio } : a)),
+    version: actual.version + 1,
+    modificadoEn: new Date().toISOString(),
+  };
+  await escribirVarios({
+    poner: [
+      { store: STORE_PUNTOS, valor: punto },
+      ...(registro ? [{ store: STORE_ARCHIVOS, valor: { ...registro, nombre: limpio } }] : []),
+    ],
+  });
+  return puntoArmado(actual.sesionId, puntoId);
+}
+
+export async function renombrarCarpeta(puntoId, ruta, nombre) {
+  exigirEscritura();
+  exigirNoFijo(puntoId);
+  const actual = await obtener(STORE_PUNTOS, puntoId);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  await exigirSesionAbierta(actual.sesionId);
+  if (typeof ruta !== 'string') throw new ApiError('VALIDACION', 'Ruta inválida.');
+  const ahora = new Date().toISOString();
+  if (ruta === '') {
+    const vacio = nombre == null || String(nombre).trim() === '';
+    const punto = { ...actual, version: actual.version + 1, modificadoEn: ahora };
+    if (vacio) delete punto.nombreCarpeta;
+    else punto.nombreCarpeta = validarNombreCarpeta(nombre);
+    await escribirVarios({ poner: [{ store: STORE_PUNTOS, valor: punto }] });
+    return puntoArmado(actual.sesionId, puntoId);
+  }
+  const dentro = (a, base) => !!a.ruta && (a.ruta === base || a.ruta.startsWith(`${base}/`));
+  const afectados = actual.archivos.filter((a) => dentro(a, ruta));
+  if (afectados.length === 0) throw new ApiError('NO_ENCONTRADO', 'La carpeta no existe.');
+  const segmentos = ruta.split('/');
+  const nuevaBase = [...segmentos.slice(0, -1), validarNombreCarpeta(nombre)].join('/');
+  if (nuevaBase === ruta) return puntoArmado(actual.sesionId, puntoId);
+  if (actual.archivos.some((a) => dentro(a, nuevaBase))) throw new ApiError('ARCHIVO_INVALIDO', 'Ya existe una carpeta con ese nombre.');
+  const nuevaRuta = (a) => `${nuevaBase}${a.ruta.slice(ruta.length)}`;
+  if (afectados.some((a) => nuevaRuta(a).length > 260)) throw new ApiError('ARCHIVO_INVALIDO', 'La ruta resultante es demasiado larga.');
+  const punto = {
+    ...actual,
+    archivos: actual.archivos.map((a) => (dentro(a, ruta) ? { ...a, ruta: nuevaRuta(a) } : a)),
+    version: actual.version + 1,
+    modificadoEn: ahora,
+  };
+  const registros = (await Promise.all(afectados.map((a) => obtener(STORE_ARCHIVOS, a.id)))).filter(Boolean);
+  await escribirVarios({
+    poner: [
+      { store: STORE_PUNTOS, valor: punto },
+      ...registros.map((r) => ({ store: STORE_ARCHIVOS, valor: { ...r, ruta: nuevaRuta(r) } })),
+    ],
   });
   return puntoArmado(actual.sesionId, puntoId);
 }
