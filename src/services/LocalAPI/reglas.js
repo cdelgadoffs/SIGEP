@@ -304,7 +304,7 @@ export function generarPuntosFijos(sesion, sesiones, catalogoFijos) {
     confidencial: false,
     archivos: [],
     orden,
-    tratado: !!sesion.fijosTratados?.[clave],
+    tratado: sesion.fijosTratados?.[clave] ?? true,
     textoVotacion: f.textoVoto ?? null,
     fijo: true,
     encabezado: !!f.encabezado,
@@ -437,14 +437,14 @@ export function validarArchivos(entradas, yaAdjuntos = 0) {
   });
 }
 
-export function prepararArchivos(puntoId, entradas, ordenBase = 0) {
+export function prepararArchivos(puntoId, entradas, ordenBase = 0, informativo = false) {
   const ahora = new Date().toISOString();
   const creadoPor = usuarioActual().id;
   const registros = entradas.map(({ archivo: a, ruta }, i) => ({
-    id: crypto.randomUUID(), puntoId, nombre: a.name, tipo: a.type, tamano: a.size, ...(ruta ? { ruta } : null), orden: ordenBase + i + 1, creadoEn: ahora, creadoPor, blob: a,
+    id: crypto.randomUUID(), puntoId, nombre: a.name, tipo: a.type, tamano: a.size, ...(ruta ? { ruta } : null), orden: ordenBase + i + 1, ...(informativo ? { informativo: true } : null), creadoEn: ahora, creadoPor, blob: a,
   }));
   const metadatos = registros.map((r) => ({
-    id: r.id, nombre: r.nombre, tipo: r.tipo, tamano: r.tamano, ...(r.ruta ? { ruta: r.ruta } : null), orden: r.orden, creadoEn: r.creadoEn, creadoPor: r.creadoPor,
+    id: r.id, nombre: r.nombre, tipo: r.tipo, tamano: r.tamano, ...(r.ruta ? { ruta: r.ruta } : null), orden: r.orden, ...(r.informativo ? { informativo: true } : null), creadoEn: r.creadoEn, creadoPor: r.creadoPor,
   }));
   return { registros, metadatos };
 }
@@ -938,7 +938,7 @@ export function nombreArchivoPunto(numero, primero = 1) {
 }
 
 export function numerarArchivos(archivos, primero = 1) {
-  const guardados = archivos.filter((a) => !a.autogenerado).map((a, i) => ({ a, o: a.orden ?? i + 1 }));
+  const guardados = archivos.filter((a) => !a.autogenerado && !a.informativo).map((a, i) => ({ a, o: a.orden ?? i + 1 }));
   const porOrden = (x, y) => x.o - y.o;
   const sueltos = guardados.filter(({ a }) => !a.ruta).sort(porOrden).map(({ a }) => a);
   const enCarpeta = guardados.filter(({ a }) => a.ruta);
@@ -947,7 +947,7 @@ export function numerarArchivos(archivos, primero = 1) {
   rutas.forEach((ruta) => {
     enCarpeta.filter(({ a }) => a.ruta === ruta).sort(porOrden).forEach(({ a }, i) => resultado.push({ ...a, numero: i + 1 }));
   });
-  return resultado;
+  return [...resultado, ...archivos.filter((a) => a.informativo)];
 }
 
 export function nombreArchivoOrdenDia(numeroSesion, nombreTipo) {

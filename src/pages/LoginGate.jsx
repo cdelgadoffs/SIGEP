@@ -3,11 +3,21 @@ import { useAuth } from '../context/AuthContext.jsx';
 import '../styles/pages/Gates.css';
 
 export default function LoginGate() {
-  const { iniciarSesion, error } = useAuth();
+  const { cargando, error, iniciarSesion } = useAuth();
+  const [autenticando, setAutenticando] = useState(false);
   const [fechaHoy] = useState(() => {
     const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
     return new Date().toLocaleDateString('es-ES', opciones);
   });
+
+  async function manejarLogin() {
+    setAutenticando(true);
+    try {
+      await iniciarSesion();
+    } finally {
+      setAutenticando(false);
+    }
+  }
 
   return (
     <div className="lg-gate">
@@ -21,13 +31,13 @@ export default function LoginGate() {
             alt="Logo institucional"
             className="lg-logo"
           />
-          <div className="lg-eyebrow">OAJ · SISTEMA DE SESIONES</div>
+          <div className="lg-eyebrow">OAJ · SIGEP</div>
           <h1 className="lg-titulo">
-            Generador de<br />Orden del Día
+            Sistema de Gestión<br />del Pleno
           </h1>
           <p className="lg-descripcion">
-            Planeación, votación y actas del Pleno del Órgano de Administración Judicial,
-            en un solo lugar.
+            Órgano de Administración Judicial<br />
+            Poder Judicial de la Federación
           </p>
           <div className="lg-fecha">{fechaHoy}</div>
         </div>
@@ -39,8 +49,17 @@ export default function LoginGate() {
           <h2 className="lg-box-titulo">Inicia sesión</h2>
           <p className="lg-box-sub">Acceso restringido a cuentas institucionales autorizadas.</p>
 
-          <button className="lg-btn" onClick={iniciarSesion}>Iniciar sesión con Microsoft</button>
+          <button className="lg-btn" disabled={cargando || autenticando} onClick={manejarLogin}>
+            {autenticando ? <span className="lg-spinner" aria-hidden="true"></span> : null}
+            {autenticando ? 'Verificando…' : 'Iniciar sesión con Microsoft'}
+          </button>
+
           {error && <p className="lg-error">{error}</p>}
+          {cargando && (
+            <div className="lg-loading">
+              <span className="lg-spinner" aria-hidden="true"></span> Verificando sesión...
+            </div>
+          )}
 
           <div className="lg-box-footer">Órgano de Administración Judicial</div>
         </div>

@@ -1,0 +1,24 @@
+.widget-adjuntos-informativos {
+  flex: 1;
+  min-width: 0;
+  margin-right: auto;
+}
+.widget-adjuntos-informativos .widget-archivos-adjuntos-grupo {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.widget-adjuntos-informativos-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-adjuntos-informativos-error {
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  color: #c62828;
+}
+.widget-adjuntos-informativos-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

@@ -6,7 +6,7 @@ import {
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
-  usuarioActual, exigirEscritura, exigirDescarga, puedeVerConfidencial,
+  usuarioActual, exigirEscritura, puedeVerConfidencial,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   validarPunto, normalizarPunto,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
@@ -429,7 +429,7 @@ export async function restaurarPunto(id, sesionId) {
     ...entrada,
     sesionId,
     orden: siguienteOrden(await obtenerTodos(STORE_PUNTOS), sesionId, entrada.seccion),
-    tratado: false,
+    tratado: true,
     votacion: null,
     version: entrada.version + 1,
     modificadoEn: new Date().toISOString(),
@@ -463,7 +463,7 @@ export async function crearPunto(sesionId, datos) {
     ...normalizarPunto(datos, catalogos),
     archivos: metadatos,
     orden,
-    tratado: false,
+    tratado: true,
     votacion: null,
     version: 1,
     creadoPor: usuarioActual().id,
@@ -595,7 +595,7 @@ export async function marcarPuntos(sesionId, tratado) {
     .map((p) => ({ ...p, tratado, version: p.version + 1, modificadoEn: ahora }));
   const clavesFijas = lista.filter((p) => p.fijo && !p.encabezado).map((p) => analizarPuntoFijo(p.id).clave);
   const sesion = await obtener(STORE_SESIONES, sesionId);
-  const hayFijosPorCambiar = clavesFijas.some((c) => !!sesion.fijosTratados?.[c] !== tratado);
+  const hayFijosPorCambiar = clavesFijas.some((c) => (sesion.fijosTratados?.[c] ?? true) !== tratado);
   await escribirVarios({
     poner: [
       ...cambiados.map((valor) => ({ store: STORE_PUNTOS, valor })),
@@ -622,7 +622,7 @@ export async function eliminarPunto(id) {
   });
 }
 
-export async function adjuntarArchivos(puntoId, archivos) {
+export async function adjuntarArchivos(puntoId, archivos, opciones = {}) {
   exigirEscritura();
   exigirNoFijo(puntoId);
   const actual = await obtener(STORE_PUNTOS, puntoId);
@@ -631,7 +631,7 @@ export async function adjuntarArchivos(puntoId, archivos) {
   const nuevos = entradasDeArchivos(Array.from(archivos || []));
   validarArchivos(nuevos, actual.archivos.length);
   const ordenBase = Math.max(0, ...actual.archivos.map((a, i) => a.orden ?? i + 1));
-  const { registros, metadatos } = prepararArchivos(puntoId, nuevos, ordenBase);
+  const { registros, metadatos } = prepararArchivos(puntoId, nuevos, ordenBase, !!opciones.informativo);
   const punto = {
     ...actual,
     archivos: [...actual.archivos, ...metadatos],
@@ -676,7 +676,7 @@ export async function reordenarArchivos(puntoId, ids) {
   if (!Array.isArray(ids)) throw new ApiError('VALIDACION', 'El orden debe ser una lista de ids.');
   const sueltos = actual.archivos
     .map((a, i) => ({ a, o: a.orden ?? i + 1 }))
-    .filter(({ a }) => a.id && !a.ruta)
+    .filter(({ a }) => a.id && !a.ruta && !a.informativo)
     .sort((x, y) => x.o - y.o);
   const mismoConjunto = ids.length === sueltos.length
     && new Set(ids).size === ids.length
@@ -697,7 +697,6 @@ export async function reordenarArchivos(puntoId, ids) {
 }
 
 export async function descargarArchivo(archivoId) {
-  exigirDescarga();
   const registro = await obtener(STORE_ARCHIVOS, archivoId);
   if (!registro) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
   const punto = await obtener(STORE_PUNTOS, registro.puntoId);

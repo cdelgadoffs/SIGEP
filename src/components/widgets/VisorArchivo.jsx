@@ -17,6 +17,7 @@ export default function VisorArchivo() {
   const contenedorWord = useRef(null);
 
   const idEnVista = archivoEnVista?.id;
+  const puedeBajar = puedeDescargar && !archivoEnVista?.soloLectura;
   const cargado = estado.id === idEnVista ? estado : SIN_CARGAR;
   const cargando = !!idEnVista && cargado.id === null;
   const vista = cargado.archivo ? tipoDeVistaPrevia(cargado.archivo.nombre, cargado.archivo.tipo) : null;
@@ -75,7 +76,7 @@ export default function VisorArchivo() {
     if (vista === 'pdf') return <embed className="widget-visor-archivo-pdf" src={`${cargado.url}#toolbar=0&navpanes=0`} type="application/pdf" />;
     if (vista === 'texto') return <pre className="widget-visor-archivo-texto">{cargado.texto}</pre>;
     if (vista === 'word') return <div className="widget-visor-archivo-word" ref={contenedorWord}></div>;
-    return <p className="widget-visor-archivo-mensaje">No se puede mostrar vista previa de este tipo de archivo ({cargado.archivo.tipo || 'desconocido'}). Puedes descargarlo.</p>;
+    return <p className="widget-visor-archivo-mensaje">No se puede mostrar vista previa de este tipo de archivo ({cargado.archivo.tipo || 'desconocido'}).{puedeBajar ? ' Puedes descargarlo.' : ''}</p>;
   }
 
   return (
@@ -84,7 +85,7 @@ export default function VisorArchivo() {
       titulo={archivoEnVista?.nombre}
       onCerrar={cerrarVistaArchivo}
       tamano={vista === 'word' || vista === 'pdf' ? 'documento' : vista ? 'completo' : 'normal'}
-      acciones={cargado.archivo && puedeDescargar && <BotonS variant="claro" onClick={descargar}>Descargar</BotonS>}
+      acciones={cargado.archivo && puedeBajar && <BotonS variant="claro" onClick={descargar}>Descargar</BotonS>}
     >
       <div className="widget-visor-archivo">{contenido()}</div>
     </Modal>

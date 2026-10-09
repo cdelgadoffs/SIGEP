@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 30;
+const DB_VERSION = 31;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -64,6 +64,27 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 31) {
+        const tx = req.transaction;
+        tx.objectStore(STORE_SESIONES).getAll().onsuccess = (e) => {
+          const sinComenzar = new Set();
+          e.target.result.forEach((sesion) => {
+            if (sesion.celebrada || sesion.horaInicio) return;
+            sinComenzar.add(sesion.id);
+            if (sesion.fijosTratados) {
+              const actualizada = { ...sesion };
+              delete actualizada.fijosTratados;
+              tx.objectStore(STORE_SESIONES).put(actualizada);
+            }
+          });
+          tx.objectStore(STORE_PUNTOS).openCursor().onsuccess = (ev) => {
+            const cursor = ev.target.result;
+            if (!cursor) return;
+            if (sinComenzar.has(cursor.value.sesionId) && !cursor.value.tratado) cursor.update({ ...cursor.value, tratado: true });
+            cursor.continue();
+          };
+        };
       }
       if (evento.oldVersion < 30) {
         req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'secciones', items: CATALOGOS_SEMILLA.secciones });

@@ -115,12 +115,17 @@
   color: #666;
 }
 .widget-lista-puntos-archivos {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-  flex: 0 0 auto;
-  max-width: 240px;
+  position: relative;
+  flex: 0 0 240px;
+  width: 240px;
+  padding: 0;
+}
+.widget-lista-puntos-archivos-scroll {
+  position: absolute;
+  inset: 0;
+}
+.widget-lista-puntos-archivos-contenido {
+  padding: 11px 18px;
 }
 
 .widget-lista-puntos-opciones {

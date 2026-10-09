@@ -4,7 +4,7 @@ import BotonIcono from '../base/BotonIcono.jsx';
 import { entradasDeArrastre, entradasDeLista, separarPermitidos } from '../../utils/archivos.js';
 import '../../styles/widgets/SelectorArchivos.css';
 
-export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = false, arrastrar = false, botones = true, disabled = false }) {
+export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = false, arrastrar = false, botones = true, carpetas = true, disabled = false }) {
   const entradaArchivos = useRef(null);
   const entradaCarpeta = useRef(null);
   const [encima, setEncima] = useState(false);
@@ -34,7 +34,7 @@ export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = fa
   const entradas = (
     <>
       <input ref={entradaArchivos} type="file" multiple hidden onChange={elegir} />
-      <input ref={entradaCarpeta} type="file" multiple hidden webkitdirectory="" directory="" onChange={elegir} />
+      {carpetas && <input ref={entradaCarpeta} type="file" multiple hidden webkitdirectory="" directory="" onChange={elegir} />}
     </>
   );
 
@@ -42,7 +42,7 @@ export default function SelectorArchivos({ onSeleccionar, onAviso, compacto = fa
     return (
       <>
         <BotonIcono icono="ri-attachment-2" ariaLabel="Adjuntar archivos" disabled={disabled} onClick={() => entradaArchivos.current.click()} />
-        <BotonIcono icono="ri-folder-add-line" ariaLabel="Adjuntar carpeta" disabled={disabled} onClick={() => entradaCarpeta.current.click()} />
+        {carpetas && <BotonIcono icono="ri-folder-add-line" ariaLabel="Adjuntar carpeta" disabled={disabled} onClick={() => entradaCarpeta.current.click()} />}
         {entradas}
       </>
     );

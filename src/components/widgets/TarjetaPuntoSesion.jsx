@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import Card from '../base/Card.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
+import SelectorArchivos from './SelectorArchivos.jsx';
+import AdjuntosInformativos from './AdjuntosInformativos.jsx';
 import SelectorVotacion from './SelectorVotacion.jsx';
 import SelectorInforme from './SelectorInforme.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -10,7 +12,7 @@ import { useOrgano } from '../../context/OrganoContext.jsx';
 import '../../styles/widgets/TarjetaPuntoSesion.css';
 
 export default function TarjetaPuntoSesion({ item, navegacion }) {
-  const { REMITENTES, sesionFinalizada, listaCerrada, registrarVotacion, TIPOS_VOTO, TIPOS_VOTACION, ESTADOS_VOTO, TIPOS_CONOCIMIENTO } = useProyecto();
+  const { REMITENTES, sesionFinalizada, listaCerrada, registrarVotacion, adjuntarArchivos, TIPOS_VOTO, TIPOS_VOTACION, ESTADOS_VOTO, TIPOS_CONOCIMIENTO } = useProyecto();
   const { puedeEscribir } = useAuth();
   const soloLectura = sesionFinalizada || !puedeEscribir;
   const { INTEGRANTES } = useOrgano();
@@ -32,6 +34,15 @@ export default function TarjetaPuntoSesion({ item, navegacion }) {
       }
       setVotacionLocal((l) => (l === valor ? null : l));
     }, 400);
+  }
+
+  async function adjuntarInformativos(entradas) {
+    setErrorAccion(null);
+    try {
+      await adjuntarArchivos(punto.id, entradas, { informativo: true });
+    } catch (e) {
+      setErrorAccion(e.mensaje || 'No se pudieron adjuntar los archivos.');
+    }
   }
 
   const esInforme = !seccion.requiereAcuerdo;
@@ -112,6 +123,10 @@ export default function TarjetaPuntoSesion({ item, navegacion }) {
           </div>
         )}
         <div className="widget-tarjeta-punto-sesion-navegacion">
+          {!punto.fijo && <AdjuntosInformativos punto={punto} />}
+          {puedeEscribir && !sesionFinalizada && !punto.fijo && (
+            <SelectorArchivos compacto carpetas={false} onSeleccionar={adjuntarInformativos} onAviso={setErrorAccion} />
+          )}
           {navegacion && (
             <OpcionesNavegacion
               onAnterior={navegacion.onAnterior}

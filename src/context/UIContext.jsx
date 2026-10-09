@@ -60,8 +60,8 @@ export function UIProvider({ children }) {
     setPuntoEnEdicionId(null);
     setSeccionFormulario(null);
   }
-  function abrirVistaArchivo(archivo) {
-    setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo });
+  function abrirVistaArchivo(archivo, opciones) {
+    setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo, soloLectura: !!opciones?.soloLectura });
   }
   function cerrarVistaArchivo() {
     setArchivoEnVista(null);

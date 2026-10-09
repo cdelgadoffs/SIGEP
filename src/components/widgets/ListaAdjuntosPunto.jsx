@@ -23,7 +23,7 @@ export default function ListaAdjuntosPunto() {
   const seccion = SECCIONES_DOCUMENTO.find((s) => s.id === (seccionFormulario ?? seccionNuevoPunto));
 
   const items = punto
-    ? punto.archivos.map((a, i) => ({
+    ? punto.archivos.filter((a) => !a.informativo).map((a, i) => ({
         clave: a.id ?? `sin-id-${i}`, nombre: a.nombre, ruta: a.ruta ?? '', numero: a.origen === 'punto' ? null : a.numero,
         guardado: a.id ? a : null, suelto: !!a.id && !a.ruta && !a.autogenerado, quitable: !!a.id && !a.autogenerado,
       }))

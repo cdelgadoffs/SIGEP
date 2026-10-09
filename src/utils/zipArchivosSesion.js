@@ -25,7 +25,7 @@ function nombreConNumero(archivo) {
 }
 
 export function archivosDescargables(punto) {
-  return (punto.archivos || []).filter((a) => a.id && a.origen !== 'ordenDia');
+  return (punto.archivos || []).filter((a) => a.id && a.origen !== 'ordenDia' && !a.informativo);
 }
 
 export function puntosConAdjuntos(puntos) {

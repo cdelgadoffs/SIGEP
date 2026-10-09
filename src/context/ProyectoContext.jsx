@@ -356,8 +356,8 @@ export function ProyectoProvider({ children }) {
   async function marcarTodosPuntos(tratado) {
     aplicarPuntos((await marcarPuntosEnApi(sesionActivaFecha, tratado)).map(conSync));
   }
-  async function adjuntarArchivos(puntoId, archivos) {
-    reemplazarPunto(puntoId, await adjuntarArchivosEnApi(puntoId, archivos));
+  async function adjuntarArchivos(puntoId, archivos, opciones) {
+    reemplazarPunto(puntoId, await adjuntarArchivosEnApi(puntoId, archivos, opciones));
   }
   async function reordenarArchivos(puntoId, ids) {
     try {
