@@ -526,6 +526,36 @@ export async function editarPunto(id, version, cambios) {
   return puntoArmado(punto.sesionId, id);
 }
 
+export async function trasladarPunto(id, sesionDestinoId) {
+  exigirEscritura();
+  exigirNoFijo(id);
+  if (!sesionDestinoId) throw new ApiError('VALIDACION', 'Debes indicar la sesión de destino.');
+  const actual = await obtener(STORE_PUNTOS, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  if (actual.sesionId === sesionDestinoId) throw new ApiError('VALIDACION', 'El punto ya está en esa sesión.');
+  const origen = await exigirSesionAbierta(actual.sesionId);
+  if (origen.horaInicio) throw new ApiError('SESION_COMENZADA', 'La sesión de origen ya comenzó y no admite trasladar puntos.');
+  exigirListaAbierta(origen);
+  const destino = await exigirSesionAbierta(sesionDestinoId);
+  if (destino.horaInicio) throw new ApiError('SESION_COMENZADA', 'La sesión de destino ya comenzó y no admite recibir puntos.');
+  exigirListaAbierta(destino, actual.seccion, await listarCatalogos());
+  const ahora = new Date().toISOString();
+  const punto = {
+    ...actual,
+    sesionId: sesionDestinoId,
+    orden: siguienteOrden(await obtenerTodos(STORE_PUNTOS), sesionDestinoId, actual.seccion),
+    tratado: true,
+    votacion: null,
+    version: actual.version + 1,
+    modificadoEn: ahora,
+  };
+  await escribirVarios({
+    poner: [{ store: STORE_PUNTOS, valor: punto }],
+    borrar: [{ store: STORE_AVISOS_EDICION, id }],
+  });
+  return puntoArmado(sesionDestinoId, id);
+}
+
 async function marcarFijo(id, tratado) {
   const { sesionId, clave } = analizarPuntoFijo(id);
   await exigirSesionAbierta(sesionId);

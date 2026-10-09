@@ -5,7 +5,7 @@ import {
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
-  retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, listarPapelera,
+  retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, trasladarPunto as trasladarPuntoEnApi, listarPapelera,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi, renombrarArchivo as renombrarArchivoEnApi, renombrarCarpeta as renombrarCarpetaEnApi, reordenarArchivos as reordenarArchivosEnApi,
   descargarArchivo as descargarArchivoEnApi,
   listarAvisosEdicion, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
@@ -276,6 +276,11 @@ export function ProyectoProvider({ children }) {
     await refrescarPuntos();
     await refrescarPapelera();
   }
+  async function trasladarPunto(id, sesionDestinoId) {
+    await trasladarPuntoEnApi(id, sesionDestinoId);
+    await refrescarPuntos();
+    await refrescarAvisos();
+  }
   async function enviarAvisoEdicion(id) {
     await enviarAvisoEdicionEnApi(id);
     await refrescarAvisos();
@@ -415,7 +420,7 @@ export function ProyectoProvider({ children }) {
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
     listaCerrada, establecerListaCerrada,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion,
-    PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
+    PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, renombrarArchivo, renombrarCarpeta, reordenarArchivos, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,

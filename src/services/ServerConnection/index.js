@@ -28,6 +28,7 @@ export const editarPunto = () => noImplementado();
 export const eliminarPunto = () => noImplementado();
 export const retirarPunto = () => noImplementado();
 export const restaurarPunto = () => noImplementado();
+export const trasladarPunto = () => noImplementado();
 export const listarPapelera = () => noImplementado();
 export const reordenarPuntos = () => noImplementado();
 export const marcarPunto = () => noImplementado();

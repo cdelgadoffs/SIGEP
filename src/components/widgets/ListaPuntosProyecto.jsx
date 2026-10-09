@@ -4,6 +4,7 @@ import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
+import TrasladarPunto from './TrasladarPunto.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
@@ -148,7 +149,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   }
   const renderOpciones = (punto, deLaSeccion, seccionId) => {
     if (sesionFinalizada || punto.fijo || !puedeEscribir) return null;
-    const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar'] : opcionesOcultas;
+    const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar', 'trasladar'] : opcionesOcultas;
     const delUsuario = deLaSeccion.filter((p) => !p.fijo);
     const indice = delUsuario.findIndex((p) => p.id === punto.id);
     return (
@@ -167,6 +168,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
         <OpcionesAUD punto={punto} ocultar={ocultas}>
           {opcionesExtra && opcionesExtra(punto)}
         </OpcionesAUD>
+        {!ocultas.includes('trasladar') && <TrasladarPunto punto={punto} />}
       </>
     );
   };
