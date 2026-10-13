@@ -81,3 +81,8 @@
   color: #999;
   text-align: center;
 }
+.widget-lista-correos-sesion {
+  margin-top: -6px;
+  font-size: 12px;
+  color: #777;
+}

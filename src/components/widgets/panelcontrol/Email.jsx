@@ -9,6 +9,7 @@ import ListasDestinatarios from './ListasDestinatarios.jsx';
 import CorreosRemitentes from './CorreosRemitentes.jsx';
 import PlantillasCorreo from './PlantillasCorreo.jsx';
 import { useUI } from '../../../context/UIContext.jsx';
+import { useProyecto } from '../../../context/ProyectoContext.jsx';
 import '../../../styles/widgets/panelcontrol/Email.css';
 
 const PANELES = {
@@ -20,6 +21,8 @@ const PANELES = {
 
 export default function Email() {
   const { setSidebar5Amplio, emailSeccion, setEmailSeccion, setCorreoSeleccionadoId } = useUI();
+  const { sesionSeleccionada } = useProyecto();
+  const seccion = emailSeccion === 'nuevo' && sesionSeleccionada?.estado !== 'proxima' ? 'enviados' : emailSeccion;
 
   useEffect(() => {
     setSidebar5Amplio(true);
@@ -30,8 +33,8 @@ export default function Email() {
     };
   }, [setSidebar5Amplio, setEmailSeccion, setCorreoSeleccionadoId]);
 
-  const Panel = PANELES[emailSeccion];
-  const redactando = emailSeccion === 'nuevo';
+  const Panel = PANELES[seccion];
+  const redactando = seccion === 'nuevo';
 
   return (
     <div className="widget-email">

@@ -3,6 +3,7 @@ import BadgeDinamico from '../../base/BadgeDinamico.jsx';
 import EditorTexto from '../EditorTexto.jsx';
 import { useUI } from '../../../context/UIContext.jsx';
 import { useCorreo } from '../../../context/CorreoContext.jsx';
+import { useProyecto } from '../../../context/ProyectoContext.jsx';
 import { estiloArchivo } from '../../../utils/archivos.js';
 import { formatoFechaCompleta, formatoTamano } from '../../../utils/correos.js';
 import { esDocVacio } from '../../../utils/documento.js';
@@ -13,7 +14,8 @@ const sinCambios = () => {};
 export default function LecturaCorreo() {
   const { CORREOS_ENVIADOS } = useCorreo();
   const { correoSeleccionadoId } = useUI();
-  const correo = CORREOS_ENVIADOS.find((c) => c.id === correoSeleccionadoId);
+  const { sesionActivaFecha } = useProyecto();
+  const correo = CORREOS_ENVIADOS.find((c) => c.id === correoSeleccionadoId && c.sesionId === sesionActivaFecha);
 
   if (!correo) {
     return (

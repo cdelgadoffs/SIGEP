@@ -959,6 +959,7 @@ export function validarCorreoRemitente(remitenteId, correo, catalogos) {
 }
 
 export function validarEnvioCorreo(datos) {
+  if (typeof datos.sesionId !== 'string' || !datos.sesionId) throw new ApiError('VALIDACION', 'Indica la sesión desde la que se envía el correo.');
   const para = normalizarListaCorreos(datos.para ?? [], 'Los destinatarios');
   const cc = normalizarListaCorreos(datos.cc ?? [], 'La copia');
   const cco = normalizarListaCorreos(datos.cco ?? [], 'La copia oculta');
@@ -974,7 +975,7 @@ export function validarEnvioCorreo(datos) {
   if (archivosExternos.reduce((t, f) => t + (f?.size ?? 0), 0) > MAX_BYTES_EXTERNOS) {
     throw new ApiError('ARCHIVO_INVALIDO', 'Los archivos externos superan los 25 MB en total.');
   }
-  return { para, cc, cco, asunto, cuerpoDoc, archivosPunto, archivosExternos };
+  return { sesionId: datos.sesionId, para, cc, cco, asunto, cuerpoDoc, archivosPunto, archivosExternos };
 }
 
 export function diferenciaTexto(anterior, nuevo) {

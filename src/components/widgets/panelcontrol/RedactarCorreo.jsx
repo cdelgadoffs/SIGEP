@@ -26,7 +26,7 @@ export default function RedactarCorreo() {
     CONTACTOS_CORREO, PLANTILLAS_CORREO, LISTAS_CORREO, CORREOS_REMITENTES,
     enviarCorreo, guardarBorrador, obtenerBorrador, eliminarBorrador,
   } = useCorreo();
-  const { REMITENTES, PUNTOS } = useProyecto();
+  const { REMITENTES, PUNTOS, sesionActivaFecha } = useProyecto();
   const { setEmailSeccion, setCorreoSeleccionadoId } = useUI();
 
   const editorRef = useRef(null);
@@ -137,6 +137,7 @@ export default function RedactarCorreo() {
     setError(null);
     try {
       const enviado = await enviarCorreo({
+        sesionId: sesionActivaFecha,
         para: form.para, cc: form.cc, cco: form.cco, asunto: form.asunto, cuerpoDoc: form.cuerpoDoc,
         archivosPunto, archivosExternos: externos,
       });

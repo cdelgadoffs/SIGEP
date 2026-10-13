@@ -1076,6 +1076,10 @@ export async function listarCorreosEnviados() {
 export async function enviarCorreo(datos) {
   exigirEscritura();
   const envio = validarEnvioCorreo(datos);
+  await exigirSesionAbierta(envio.sesionId);
+  if (await estadoDeSesion(envio.sesionId) !== 'proxima') {
+    throw new ApiError('SESION_NO_PROXIMA', 'Solo se pueden enviar correos desde la sesión próxima.');
+  }
   const adjuntos = [];
   for (const archivoId of envio.archivosPunto) {
     const registro = await obtener(STORE_ARCHIVOS, archivoId);
@@ -1092,6 +1096,7 @@ export async function enviarCorreo(datos) {
   const { id, nombre } = usuarioActual();
   const enviado = {
     id: crypto.randomUUID(),
+    sesionId: envio.sesionId,
     para: envio.para,
     cc: envio.cc,
     cco: envio.cco,

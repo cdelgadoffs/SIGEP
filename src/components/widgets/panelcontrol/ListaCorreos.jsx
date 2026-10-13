@@ -3,16 +3,21 @@ import CampoTexto from '../../base/CampoTexto.jsx';
 import Scrollbar from '../../base/Scrollbar.jsx';
 import { useUI } from '../../../context/UIContext.jsx';
 import { useCorreo } from '../../../context/CorreoContext.jsx';
+import { useProyecto } from '../../../context/ProyectoContext.jsx';
 import { formatoFechaCorreo } from '../../../utils/correos.js';
+import { encabezadoSesion } from '../../../utils/sesiones.js';
 import '../../../styles/widgets/panelcontrol/ListaCorreos.css';
 
 export default function ListaCorreos() {
   const { CORREOS_ENVIADOS, cargando } = useCorreo();
   const { correoSeleccionadoId, setCorreoSeleccionadoId } = useUI();
+  const { sesionActivaFecha, sesionSeleccionada } = useProyecto();
+  const encabezado = encabezadoSesion(sesionSeleccionada);
+  const delaSesion = CORREOS_ENVIADOS.filter((c) => c.sesionId === sesionActivaFecha);
   const [busqueda, setBusqueda] = useState('');
 
   const termino = busqueda.trim().toLowerCase();
-  const visibles = CORREOS_ENVIADOS.filter((c) => (
+  const visibles = delaSesion.filter((c) => (
     !termino || c.asunto.toLowerCase().includes(termino) || c.para.some((p) => p.toLowerCase().includes(termino))
   ));
 
@@ -20,13 +25,14 @@ export default function ListaCorreos() {
     <div className="widget-lista-correos">
       <div className="widget-lista-correos-encabezado">
         <h3 className="widget-lista-correos-titulo">Enviados</h3>
+        {sesionSeleccionada && <span className="widget-lista-correos-sesion">{encabezado.titulo} · {encabezado.subtitulo}</span>}
         <CampoTexto variant="claro" value={busqueda} onChange={setBusqueda} placeholder="Buscar en Enviados" ariaLabel="Buscar en Enviados" />
       </div>
       <div className="widget-lista-correos-cuerpo">
         <Scrollbar>
           {visibles.length === 0 ? (
             <div className="widget-lista-correos-vacio">
-              {cargando ? 'Cargando…' : CORREOS_ENVIADOS.length === 0 ? 'No has enviado correos.' : 'Sin resultados.'}
+              {cargando ? 'Cargando…' : !sesionSeleccionada ? 'Selecciona una sesión.' : delaSesion.length === 0 ? 'No hay correos enviados en esta sesión.' : 'Sin resultados.'}
             </div>
           ) : visibles.map((c) => (
             <div

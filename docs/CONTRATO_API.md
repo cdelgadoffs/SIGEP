@@ -292,7 +292,7 @@ Datos del órgano que usa el panel de Email. No dependen de una sesión.
 | `ListaDestinatarios` | `id`, `nombre`, `correos` | Nombre único; al menos un correo; todos con formato válido y sin repetir. |
 | `CorreoRemitente` | `remitenteId`, `correo` | Un correo por remitente del catálogo `remitentes` (el catálogo es de solo lectura, por eso va aparte). Es el correo al que se mandarán los engroses. |
 
-| `CorreoEnviado` | `id`, `para`, `cc`, `cco`, `asunto`, `cuerpoDoc`, `cuerpo`, `adjuntos`, `enviadoEn`, `enviadoPor` | Historial de lo enviado con `enviarCorreo` (lo que muestra la carpeta Enviados). `adjuntos` es `{ nombre, tamano }[]`: guarda los nombres, no los binarios. `enviadoPor` es `{ id, nombre }` del usuario del servidor. No se edita. `cuerpoDoc` es un `Documento`; `cuerpo` es su texto plano derivado (lo usan la vista previa de la lista y la búsqueda). |
+| `CorreoEnviado` | `id`, `para`, `cc`, `cco`, `asunto`, `cuerpoDoc`, `cuerpo`, `adjuntos`, `sesionId`, `enviadoEn`, `enviadoPor` | Historial de lo enviado con `enviarCorreo` (lo que muestra la carpeta Enviados, **por sesión**). `sesionId` es la sesión en la que se envió (los correos anteriores a este campo no lo tienen y no pertenecen a ninguna sesión). `adjuntos` es `{ nombre, tamano }[]`: guarda los nombres, no los binarios. `enviadoPor` es `{ id, nombre }` del usuario del servidor. No se edita. `cuerpoDoc` es un `Documento`; `cuerpo` es su texto plano derivado (lo usan la vista previa de la lista y la búsqueda). |
 
 Todos llevan `version`, `creadoEn` y `modificadoEn` del servidor.
 
@@ -314,9 +314,9 @@ Lectura para cualquier usuario autenticado; escritura solo del administrador.
 | `listarCorreosRemitentes()` | — | `CorreoRemitente[]` | — |
 | `guardarCorreoRemitente(remitenteId, correo)` | id del remitente, correo (vacío lo quita) | `CorreoRemitente` \| `null` | `NO_AUTORIZADO`, `VALIDACION` |
 | `listarCorreosEnviados()` | — | `CorreoEnviado[]` (el más reciente primero) | — |
-| `enviarCorreo(datos)` | ver abajo | `CorreoEnviado` (ya guardado en el historial) | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `ARCHIVO_INVALIDO` |
+| `enviarCorreo(datos)` | ver abajo | `CorreoEnviado` (ya guardado en el historial) | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `ARCHIVO_INVALIDO`, `SESION_CELEBRADA`, `SESION_VENCIDA`, `SESION_NO_PROXIMA` |
 
-- **`enviarCorreo`:** `datos = { para, cc, cco, asunto, cuerpoDoc, archivosPunto, archivosExternos }`. `para`, `cc` y `cco` son listas de correos (se normalizan y se quitan repetidos); debe haber al menos un correo en `para`; todos con formato válido; `asunto` obligatorio (máx. 300); `cuerpoDoc` es un `Documento` (acepta también `cuerpo` en texto plano, un párrafo por línea; si llegan ambos, gana el documento) con hasta 20 000 caracteres de texto plano. Las marcas y nodos son los de la lista blanca de `Documento`; el servidor real lo convertirá a HTML al enviar. La marca `oculto` no tiene efecto en un correo. `archivosPunto` son ids de archivos adjuntos a puntos (deben existir y el usuario debe poder verlos); `archivosExternos` son `File[]` (máx. 10, 25 MB en total). **El prototipo solo valida y simula el envío** (espera un momento y responde); el servidor real mandará el correo. Cada envío correcto queda guardado en el historial (`CorreoEnviado`).
+- **`enviarCorreo`:** `datos = { sesionId, para, cc, cco, asunto, cuerpoDoc, archivosPunto, archivosExternos }`. **`sesionId` es obligatorio y la sesión debe ser la próxima** (`proxima`, la azul: la que se está preparando o celebrando; comenzada o no): enviar correos solo se permite desde ella (`SESION_NO_PROXIMA` en una pendiente; `SESION_CELEBRADA` y `SESION_VENCIDA` en las que ya terminaron). Las demás sesiones solo conservan su historial de enviados. `para`, `cc` y `cco` son listas de correos (se normalizan y se quitan repetidos); debe haber al menos un correo en `para`; todos con formato válido; `asunto` obligatorio (máx. 300); `cuerpoDoc` es un `Documento` (acepta también `cuerpo` en texto plano, un párrafo por línea; si llegan ambos, gana el documento) con hasta 20 000 caracteres de texto plano. Las marcas y nodos son los de la lista blanca de `Documento`; el servidor real lo convertirá a HTML al enviar. La marca `oculto` no tiene efecto en un correo. `archivosPunto` son ids de archivos adjuntos a puntos (deben existir y el usuario debe poder verlos); `archivosExternos` son `File[]` (máx. 10, 25 MB en total). **El prototipo solo valida y simula el envío** (espera un momento y responde); el servidor real mandará el correo. Cada envío correcto queda guardado en el historial (`CorreoEnviado`).
 - Los correos de los remitentes los usará el envío real de los engroses (`enviarEngrose`).
 
 ### Horarios de la celebración
@@ -450,7 +450,7 @@ Notas de comportamiento:
 | `LISTA_CERRADA` | La sesión tiene la lista de puntos cerrada y la operación no está permitida con ella cerrada. |
 | `LISTA_ABIERTA` | Se intentó celebrar una sesión con la lista de puntos abierta. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
-| `SESION_NO_PROXIMA` | Se intentó comenzar o celebrar una sesión que no es la próxima (`proxima`, la azul). |
+| `SESION_NO_PROXIMA` | Se intentó comenzar o celebrar una sesión, o enviar un correo, desde una sesión que no es la próxima (`proxima`, la azul). |
 | `SESION_VENCIDA` | La sesión ya pasó sin celebrarse (`no-celebrada`, la roja): es de solo lectura, no admite cambios. |
 | `SIN_CORREO_REMITENTE` | El remitente del punto no tiene correo vinculado (`enviarAvisoEdicion`). |
 | `AVISOS_PENDIENTES` | La sesión tiene avisos de edición sin enviar ni descartar y no se puede cerrar su lista. |

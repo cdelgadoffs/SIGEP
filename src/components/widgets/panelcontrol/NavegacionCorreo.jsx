@@ -2,6 +2,7 @@ import BotonS from '../../base/BotonS.jsx';
 import BotonSeleccionableMenu from '../../base/BotonSeleccionableMenu.jsx';
 import { useUI } from '../../../context/UIContext.jsx';
 import { useCorreo } from '../../../context/CorreoContext.jsx';
+import { useProyecto } from '../../../context/ProyectoContext.jsx';
 import '../../../styles/widgets/panelcontrol/NavegacionCorreo.css';
 
 const GRUPOS = [
@@ -13,9 +14,12 @@ const GRUPOS = [
 export default function NavegacionCorreo() {
   const { emailSeccion, setEmailSeccion, setPanelControlActivo } = useUI();
   const { CORREOS_ENVIADOS, CONTACTOS_CORREO, LISTAS_CORREO, PLANTILLAS_CORREO } = useCorreo();
+  const { sesionActivaFecha, sesionSeleccionada } = useProyecto();
+  const puedeRedactar = sesionSeleccionada?.estado === 'proxima';
+  const seccionActiva = emailSeccion === 'nuevo' && !puedeRedactar ? 'enviados' : emailSeccion;
 
   const totales = {
-    enviados: CORREOS_ENVIADOS.length,
+    enviados: CORREOS_ENVIADOS.filter((c) => c.sesionId === sesionActivaFecha).length,
     contactos: CONTACTOS_CORREO.length,
     listas: LISTAS_CORREO.length,
     plantillas: PLANTILLAS_CORREO.length,
@@ -24,21 +28,23 @@ export default function NavegacionCorreo() {
   return (
     <nav className="widget-navegacion-correo">
       <BotonS variant="claro" onClick={() => setPanelControlActivo(null)}>‹ Panel de control</BotonS>
-      <button
-        type="button"
-        className={'widget-navegacion-correo-nuevo' + (emailSeccion === 'nuevo' ? ' widget-navegacion-correo-nuevo-activo' : '')}
-        onClick={() => setEmailSeccion('nuevo')}
-      >
-        <i className="ri-mail-add-line"></i>
-        Nuevo correo
-      </button>
+      {puedeRedactar && (
+        <button
+          type="button"
+          className={'widget-navegacion-correo-nuevo' + (seccionActiva === 'nuevo' ? ' widget-navegacion-correo-nuevo-activo' : '')}
+          onClick={() => setEmailSeccion('nuevo')}
+        >
+          <i className="ri-mail-add-line"></i>
+          Nuevo correo
+        </button>
+      )}
       {GRUPOS.map((grupo) => (
         <div key={grupo.titulo} className="widget-navegacion-correo-grupo">
           <span className="widget-navegacion-correo-titulo">{grupo.titulo}</span>
           {grupo.secciones.map((s) => (
             <BotonSeleccionableMenu
               key={s.id}
-              activo={emailSeccion === s.id}
+              activo={seccionActiva === s.id}
               badge={totales[s.id]}
               onClick={() => setEmailSeccion(s.id)}
             >
