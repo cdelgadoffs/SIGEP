@@ -1,5 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 import { leerAjustesVisuales, guardarAjustesVisuales } from '../services/AjustesVisuales.js';
+import { FILTROS_CINTA } from '../utils/sesiones.js';
+import { NIVELES_BRILLO } from '../utils/brillo.js';
 
 const AjustesVisualesContext = createContext(null);
 
@@ -18,6 +20,8 @@ export function AjustesVisualesProvider({ children }) {
     vistaCompletaSesion: ajustes.vistaCompletaSesion === true,
     infoNavegadorAbierta: ajustes.infoNavegadorAbierta === true,
     filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'todos',
+    filtroCinta: FILTROS_CINTA.some((f) => f.id === ajustes.filtroCinta) ? ajustes.filtroCinta : 'todas',
+    brilloPantalla: NIVELES_BRILLO.includes(ajustes.brilloPantalla) ? ajustes.brilloPantalla : 0,
     cambiarAjuste,
   };
   return <AjustesVisualesContext.Provider value={value}>{children}</AjustesVisualesContext.Provider>;

@@ -33,6 +33,11 @@ export function sumarDiasISO(id, dias) {
   return `${fecha.getFullYear()}-${mes}-${dia}`;
 }
 
+export function inicioDeSemana(id) {
+  const JUEVES = 4;
+  return sumarDiasISO(id, -((diaDeSemana(id) - JUEVES + 7) % 7));
+}
+
 export function diaDeSemana(id) {
   return new Date(id + 'T00:00:00').getDay();
 }

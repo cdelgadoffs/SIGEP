@@ -17,7 +17,7 @@ import { useUI, ALTO_TOPBAR, ALTO_CINTA, ANCHO_SIDEBAR1, ANCHO_SIDEBAR4 } from '
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
-import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
+import { encabezadoSesion, subtituloAsuetos, opcionesFiltroCinta, filtroDeOpcion } from '../utils/sesiones.js';
 
 const ANCHO_SIDEBAR1_CELEBRADA = 340;
 
@@ -32,7 +32,7 @@ export default function Inicio() {
   } = useUI();
   const { usuario } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, CALENDARIO } = useProyecto();
-  const { infoNavegadorAbierta, cambiarAjuste } = useAjustesVisuales();
+  const { infoNavegadorAbierta, filtroCinta, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const anchoSidebar1 = sesionFinalizada ? ANCHO_SIDEBAR1_CELEBRADA : ANCHO_SIDEBAR1;
   const panelIzquierda = izquierdaSidebar1 + anchoSidebar1;
@@ -45,6 +45,8 @@ export default function Inicio() {
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}
+        opcionesConfiguracion={opcionesFiltroCinta(filtroCinta)}
+        onSeleccionarConfiguracion={(id) => cambiarAjuste('filtroCinta', filtroDeOpcion(id))}
       />
       <CintaSesiones textoVacio="Aún no hay sesiones programadas." />
       <Sidebar1

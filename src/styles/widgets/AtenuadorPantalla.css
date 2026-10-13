@@ -1,0 +1,6 @@
+.widget-atenuador-pantalla {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  pointer-events: none;
+}

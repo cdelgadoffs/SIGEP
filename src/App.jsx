@@ -1,5 +1,6 @@
 import Skeleton from './components/Skeleton.jsx';
 import AvisoEdicionCorreo from './components/widgets/AvisoEdicionCorreo.jsx';
+import AtenuadorPantalla from './components/widgets/AtenuadorPantalla.jsx';
 import Inicio from './pages/Inicio.jsx';
 import ProyectoOrdenDia from './pages/ProyectoOrdenDia.jsx';
 import Sesion from './pages/Sesion.jsx';
@@ -23,6 +24,7 @@ function App() {
         {Page && <Page />}
       </Skeleton>
       <AvisoEdicionCorreo />
+      <AtenuadorPantalla />
     </>
   );
 }

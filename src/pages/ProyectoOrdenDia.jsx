@@ -24,7 +24,7 @@ import { useUI, ANCHO_SIDEBAR3, ANCHO_SIDEBAR4, ALTO_TOPBAR, ALTO_CINTA } from '
 import { useAuth } from '../context/AuthContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
-import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
+import { encabezadoSesion, subtituloAsuetos, opcionesFiltroCinta, esOpcionFiltroCinta, filtroDeOpcion } from '../utils/sesiones.js';
 import '../styles/pages/ProyectoOrdenDia.css';
 
 export default function ProyectoOrdenDia() {
@@ -40,7 +40,7 @@ export default function ProyectoOrdenDia() {
   } = useUI();
   const { usuario } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, listaCerrada, CALENDARIO } = useProyecto();
-  const { vistaCompletaProyecto, cambiarAjuste } = useAjustesVisuales();
+  const { vistaCompletaProyecto, filtroCinta, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3 + (sidebar3Abierto ? ANCHO_SIDEBAR3 : 0);
   const arriba = ALTO_TOPBAR + ALTO_CINTA;
@@ -55,10 +55,11 @@ export default function ProyectoOrdenDia() {
         mostrarNuevaExtraordinaria={!sidebar3Abierto}
         opcionesConfiguracion={[
           vistaCompletaProyecto
-            ? { id: 'vista', label: 'Ver por sección', icono: 'ri-list-unordered' }
-            : { id: 'vista', label: 'Ver lista completa', icono: 'ri-stack-line' },
+            ? { id: 'vista', label: 'Ver por sección', grupo: 'Lista de puntos', icono: 'ri-list-unordered' }
+            : { id: 'vista', label: 'Ver lista completa', grupo: 'Lista de puntos', icono: 'ri-stack-line' },
+          ...opcionesFiltroCinta(filtroCinta),
         ]}
-        onSeleccionarConfiguracion={() => cambiarAjuste('vistaCompletaProyecto', !vistaCompletaProyecto)}
+        onSeleccionarConfiguracion={(id) => (esOpcionFiltroCinta(id) ? cambiarAjuste('filtroCinta', filtroDeOpcion(id)) : cambiarAjuste('vistaCompletaProyecto', !vistaCompletaProyecto))}
       />
       <CintaSesiones
         textoVacio="Aún no hay sesiones programadas."

@@ -4,6 +4,32 @@ export function nombreTipoSesion(tipo) {
   return NOMBRES_TIPO[tipo] ?? NOMBRES_TIPO.ordinaria;
 }
 
+export const FILTROS_CINTA = [
+  { id: 'todas', label: 'Todas' },
+  { id: 'ordinaria', label: 'Sesiones Ordinarias' },
+  { id: 'extraordinaria', label: 'Sesiones Extraordinarias' },
+  { id: 'semanal', label: 'Vista semanal' },
+];
+
+export const PREFIJO_OPCION_FILTRO_CINTA = 'filtroCinta:';
+
+export function opcionesFiltroCinta(filtroActivo) {
+  return FILTROS_CINTA.map((f) => ({
+    id: `${PREFIJO_OPCION_FILTRO_CINTA}${f.id}`,
+    label: f.label,
+    grupo: 'Cinta de sesiones',
+    icono: f.id === filtroActivo ? 'ri-radio-button-line' : 'ri-checkbox-blank-circle-line',
+  }));
+}
+
+export function esOpcionFiltroCinta(id) {
+  return typeof id === 'string' && id.startsWith(PREFIJO_OPCION_FILTRO_CINTA);
+}
+
+export function filtroDeOpcion(id) {
+  return id.slice(PREFIJO_OPCION_FILTRO_CINTA.length);
+}
+
 export function encabezadoSesion(sesion) {
   return sesion
     ? { titulo: `Sesión ${nombreTipoSesion(sesion.tipo)} N° ${sesion.numeroSesion ?? '—'}`, subtitulo: sesion.label }

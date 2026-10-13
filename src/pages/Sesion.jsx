@@ -59,8 +59,8 @@ export default function Sesion() {
         mostrarNuevaExtraordinaria={false}
         opcionesConfiguracion={[
           vistaCompletaSesion
-            ? { id: 'vista', label: 'Ver por punto', icono: 'ri-file-list-line' }
-            : { id: 'vista', label: 'Ver todos los puntos', icono: 'ri-stack-line' },
+            ? { id: 'vista', label: 'Ver por punto', grupo: 'Puntos de la sesión', icono: 'ri-file-list-line' }
+            : { id: 'vista', label: 'Ver todos los puntos', grupo: 'Puntos de la sesión', icono: 'ri-stack-line' },
         ]}
         onSeleccionarConfiguracion={() => cambiarAjuste('vistaCompletaSesion', !vistaCompletaSesion)}
       />

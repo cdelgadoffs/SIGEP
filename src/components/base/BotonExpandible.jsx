@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import '../../styles/base/BotonExpandible.css';
 
 export default function BotonExpandible({ icono, ariaLabel, opciones, onSeleccionar, textoVacio = 'Sin opciones.' }) {
@@ -57,16 +57,20 @@ export default function BotonExpandible({ icono, ariaLabel, opciones, onSeleccio
       {abierto && (
         <div ref={menuRef} className="base-boton-expandible-menu" role="menu" style={{ top: pos.top, right: pos.right }}>
           {opciones.length === 0 && <div className="base-boton-expandible-vacio">{textoVacio}</div>}
-          {opciones.map((op) => (
-            <div
-              key={op.id}
-              role="menuitem"
-              className="base-boton-expandible-item"
-              onClick={() => onSeleccionar(op.id)}
-            >
-              {op.icono && <i className={op.icono}></i>}
-              <span>{op.label}</span>
-            </div>
+          {opciones.map((op, i) => (
+            <Fragment key={op.id}>
+              {op.grupo && op.grupo !== opciones[i - 1]?.grupo && (
+                <div className="base-boton-expandible-grupo" role="presentation">{op.grupo}</div>
+              )}
+              <div
+                role="menuitem"
+                className="base-boton-expandible-item"
+                onClick={() => onSeleccionar(op.id)}
+              >
+                {op.icono && <i className={op.icono}></i>}
+                <span>{op.label}</span>
+              </div>
+            </Fragment>
           ))}
         </div>
       )}
