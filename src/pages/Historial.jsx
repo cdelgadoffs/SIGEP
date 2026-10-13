@@ -8,6 +8,7 @@ import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
 import { useUI } from '../context/UIContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
 import '../styles/pages/Historial.css';
@@ -21,6 +22,7 @@ export default function Historial() {
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
+  const { usuario } = useAuth();
   const { sesionSeleccionada, CALENDARIO } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3;
@@ -39,6 +41,7 @@ export default function Historial() {
         <MenuPrincipalSesion />
       </Sidebar1>
       <Sidebar5
+        subtitulo={usuario?.correo}
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
         amplio={sidebar5Amplio}

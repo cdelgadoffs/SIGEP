@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
@@ -160,7 +160,13 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo, terminoBusqueda } = useUI();
+  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo, terminoBusqueda, puntoDestinoProyecto } = useUI();
+  const [destinoAplicado, setDestinoAplicado] = useState(null);
+  const destinoDesplazado = useRef(null);
+  if (puntoDestinoProyecto !== destinoAplicado) {
+    setDestinoAplicado(puntoDestinoProyecto);
+    if (puntoDestinoProyecto) setSeleccionadoId(puntoDestinoProyecto);
+  }
   const termino = terminoBusqueda.trim();
   const puntos = termino ? todosLosPuntos.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : todosLosPuntos;
   const { vistaCompletaProyecto } = useAjustesVisuales();
@@ -171,6 +177,17 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
       requestAnimationFrame(() => document.getElementById(`punto-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
     }
   };
+  useEffect(() => {
+    if (!puntoDestinoProyecto) {
+      destinoDesplazado.current = null;
+      return;
+    }
+    if (destinoDesplazado.current === puntoDestinoProyecto) return;
+    const tarjeta = document.getElementById(`punto-${puntoDestinoProyecto}`);
+    if (!tarjeta) return;
+    destinoDesplazado.current = puntoDestinoProyecto;
+    tarjeta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [puntoDestinoProyecto, todosLosPuntos, vistaCompletaProyecto, seccionActivaProyecto]);
   const estadoCarga = error ? 'error' : cargando ? 'cargando' : 'listo';
   const avisoError = (error || errorAccion) && (
     <div className="widget-lista-puntos-error">

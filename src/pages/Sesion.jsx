@@ -24,6 +24,7 @@ import ListaReciclaje from '../components/widgets/ListaReciclaje.jsx';
 import BotonDescargarActa from '../components/widgets/BotonDescargarActa.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR2, ANCHO_SIDEBAR4, ANCHO_VISTA_PREVIA } from '../context/UIContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
@@ -42,6 +43,7 @@ export default function Sesion() {
     vistaPreviaAbierta,
     sidebar4Abierto, setSidebar4Abierto,
   } = useUI();
+  const { usuario } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, CALENDARIO, PUNTOS } = useProyecto();
   const { vistaCompletaSesion, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
@@ -86,6 +88,7 @@ export default function Sesion() {
         </Sidebar2>
       )}
       <Sidebar5
+        subtitulo={usuario?.correo}
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
         amplio={sidebar5Amplio}

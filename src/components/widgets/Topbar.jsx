@@ -10,7 +10,7 @@ import '../../styles/widgets/Topbar.css';
 
 export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesConfiguracion = [], onSeleccionarConfiguracion, mostrarNuevaExtraordinaria = true }) {
   const { toggleSidebar5 } = useUI();
-  const { cerrarSesion, puedeEscribir } = useAuth();
+  const { usuario, cerrarSesion, puedeEscribir } = useAuth();
 
   return (
     <header className="widget-topbar">
@@ -28,7 +28,10 @@ export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesCon
         <BuscadorGlobal value={terminoBusqueda} onChange={onCambiarBusqueda} placeholder="Buscar punto..." />
         {mostrarNuevaExtraordinaria && puedeEscribir && <NuevaSesionExtraordinaria />}
         <FechaDia />
-        <BotonS onClick={cerrarSesion}>Salir</BotonS>
+        <div className="widget-topbar-sesion">
+          <span className="widget-topbar-usuario">{usuario?.nombre || usuario?.correo || ''}</span>
+          <BotonS onClick={cerrarSesion}>Salir</BotonS>
+        </div>
         <BotonExpandible
           icono="ri-settings-3-line"
           ariaLabel="Configuración visual"

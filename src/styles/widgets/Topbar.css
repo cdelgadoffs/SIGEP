@@ -41,6 +41,18 @@
   align-items: center;
   gap: 14px;
 }
+.widget-topbar-sesion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 12px;
+  border-left: 1px solid #3a3a3a;
+}
+.widget-topbar-usuario {
+  font-size: 13px;
+  color: #ddd;
+  font-weight: 500;
+}
 .widget-topbar .base-boton-agregar.base-boton-agregar-expandible {
   padding: 0 9px;
 }

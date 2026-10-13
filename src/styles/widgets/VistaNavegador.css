@@ -157,6 +157,39 @@
   flex-shrink: 0;
   color: #666;
 }
+.widget-vista-navegador-col-acciones {
+  display: flex;
+  justify-content: flex-end;
+  width: 96px;
+  flex-shrink: 0;
+}
+.widget-vista-navegador-ir {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.widget-vista-navegador-ir:hover {
+  background: #e4e4e4;
+  border-color: #b5b5b5;
+}
+.widget-vista-navegador-fila:hover .widget-vista-navegador-ir,
+.widget-vista-navegador-fila-seleccionada .widget-vista-navegador-ir,
+.widget-vista-navegador-ir:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .widget-vista-navegador-ir {
+    opacity: 1;
+  }
+}
 .widget-vista-navegador-nombre {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -21,6 +21,7 @@ import FiltroReciclaje from '../components/widgets/FiltroReciclaje.jsx';
 import ListaReciclaje from '../components/widgets/ListaReciclaje.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR3, ANCHO_SIDEBAR4, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
@@ -37,6 +38,7 @@ export default function ProyectoOrdenDia() {
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
+  const { usuario } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, listaCerrada, CALENDARIO } = useProyecto();
   const { vistaCompletaProyecto, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
@@ -89,6 +91,7 @@ export default function ProyectoOrdenDia() {
         <FormularioPunto />
       </Sidebar3>
       <Sidebar5
+        subtitulo={usuario?.correo}
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
         amplio={sidebar5Amplio}

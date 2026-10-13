@@ -36,6 +36,7 @@ export function UIProvider({ children }) {
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
   const [vistaPreviaAbierta, setVistaPreviaAbiertaInterna] = useState(false);
   const [elementoNavegador, setElementoNavegador] = useState(null);
+  const [puntoDestinoProyecto, setPuntoDestinoProyecto] = useState(null);
   const setSidebar4Abierto = useCallback((abierto) => {
     if (abierto) setVistaPreviaAbiertaInterna(false);
     setSidebar4AbiertoInterno(abierto);
@@ -70,9 +71,16 @@ export function UIProvider({ children }) {
   function setVistaActual(vista) {
     cerrarVistaArchivo();
     setElementoNavegador(null);
+    if (vista !== 'proyecto') setPuntoDestinoProyecto(null);
     if (vista !== 'proyecto') cerrarSidebar3();
     if (vista !== 'proyecto' && vista !== 'sesion') setSidebar4Abierto(false);
     setVistaActualInterna(vista);
+  }
+  function irAPunto(puntoId, seccionId) {
+    setSeccionActivaProyecto(seccionId);
+    setPuntoDestinoProyecto(puntoId);
+    setTerminoBusqueda('');
+    setVistaActual('proyecto');
   }
   function cerrarSidebar5() {
     setSidebar5Abierto(false);
@@ -103,6 +111,7 @@ export function UIProvider({ children }) {
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
     vistaPreviaAbierta, setVistaPreviaAbierta,
     elementoNavegador, setElementoNavegador,
+    puntoDestinoProyecto, setPuntoDestinoProyecto, irAPunto,
     izquierdaSidebar1, izquierdaSidebar3, izquierdaSidebar6,
   };
 

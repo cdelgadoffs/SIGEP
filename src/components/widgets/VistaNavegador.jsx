@@ -57,7 +57,7 @@ function buscarEnCarpetas(carpetas, consulta) {
 export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
-  const { abrirVistaArchivo, terminoBusqueda, elementoNavegador, setElementoNavegador } = useUI();
+  const { abrirVistaArchivo, terminoBusqueda, elementoNavegador, setElementoNavegador, irAPunto } = useUI();
   const { infoNavegadorAbierta, cambiarAjuste } = useAjustesVisuales();
   const [posicion, setPosicion] = useState({ sesionId: null, ruta: [], busqueda: '' });
   const [renombrando, setRenombrando] = useState(null);
@@ -80,6 +80,7 @@ export default function VistaNavegador() {
   const nivel = carpeta ? contenidoDeNivel(carpeta, subruta) : null;
   const puedeRenombrar = puedeEscribir && !!sesionSeleccionada && sesionSeleccionada.estado !== 'celebrada' && sesionSeleccionada.estado !== 'no-celebrada';
   const titulo = encabezadoSesion(sesionSeleccionada).titulo;
+  const hayVistaProyecto = sesionSeleccionada?.estado === 'proxima' || sesionSeleccionada?.estado === 'pendiente';
   const claveSeleccionada = elementoNavegador && elementoNavegador.sesionId === sesionId ? elementoNavegador.clave : null;
 
   function ir(nuevaRuta) {
@@ -151,6 +152,23 @@ export default function VistaNavegador() {
           aria-label="Nuevo nombre"
         />
         {extension && <span className="widget-vista-navegador-extension">{extension}</span>}
+      </span>
+    );
+  }
+
+  function botonIrAPunto(puntoId) {
+    return (
+      <span className="widget-vista-navegador-col-acciones">
+        {hayVistaProyecto && puntoId && PUNTOS.some((p) => p.id === puntoId) && (
+          <button
+            type="button"
+            className="widget-vista-navegador-ir"
+            onClick={(e) => { e.stopPropagation(); irAPunto(puntoId, PUNTOS.find((p) => p.id === puntoId).seccion); }}
+            onDoubleClick={(e) => e.stopPropagation()}
+          >
+            Ir al punto
+          </button>
+        )}
       </span>
     );
   }
@@ -283,6 +301,7 @@ export default function VistaNavegador() {
         <span className="widget-vista-navegador-col-nombre">Nombre</span>
         <span className="widget-vista-navegador-col-fecha">Fecha</span>
         <span className="widget-vista-navegador-col-tamano">Tamaño</span>
+        <span className="widget-vista-navegador-col-acciones"></span>
       </div>
 
       <div className="widget-vista-navegador-cuerpo" onClick={() => setElementoNavegador(null)}>
@@ -311,6 +330,7 @@ export default function VistaNavegador() {
                 </span>
                 <span className="widget-vista-navegador-col-fecha"></span>
                 <span className="widget-vista-navegador-col-tamano">{f.cantidad} {f.cantidad === 1 ? 'elemento' : 'elementos'}</span>
+                {botonIrAPunto(f.puntoId)}
               </div>
             );
           })}
@@ -337,6 +357,7 @@ export default function VistaNavegador() {
                 </span>
                 <span className="widget-vista-navegador-col-fecha">{fechaCorta(archivo.creadoEn)}</span>
                 <span className="widget-vista-navegador-col-tamano">{archivo.tamano ? formatoTamano(archivo.tamano) : '—'}</span>
+                {botonIrAPunto(f.entrada.puntoId)}
               </div>
             );
           })}

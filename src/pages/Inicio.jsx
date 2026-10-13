@@ -14,6 +14,7 @@ import ResumenSesion from '../components/widgets/ResumenSesion.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/panelcontrol/MenuPanelControl.jsx';
 import { useUI, ALTO_TOPBAR, ALTO_CINTA, ANCHO_SIDEBAR1, ANCHO_SIDEBAR4 } from '../context/UIContext.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { encabezadoSesion, subtituloAsuetos } from '../utils/sesiones.js';
@@ -29,6 +30,7 @@ export default function Inicio() {
     sidebar6Abierto, izquierdaSidebar6,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
+  const { usuario } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, CALENDARIO } = useProyecto();
   const { infoNavegadorAbierta, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
@@ -56,6 +58,7 @@ export default function Inicio() {
         <ResumenSesion />
       </Sidebar1>
       <Sidebar5
+        subtitulo={usuario?.correo}
         abierto={sidebar5Abierto}
         ancho={sidebar5Ancho}
         amplio={sidebar5Amplio}
