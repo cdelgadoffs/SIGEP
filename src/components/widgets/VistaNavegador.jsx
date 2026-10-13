@@ -10,7 +10,7 @@ import Modal from '../base/Modal.jsx';
 import { carpetasDeSesion, contenidoDeNivel, nombreConNumero } from '../../utils/arbolArchivos.js';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { formatoTamano } from '../../utils/correos.js';
-import { encabezadoSesion } from '../../utils/sesiones.js';
+import { encabezadoSesion, listaNoPublicada, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
 import { normalizarTexto, puntoCoincide } from '../../utils/puntos.js';
 import '../../styles/widgets/VistaNavegador.css';
 
@@ -309,7 +309,7 @@ export default function VistaNavegador() {
           {!sesionSeleccionada && <div className="widget-vista-navegador-vacio">Selecciona una sesión para ver sus archivos.</div>}
           {sesionSeleccionada && cargando && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">Cargando…</div>}
           {sesionSeleccionada && error && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">No se pudieron cargar los archivos.</div>}
-          {sesionSeleccionada && !cargando && !error && vacio && <div className="widget-vista-navegador-vacio">{buscando ? `Sin resultados para «${busqueda.trim()}».` : carpeta ? 'Esta carpeta está vacía.' : terminoGlobal ? `Ningún punto coincide con «${terminoGlobal}».` : 'Esta sesión aún no tiene archivos.'}</div>}
+          {sesionSeleccionada && !cargando && !error && vacio && <div className="widget-vista-navegador-vacio">{listaNoPublicada(sesionSeleccionada, puedeEscribir) ? TEXTO_LISTA_NO_PUBLICADA : buscando ? `Sin resultados para «${busqueda.trim()}».` : carpeta ? 'Esta carpeta está vacía.' : terminoGlobal ? `Ningún punto coincide con «${terminoGlobal}».` : 'Esta sesión aún no tiene archivos.'}</div>}
 
           {filasCarpetas.map((f) => {
             const editando = renombrando === f.clave;

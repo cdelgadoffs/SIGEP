@@ -172,6 +172,7 @@ Son `fijo: true` de la sección `actas` (sin `encabezado`), con `id` `fijo:<sesi
 Cada sesión tiene un registro de puntos que el administrador puede **cerrar** (`listaCerrada: true`) para congelar el orden del día antes de celebrar. Reglas del servidor:
 
 - Con la lista cerrada **no se pueden crear, editar, eliminar ni mover puntos** (`LISTA_CERRADA`). La excepción son las secciones del catálogo con el atributo `admiteConListaCerrada: true` (hoy `asuntos-generales`), donde **sí se pueden crear** puntos; editarlos, eliminarlos y moverlos sigue prohibido. Adjuntar y quitar archivos, y marcar puntos como tratados, siguen permitidos.
+- **El `lector` solo ve los puntos de una sesión cuando su lista está cerrada.** Mientras esté abierta, el servidor no se los entrega: `listarPuntos(sesionId)` responde `[]` (también los puntos fijos), `descargarArchivo` de un archivo de esa sesión responde `NO_AUTORIZADO` y `listarHistorialPunto` de uno de sus puntos responde `[]`. Vale para toda sesión no celebrada, ordinaria o extraordinaria (las celebradas siempre tienen la lista cerrada). Se calcula al leer: si el administrador reabre la lista, los lectores dejan de verla otra vez. La papelera (global) no cambia. El `administrador` lo ve siempre.
 - La lista se puede **reabrir** mientras la sesión no esté celebrada. Una sesión celebrada es inmutable (`SESION_CELEBRADA`).
 - **No se puede celebrar una sesión con la lista abierta** (`LISTA_ABIERTA`).
 
@@ -482,7 +483,7 @@ La identidad es **Microsoft Entra ID** (un solo tenant). El cliente inicia sesi�
 | Rol | Sesiones y puntos | Descarga de archivos | Confidenciales |
 |---|---|---|---|
 | `administrador` | Lectura y escritura (CRUD de puntos y de sesiones, lista, celebración, correo, panel de control) | Sí | Los ve |
-| `lector` | **Solo lectura**: ninguna operación de escritura (`NO_AUTORIZADO`), tampoco envíos de correo ni avisos | **No**: `descargarArchivo` responde `NO_AUTORIZADO`; la interfaz no ofrece descargas ni vistas previas de adjuntos | **Ocultos**: reciben el punto con su `numero` y `confidencial: true`, pero con `contenido: "CONFIDENCIAL"`, sin acuerdo y sin archivos. Así la numeración es la misma para todos y no se filtra el contenido. |
+| `lector` | **Solo lectura**: ninguna operación de escritura (`NO_AUTORIZADO`), tampoco envíos de correo ni avisos. **Solo ve los puntos de una sesión cuando su lista está cerrada** (ver "Lista cerrada") | **No**: `descargarArchivo` responde `NO_AUTORIZADO`; la interfaz no ofrece descargas ni vistas previas de adjuntos | **Ocultos**: reciben el punto con su `numero` y `confidencial: true`, pero con `contenido: "CONFIDENCIAL"`, sin acuerdo y sin archivos. Así la numeración es la misma para todos y no se filtra el contenido. |
 
 - **Límite honesto:** el contenido de los puntos que el `lector` sí lee puede copiarse o capturarse, y los documentos Word automáticos (punto, orden del día, acta) se construyen en el cliente con datos que ya recibió; la interfaz le oculta sus descargas, pero impedirlas de verdad exige que el servidor real los genere. Lo mismo para "ver pero no descargar" un adjunto: los bytes llegan al navegador en cualquier caso.
 - Las restricciones finas de lectura por remitente/colaborador están por definir; la regla siempre se aplica en el servidor.

@@ -6,7 +6,7 @@ import {
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
-  usuarioActual, exigirEscritura, puedeVerConfidencial,
+  usuarioActual, exigirEscritura, puedeVerConfidencial, puedeVerLista,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   validarPunto, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta, seccionParaLista,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
@@ -385,6 +385,7 @@ async function puntoArmado(sesionId, id) {
 }
 
 export async function listarPuntos(sesionId) {
+  if (!puedeVerLista(await obtener(STORE_SESIONES, sesionId))) return [];
   const lista = await armarPuntos(sesionId);
   return puedeVerConfidencial() ? lista : lista.map(ocultarConfidencial);
 }
@@ -638,6 +639,7 @@ export async function listarHistorialPunto(puntoId) {
   const punto = (await obtener(STORE_PUNTOS, puntoId)) ?? (await obtener(STORE_PAPELERA, puntoId));
   if (!punto) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   if (punto.confidencial && !puedeVerConfidencial()) return [];
+  if (punto.sesionId && !puedeVerLista(await obtener(STORE_SESIONES, punto.sesionId))) return [];
   const eventos = (await obtenerTodos(STORE_HISTORIAL)).filter((e) => e.puntoId === puntoId);
   if (!eventos.some((e) => e.accion === 'creado')) eventos.push(eventoCreacionSintetico(punto));
   return eventos.sort((a, b) => (a.creadoEn < b.creadoEn ? 1 : -1));
@@ -832,6 +834,9 @@ export async function descargarArchivo(archivoId) {
   if (!punto) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
   if (punto.confidencial && !puedeVerConfidencial()) {
     throw new ApiError('NO_AUTORIZADO', 'No tienes permiso para ver este archivo.');
+  }
+  if (!puedeVerLista(await obtener(STORE_SESIONES, punto.sesionId))) {
+    throw new ApiError('NO_AUTORIZADO', 'La lista de puntos aún no está disponible.');
   }
   return { nombre: registro.nombre, tipo: registro.tipo, blob: registro.blob };
 }

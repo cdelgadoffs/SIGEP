@@ -5,7 +5,7 @@ import SubMenuDD from './SubMenuDD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { contarPuntos, puntoCoincide } from '../../utils/puntos.js';
-import { nombreTipoSesion } from '../../utils/sesiones.js';
+import { nombreTipoSesion, listaNoPublicada } from '../../utils/sesiones.js';
 
 const VISTAS_MENU_PRINCIPAL = [
   { id: 'inicio', label: 'Inicio' },
@@ -27,6 +27,7 @@ export default function MenuPrincipalSesion() {
   } = useUI();
 
   const estadoSesion = sesionSeleccionada?.estado;
+  const listaOculta = listaNoPublicada(sesionSeleccionada, puedeEscribir);
   const disponibles = VISTAS_MENU_PRINCIPAL.filter((v) => (!v.estados || v.estados.includes(estadoSesion)) && (!v.soloEscritura || puedeEscribir));
   const vistaDisponible = disponibles.some((v) => v.id === vistaActual);
 
@@ -42,11 +43,13 @@ export default function MenuPrincipalSesion() {
 
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
-    badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado && puntoCoincide(p, terminoBusqueda)).length,
+    badge: listaOculta ? undefined : PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado && puntoCoincide(p, terminoBusqueda)).length,
     sinAgregar: !puedeEscribir || s.soloPuntosFijos || (listaCerrada && !s.admiteConListaCerrada),
   }));
 
-  const avisoSecciones = seccionesConBadge.length > 0
+  const avisoSecciones = listaOculta
+    ? 'La lista se publicará cuando el administrador la cierre.'
+    : seccionesConBadge.length > 0
     ? undefined
     : error ? 'No se pudieron cargar las secciones.' : cargando ? 'Cargando…' : undefined;
 
@@ -78,7 +81,7 @@ export default function MenuPrincipalSesion() {
           <div key={v.id}>
             <BotonSeleccionableMenu
               activo={activo}
-              badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS.filter((p) => puntoCoincide(p, terminoBusqueda))) : undefined}
+              badge={v.mostrarTotalPuntos && !listaOculta ? contarPuntos(PUNTOS.filter((p) => puntoCoincide(p, terminoBusqueda))) : undefined}
               expandible={v.expandible}
               expandido={expandido}
               deshabilitado={v.id === 'sesion' ? !listaCerrada && !sesionFinalizada && !enCurso : enCurso}

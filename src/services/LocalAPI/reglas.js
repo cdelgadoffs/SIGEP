@@ -34,6 +34,10 @@ export function exigirDescarga() {
   }
 }
 
+export function puedeVerLista(sesion) {
+  return usuarioActual().rol === 'administrador' || !!sesion?.listaCerrada;
+}
+
 export function puedeVerConfidencial() {
   return usuarioActual().rol === 'administrador';
 }

@@ -30,6 +30,12 @@ export function filtroDeOpcion(id) {
   return id.slice(PREFIJO_OPCION_FILTRO_CINTA.length);
 }
 
+export const TEXTO_LISTA_NO_PUBLICADA = 'La lista de puntos estará disponible cuando el administrador la cierre.';
+
+export function listaNoPublicada(sesion, puedeEscribir) {
+  return !puedeEscribir && !!sesion && !sesion.listaCerrada;
+}
+
 export function encabezadoSesion(sesion) {
   return sesion
     ? { titulo: `Sesión ${nombreTipoSesion(sesion.tipo)} N° ${sesion.numeroSesion ?? '—'}`, subtitulo: sesion.label }

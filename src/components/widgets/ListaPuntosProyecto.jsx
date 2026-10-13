@@ -12,6 +12,7 @@ import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import ListaArchivosAdjuntos from './ListaArchivosAdjuntos.jsx';
 import Scrollbar from '../base/Scrollbar.jsx';
 import { tituloPunto, puntoCoincide } from '../../utils/puntos.js';
+import { listaNoPublicada, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
 import { esDocVacio } from '../../utils/documento.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
@@ -163,7 +164,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
   const { puedeEscribir } = useAuth();
-  const { PUNTOS: todosLosPuntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
+  const { PUNTOS: todosLosPuntos, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
@@ -256,6 +257,14 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
       </>
     );
   };
+
+  if (listaNoPublicada(sesionSeleccionada, puedeEscribir)) {
+    return (
+      <div className="widget-lista-puntos-proyecto">
+        <div className="widget-lista-puntos-vacio">{TEXTO_LISTA_NO_PUBLICADA}</div>
+      </div>
+    );
+  }
 
   if (vistaCompleta) {
     const seccionesVisibles = termino

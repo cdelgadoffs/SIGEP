@@ -4,12 +4,15 @@ import BotonDescargarActa from './BotonDescargarActa.jsx';
 import BotonDescargarEngroses from './BotonDescargarEngroses.jsx';
 import BotonDescargarArchivosSesion from './BotonDescargarArchivosSesion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { listaNoPublicada, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
 import { horaDeISO } from '../../utils/fechas.js';
 import { contarPuntos } from '../../utils/puntos.js';
 import '../../styles/widgets/ResumenSesion.css';
 
 export default function ResumenSesion() {
   const { sesionSeleccionada, sesionFinalizada, listaCerrada, PUNTOS } = useProyecto();
+  const { puedeEscribir } = useAuth();
 
   if (!sesionSeleccionada) return null;
 
@@ -19,7 +22,9 @@ export default function ResumenSesion() {
   return (
     <div className="widget-resumen-sesion">
       <div className="widget-resumen-sesion-lista">
-        {listaCerrada ? 'Lista de puntos cerrada' : 'Lista de puntos abierta'} · {total} {total === 1 ? 'punto' : 'puntos'}
+        {listaNoPublicada(sesionSeleccionada, puedeEscribir)
+          ? TEXTO_LISTA_NO_PUBLICADA
+          : `${listaCerrada ? 'Lista de puntos cerrada' : 'Lista de puntos abierta'} · ${total} ${total === 1 ? 'punto' : 'puntos'}`}
       </div>
       {sesionFinalizada && (
         <>
