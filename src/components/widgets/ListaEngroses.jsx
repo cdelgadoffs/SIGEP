@@ -24,7 +24,7 @@ export default function ListaEngroses() {
     PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA,
     sesionSeleccionada, enviarEngrose, cargando, error,
   } = useProyecto();
-  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta } = useUI();
+  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta, terminoBusqueda } = useUI();
   const { puedeEscribir, puedeDescargar } = useAuth();
   const [filtroRemitente, setFiltroRemitente] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -34,7 +34,7 @@ export default function ListaEngroses() {
   const [aviso, setAviso] = useState(null);
 
   const nombreRemitente = (id) => REMITENTES.find((r) => r.id === id)?.nombre ?? id;
-  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO).filter((i) => i.punto.engrose);
+  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO, terminoBusqueda).filter((i) => i.punto.engrose);
   const enviados = items.filter((i) => i.punto.engroseEnviado).length;
   const pendientesMarcados = items.filter((i) => !i.punto.engroseEnviado && !desmarcados.has(i.punto.id));
   const puntoVistaPrevia = vistaPreviaAbierta ? items.find((i) => i.punto.id === puntoSesionSeleccionadoId)?.punto ?? null : null;
@@ -103,7 +103,7 @@ export default function ListaEngroses() {
   if (items.length === 0) {
     const mensaje = error
       ? `No se pudo cargar la información: ${error.mensaje}`
-      : cargando ? 'Cargando…' : 'No hay puntos para engrosar.';
+      : cargando ? 'Cargando…' : terminoBusqueda.trim() ? `Sin coincidencias para «${terminoBusqueda.trim()}».` : 'No hay puntos para engrosar.';
     return <div className="widget-lista-engroses"><div className="widget-lista-engroses-vacio">{mensaje}</div></div>;
   }
 

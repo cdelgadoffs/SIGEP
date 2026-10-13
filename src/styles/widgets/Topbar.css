@@ -41,3 +41,6 @@
   align-items: center;
   gap: 14px;
 }
+.widget-topbar .base-boton-agregar.base-boton-agregar-expandible {
+  padding: 0 9px;
+}

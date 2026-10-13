@@ -1,8 +1,9 @@
 import '../../styles/base/CampoTexto.css';
 
-export default function CampoTexto({ value, onChange, onEnter, placeholder, type = 'text', variant = 'oscuro', disabled, ariaLabel }) {
+export default function CampoTexto({ value, onChange, onEnter, placeholder, type = 'text', variant = 'oscuro', disabled, ariaLabel, inputRef }) {
   return (
     <input
+      ref={inputRef}
       type={type}
       className={'base-campo-texto' + (variant === 'claro' ? ' base-campo-texto-claro' : '')}
       value={value}

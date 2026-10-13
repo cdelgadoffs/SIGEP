@@ -4,7 +4,7 @@ import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
 import SubMenuDD from './SubMenuDD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { contarPuntos } from '../../utils/puntos.js';
+import { contarPuntos, puntoCoincide } from '../../utils/puntos.js';
 import { nombreTipoSesion } from '../../utils/sesiones.js';
 
 const VISTAS_MENU_PRINCIPAL = [
@@ -23,6 +23,7 @@ export default function MenuPrincipalSesion() {
     sidebar3Abierto, setSidebar3Abierto, setSeccionNuevoPunto,
     puntoEnEdicionId, setPuntoEnEdicionId,
     seccionActivaProyecto, setSeccionActivaProyecto,
+    terminoBusqueda,
   } = useUI();
 
   const estadoSesion = sesionSeleccionada?.estado;
@@ -41,7 +42,7 @@ export default function MenuPrincipalSesion() {
 
   const seccionesConBadge = SECCIONES_DOCUMENTO.map((s) => ({
     ...s,
-    badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado).length,
+    badge: PUNTOS.filter((p) => p.seccion === s.id && !p.encabezado && puntoCoincide(p, terminoBusqueda)).length,
     sinAgregar: !puedeEscribir || s.soloPuntosFijos || (listaCerrada && !s.admiteConListaCerrada),
   }));
 
@@ -77,7 +78,7 @@ export default function MenuPrincipalSesion() {
           <div key={v.id}>
             <BotonSeleccionableMenu
               activo={activo}
-              badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS) : undefined}
+              badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS.filter((p) => puntoCoincide(p, terminoBusqueda))) : undefined}
               expandible={v.expandible}
               expandido={expandido}
               deshabilitado={v.id === 'sesion' ? !listaCerrada && !sesionFinalizada && !enCurso : enCurso}

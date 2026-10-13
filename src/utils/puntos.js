@@ -7,9 +7,18 @@ export function contarPuntos(puntos) {
   return puntos.filter((p) => !p.encabezado).length;
 }
 
-export function puntosOrdenados(puntos, secciones) {
+export function normalizarTexto(texto) {
+  return String(texto ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+export function puntoCoincide(punto, termino) {
+  const buscado = normalizarTexto(termino).trim();
+  return !buscado || normalizarTexto(punto.contenido).includes(buscado);
+}
+
+export function puntosOrdenados(puntos, secciones, termino = '') {
   return puntos
-    .filter((p) => !p.encabezado)
+    .filter((p) => !p.encabezado && puntoCoincide(p, termino))
     .sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0))
     .map((punto) => ({ punto, seccion: secciones.find((s) => s.id === punto.seccion), titulo: tituloPunto(punto.numero) }))
     .filter((item) => item.seccion);

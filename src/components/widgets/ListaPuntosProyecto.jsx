@@ -10,7 +10,7 @@ import { useUI } from '../../context/UIContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import ListaArchivosAdjuntos from './ListaArchivosAdjuntos.jsx';
 import Scrollbar from '../base/Scrollbar.jsx';
-import { tituloPunto } from '../../utils/puntos.js';
+import { tituloPunto, puntoCoincide } from '../../utils/puntos.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
 function seleccionarSiNoEsControl(e, seleccionar) {
@@ -91,7 +91,7 @@ function BadgeOrigenAG({ punto, nombreSeccion, nombreRemitente, onIr }) {
   );
 }
 
-function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onAbrir, seleccionadoId, seleccionar, secciones) {
+function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onAbrir, seleccionadoId, seleccionar, secciones, termino) {
   const deLaSeccion = puntos.filter((p) => p.seccion === seccion.id);
   const registradosAqui = seccion.permiteCambiarSeccion ? puntos.filter((p) => p.origenAG && p.seccion !== seccion.id) : [];
   const hayPuntos = deLaSeccion.some((p) => !p.encabezado) || registradosAqui.length > 0;
@@ -99,7 +99,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
   if (!hayPuntos && estadoCarga !== 'error') {
     aviso = estadoCarga === 'cargando'
       ? <div className="widget-lista-puntos-vacio">Cargando…</div>
-      : <div className="widget-lista-puntos-vacio">Sin puntos en {seccion.nombre}.</div>;
+      : <div className="widget-lista-puntos-vacio">{termino ? `Sin coincidencias para «${termino}» en ${seccion.nombre}.` : `Sin puntos en ${seccion.nombre}.`}</div>;
   }
   return (
     <>
@@ -146,11 +146,13 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
   const { puedeEscribir } = useAuth();
-  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
+  const { PUNTOS: todosLosPuntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo } = useUI();
+  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo, terminoBusqueda } = useUI();
+  const termino = terminoBusqueda.trim();
+  const puntos = termino ? todosLosPuntos.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : todosLosPuntos;
   const { vistaCompletaProyecto } = useAjustesVisuales();
   const seleccionar = (id, seccionId, desplazar = false) => {
     setSeccionActivaProyecto(seccionId);
@@ -181,7 +183,8 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   }
   const renderOpciones = (punto, deLaSeccion, seccionId) => {
     if (sesionFinalizada || punto.fijo || !puedeEscribir) return null;
-    const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar', 'trasladar'] : opcionesOcultas;
+    const sinMover = termino ? [...opcionesOcultas, 'mover'] : opcionesOcultas;
+    const ocultas = listaCerrada ? [...sinMover, 'mover', 'editar', 'eliminar', 'trasladar'] : sinMover;
     const delUsuario = deLaSeccion.filter((p) => !p.fijo);
     const indice = delUsuario.findIndex((p) => p.id === punto.id);
     return (
@@ -206,13 +209,19 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   };
 
   if (vistaCompletaProyecto) {
+    const seccionesVisibles = termino
+      ? SECCIONES_DOCUMENTO.filter((s) => puntos.some((p) => p.seccion === s.id || (s.permiteCambiarSeccion && p.origenAG)))
+      : SECCIONES_DOCUMENTO;
     return (
       <div className="widget-lista-puntos-proyecto">
         {avisoError}
-        {SECCIONES_DOCUMENTO.map((s) => (
+        {termino && seccionesVisibles.length === 0 && estadoCarga === 'listo' && (
+          <div className="widget-lista-puntos-vacio">Sin coincidencias para «{termino}».</div>
+        )}
+        {seccionesVisibles.map((s) => (
           <div key={s.id} className="widget-lista-puntos-grupo">
             <div className="widget-lista-puntos-separador">{s.nombre}</div>
-            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO)}
+            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO, termino)}
           </div>
         ))}
       </div>
@@ -225,7 +234,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   return (
     <div className="widget-lista-puntos-proyecto">
       {avisoError}
-      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO) : (
+      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO, termino) : (
         estadoCarga === 'listo' && <div className="widget-lista-puntos-vacio">Sin secciones definidas.</div>
       )}
       {!seccion && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}

@@ -10,6 +10,7 @@ import { carpetasDeSesion, contenidoDeNivel, nombreConNumero } from '../../utils
 import { estiloArchivo } from '../../utils/archivos.js';
 import { formatoTamano } from '../../utils/correos.js';
 import { encabezadoSesion } from '../../utils/sesiones.js';
+import { normalizarTexto, puntoCoincide } from '../../utils/puntos.js';
 import '../../styles/widgets/VistaNavegador.css';
 
 function partirNombre(nombre) {
@@ -21,16 +22,12 @@ function fechaCorta(iso) {
   return iso ? new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 }
 
-function normalizar(texto) {
-  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-}
-
 function buscarEnCarpetas(carpetas, consulta) {
-  const q = normalizar(consulta);
+  const q = normalizarTexto(consulta);
   const carpetasEncontradas = [];
   const archivosEncontrados = [];
   carpetas.forEach((c) => {
-    if (normalizar(c.nombre).includes(q)) {
+    if (normalizarTexto(c.nombre).includes(q)) {
       carpetasEncontradas.push({ clave: `c:${c.id}`, nombre: c.nombre, origen: '', cantidad: c.archivos.length, rutaDestino: [c.id] });
     }
     const vistas = new Set();
@@ -38,7 +35,7 @@ function buscarEnCarpetas(carpetas, consulta) {
       const segmentos = (entrada.archivo.ruta || '').split('/').filter(Boolean);
       segmentos.forEach((segmento, i) => {
         const rutaSub = segmentos.slice(0, i + 1).join('/');
-        if (vistas.has(rutaSub) || !normalizar(segmento).includes(q)) return;
+        if (vistas.has(rutaSub) || !normalizarTexto(segmento).includes(q)) return;
         vistas.add(rutaSub);
         carpetasEncontradas.push({
           clave: `c:${c.id}/${rutaSub}`,
@@ -48,7 +45,7 @@ function buscarEnCarpetas(carpetas, consulta) {
           rutaDestino: [c.id, ...segmentos.slice(0, i + 1)],
         });
       });
-      if (normalizar(nombreConNumero(entrada.archivo)).includes(q)) {
+      if (normalizarTexto(nombreConNumero(entrada.archivo)).includes(q)) {
         archivosEncontrados.push({ ...entrada, origen: [c.nombre, ...segmentos].join(' / ') });
       }
     });
@@ -58,8 +55,8 @@ function buscarEnCarpetas(carpetas, consulta) {
 
 export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
-  const { sesionSeleccionada, PUNTOS, listaCerrada, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
-  const { abrirVistaArchivo } = useUI();
+  const { sesionSeleccionada, FECHAS_SESIONES, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
+  const { abrirVistaArchivo, terminoBusqueda } = useUI();
   const [posicion, setPosicion] = useState({ sesionId: null, ruta: [], busqueda: '' });
   const [renombrando, setRenombrando] = useState(null);
   const [textoNuevo, setTextoNuevo] = useState('');
@@ -70,8 +67,13 @@ export default function VistaNavegador() {
   const ruta = posicion.sesionId === sesionId ? posicion.ruta : [];
   const busqueda = posicion.sesionId === sesionId ? posicion.busqueda : '';
   const buscando = busqueda.trim() !== '';
-  const carpetas = carpetasDeSesion(PUNTOS, listaCerrada);
-  const carpeta = ruta.length ? carpetas.find((c) => c.id === ruta[0]) : null;
+  const todasLasCarpetas = carpetasDeSesion(PUNTOS, sesionSeleccionada, FECHAS_SESIONES);
+  const terminoGlobal = terminoBusqueda.trim();
+  const puntoDeCarpeta = (c) => PUNTOS.find((p) => p.id === c.puntoRef);
+  const carpetas = terminoGlobal
+    ? todasLasCarpetas.filter((c) => { const p = puntoDeCarpeta(c); return p && puntoCoincide(p, terminoGlobal); })
+    : todasLasCarpetas;
+  const carpeta = ruta.length ? todasLasCarpetas.find((c) => c.id === ruta[0]) : null;
   const subruta = carpeta ? ruta.slice(1) : [];
   const nivel = carpeta ? contenidoDeNivel(carpeta, subruta) : null;
   const puedeRenombrar = puedeEscribir && !!sesionSeleccionada && sesionSeleccionada.estado !== 'celebrada' && sesionSeleccionada.estado !== 'no-celebrada';
@@ -230,7 +232,7 @@ export default function VistaNavegador() {
           {!sesionSeleccionada && <div className="widget-vista-navegador-vacio">Selecciona una sesión para ver sus archivos.</div>}
           {sesionSeleccionada && cargando && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">Cargando…</div>}
           {sesionSeleccionada && error && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">No se pudieron cargar los archivos.</div>}
-          {sesionSeleccionada && !cargando && !error && vacio && <div className="widget-vista-navegador-vacio">{buscando ? `Sin resultados para «${busqueda.trim()}».` : carpeta ? 'Esta carpeta está vacía.' : 'Esta sesión aún no tiene archivos.'}</div>}
+          {sesionSeleccionada && !cargando && !error && vacio && <div className="widget-vista-navegador-vacio">{buscando ? `Sin resultados para «${busqueda.trim()}».` : carpeta ? 'Esta carpeta está vacía.' : terminoGlobal ? `Ningún punto coincide con «${terminoGlobal}».` : 'Esta sesión aún no tiene archivos.'}</div>}
 
           {filasCarpetas.map((f) => {
             const editando = renombrando === f.clave;

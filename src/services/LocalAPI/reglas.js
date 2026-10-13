@@ -307,6 +307,7 @@ export function generarPuntosFijos(sesion, sesiones, catalogoFijos) {
     tratado: sesion.fijosTratados?.[clave] ?? true,
     textoVotacion: f.textoVoto ?? null,
     fijo: true,
+    clave,
     encabezado: !!f.encabezado,
     version: 1,
     creadoPor: 'sistema',

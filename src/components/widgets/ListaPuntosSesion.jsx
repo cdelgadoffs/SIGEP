@@ -16,7 +16,7 @@ export default function ListaPuntosSesion() {
     PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA,
     sesionSeleccionada, sesionFinalizada, marcarPunto, retirarPunto, cargando, error,
   } = useProyecto();
-  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta } = useUI();
+  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, vistaPreviaAbierta, setVistaPreviaAbierta, terminoBusqueda } = useUI();
   const { puedeEscribir, puedeDescargar } = useAuth();
   const [errorAccion, setErrorAccion] = useState(null);
   const [guardandoId, setGuardandoId] = useState(null);
@@ -27,7 +27,7 @@ export default function ListaPuntosSesion() {
     return !punto.fijo && !!SECCIONES_DOCUMENTO.find((s) => s.id === punto.seccion)?.requiereAcuerdo;
   }
 
-  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO);
+  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO, terminoBusqueda);
   const activo = puntoActivo(items, puntoSesionSeleccionadoId)?.punto;
   const activoId = activo?.id;
   const puntoVistaPrevia = vistaPreviaAbierta && !sesionComenzada && activo?.tratado && esPuntoConHoja(activo) ? activo : null;
@@ -74,7 +74,7 @@ export default function ListaPuntosSesion() {
 
   const aviso = error ? `No se pudo cargar la información: ${error.mensaje}` : errorAccion;
   const vacio = items.length === 0
-    ? (cargando ? 'Cargando…' : error ? null : 'Esta sesión no tiene puntos.')
+    ? (cargando ? 'Cargando…' : error ? null : terminoBusqueda.trim() ? 'Sin coincidencias.' : 'Esta sesión no tiene puntos.')
     : null;
 
   return (

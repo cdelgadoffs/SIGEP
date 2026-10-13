@@ -8,11 +8,11 @@ import '../../styles/widgets/PuntoSesion.css';
 
 export default function PuntoSesion() {
   const { PUNTOS, SECCIONES_DOCUMENTO, cargando, error } = useProyecto();
-  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId } = useUI();
+  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, terminoBusqueda } = useUI();
   const { vistaCompletaSesion } = useAjustesVisuales();
   const elementos = useRef({});
 
-  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO);
+  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO, terminoBusqueda);
   const activo = puntoActivo(items, puntoSesionSeleccionadoId);
   const activoId = activo?.punto.id;
 
@@ -23,7 +23,7 @@ export default function PuntoSesion() {
   if (!activo) {
     const mensaje = error
       ? `No se pudo cargar la información: ${error.mensaje}`
-      : cargando ? 'Cargando…' : 'Esta sesión no tiene puntos.';
+      : cargando ? 'Cargando…' : terminoBusqueda.trim() ? `Sin coincidencias para «${terminoBusqueda.trim()}».` : 'Esta sesión no tiene puntos.';
     return <div className="widget-punto-sesion"><div className="widget-punto-sesion-vacio">{mensaje}</div></div>;
   }
 

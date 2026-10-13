@@ -58,6 +58,7 @@ export default function FormularioPunto() {
   const [error, setError] = useState(null);
   const [avisoArchivos, setAvisoArchivos] = useState(null);
   const claveGuardadaRef = useRef(null);
+  const carpetaRef = useRef(null);
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   const punto = puntoEnEdicionId ? PUNTOS.find((p) => p.id === puntoEnEdicionId) : null;
   const editando = !!punto;
@@ -115,6 +116,13 @@ export default function FormularioPunto() {
       });
     return () => { vigente = false; };
   }, [sidebar3Abierto, seccionNuevoPunto, puntoEnEdicionId]);
+
+  useEffect(() => {
+    const campo = carpetaRef.current;
+    if (!sidebar3Abierto || editando || !campo) return;
+    campo.focus();
+    campo.setSelectionRange(campo.value.length, campo.value.length);
+  }, [sidebar3Abierto, editando, reinicioEditor, form.seccion]);
 
   useEffect(() => {
     if (sidebar3Abierto) setSeccionFormulario(form.seccion);
@@ -299,6 +307,7 @@ export default function FormularioPunto() {
         <label className="widget-formulario-punto-label">Nombre de carpeta</label>
         <CampoTexto
           variant="claro"
+          inputRef={carpetaRef}
           value={form.nombreCarpeta}
           onChange={(v) => { setAporte(true); actualizar('nombreCarpeta', v); }}
           placeholder="Opcional"
@@ -307,21 +316,12 @@ export default function FormularioPunto() {
         {errorNombreCarpeta && <div className="widget-formulario-punto-aviso">{errorNombreCarpeta}</div>}
       </div>
 
-      {!editando && (
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
-          <SelectorArchivos arrastrar botones={false} onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
-          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
-        </div>
-      )}
-
       <div className="widget-formulario-punto-campo widget-formulario-punto-editor widget-formulario-punto-editor-contenido">
         <label className="widget-formulario-punto-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</label>
         <EditorTexto
           value={form.contenidoDoc}
           onChange={(doc) => cambiarDoc('contenidoDoc', doc)}
           placeholder={esInforme ? 'Informe' : '...por el que/cual se...'}
-          autoFocus={sidebar3Abierto && !editando}
           resetToken={reinicioEditor}
           ariaLabel={esInforme ? 'Informe' : 'Punto de acuerdo'}
         />
@@ -337,6 +337,14 @@ export default function FormularioPunto() {
             resetToken={reinicioEditor}
             ariaLabel="Acuerdo"
           />
+        </div>
+      )}
+
+      {!editando && (
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Adjuntar archivos</label>
+          <SelectorArchivos arrastrar botones={false} onSeleccionar={agregarArchivos} onAviso={setAvisoArchivos} />
+          {avisoArchivos && <div className="widget-formulario-punto-aviso">{avisoArchivos}</div>}
         </div>
       )}
 

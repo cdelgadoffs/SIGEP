@@ -16,7 +16,7 @@ function nombreUnico(nombre, usados) {
   return nuevo;
 }
 
-export async function generarZipArchivosSesion({ sesion, tipoSesion = 'Ordinaria', puntos, secciones, listaCerrada, binarios }) {
+export async function generarZipArchivosSesion({ sesion, sesiones, tipoSesion = 'Ordinaria', puntos, secciones, listaCerrada, binarios }) {
   const conAdjuntos = puntosConAdjuntos(puntos);
   const conOrdenDia = listaCerrada && puntos.length > 0;
   if (conAdjuntos.length === 0 && !conOrdenDia) throw new Error('No hay archivos adjuntos en esta sesión.');
@@ -24,13 +24,14 @@ export async function generarZipArchivosSesion({ sesion, tipoSesion = 'Ordinaria
   const { default: JSZip } = await import('jszip');
   const zip = new JSZip();
 
-  if (conOrdenDia) {
-    const { blob, nombreArchivo } = await generarWordOrdenDia({ sesion, tipoSesion, puntos, secciones });
-    zip.folder('01-Aprobación del orden del día').file(nombreArchivo, blob);
-  }
+  const ordenDiaWord = conOrdenDia ? await generarWordOrdenDia({ sesion, tipoSesion, puntos, secciones }) : null;
 
-  carpetasDeSesion(puntos, listaCerrada).filter((c) => c.id !== ID_CARPETA_ORDEN_DIA).forEach((c) => {
+  carpetasDeSesion(puntos, sesion, sesiones).forEach((c) => {
     const carpeta = zip.folder(c.nombre);
+    if (c.id === ID_CARPETA_ORDEN_DIA) {
+      if (ordenDiaWord) carpeta.file(ordenDiaWord.nombreArchivo, ordenDiaWord.blob);
+      return;
+    }
     const usados = new Set();
     c.archivos.filter(({ archivo }) => binarios.has(archivo.id)).forEach(({ archivo }) => {
       carpeta.file(nombreUnico(`${archivo.ruta ? `${archivo.ruta}/` : ''}${nombreConNumero(archivo)}`, usados), binarios.get(archivo.id));

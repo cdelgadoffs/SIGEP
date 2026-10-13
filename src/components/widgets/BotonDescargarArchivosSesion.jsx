@@ -11,7 +11,7 @@ import '../../styles/widgets/BotonDescargarArchivosSesion.css';
 
 export default function BotonDescargarArchivosSesion() {
   const { puedeDescargar } = useAuth();
-  const { sesionSeleccionada, PUNTOS, SECCIONES_DOCUMENTO, listaCerrada, descargarArchivo } = useProyecto();
+  const { sesionSeleccionada, FECHAS_SESIONES, PUNTOS, SECCIONES_DOCUMENTO, listaCerrada, descargarArchivo } = useProyecto();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,6 +30,7 @@ export default function BotonDescargarArchivosSesion() {
       }
       const { blob, nombreArchivo } = await generarZipArchivosSesion({
         sesion: sesionSeleccionada,
+        sesiones: FECHAS_SESIONES,
         tipoSesion: nombreTipoSesion(sesionSeleccionada.tipo),
         puntos: PUNTOS,
         secciones: SECCIONES_DOCUMENTO,

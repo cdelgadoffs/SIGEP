@@ -69,6 +69,7 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 | `engroseEnviadoEn` | string \| null | Timestamp del último envío. |
 | `numero` | int | **Derivado.** Posición del punto en el orden del documento de su sesión, empezando en 1 (ver "Numeración y puntos fijos"). Todo `Punto` que el API devuelve lo lleva. |
 | `fijo` | bool | **Derivado.** `true` en los puntos autogenerados (no se guardan como puntos; ver abajo). |
+| `clave` | string | **Derivado.** Solo en puntos fijos: su identificador dentro de la sesión (`orden-dia`, `acta-anterior`, `acta-auto-<fecha>`, `asuntos-generales`); es la última parte de su `id`. Permite al cliente reconocerlos sin interpretar el `id`. |
 | `encabezado` | bool | **Derivado.** Solo en puntos fijos que funcionan como título de una sección (cuentan en la numeración, pero no son puntos a tratar). |
 | `version` | int | |
 | `creadoPor`, `creadoEn`, `modificadoEn` | string | Autoría y fechas, del servidor. |
