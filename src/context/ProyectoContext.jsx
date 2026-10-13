@@ -8,7 +8,7 @@ import {
   retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, trasladarPunto as trasladarPuntoEnApi, listarPapelera,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi, renombrarArchivo as renombrarArchivoEnApi, renombrarCarpeta as renombrarCarpetaEnApi, reordenarArchivos as reordenarArchivosEnApi,
   descargarArchivo as descargarArchivoEnApi,
-  listarAvisosEdicion, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
+  listarAvisosEdicion, listarHistorialPunto, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
 } from '../services/api.js';
 import {
   guardarBorrador, obtenerBorrador, eliminarBorrador,
@@ -419,7 +419,7 @@ export function ProyectoProvider({ children }) {
     TIPOS_SESION: catalogos.tiposSesion,
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
     listaCerrada, establecerListaCerrada,
-    AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion,
+    AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion, listarHistorialPunto,
     PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, renombrarArchivo, renombrarCarpeta, reordenarArchivos, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,

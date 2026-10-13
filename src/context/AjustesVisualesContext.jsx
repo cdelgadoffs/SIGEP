@@ -16,6 +16,7 @@ export function AjustesVisualesProvider({ children }) {
   const value = {
     vistaCompletaProyecto: ajustes.vistaCompletaProyecto === true,
     vistaCompletaSesion: ajustes.vistaCompletaSesion === true,
+    infoNavegadorAbierta: ajustes.infoNavegadorAbierta === true,
     filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'todos',
     cambiarAjuste,
   };

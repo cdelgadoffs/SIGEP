@@ -14,7 +14,9 @@ export function itemsDeNivelSuperior(doc) {
   ((doc && doc.content) || []).forEach((n, indice) => {
     if (n.type !== 'paragraph') return;
     const texto = textoDeParrafo(n);
-    if (texto.trim() !== '') items.push({ indice, texto });
+    if (texto.trim() === '') return;
+    if (n.attrs?.continuacion && items.length > 0) items[items.length - 1].texto += ` ${texto}`;
+    else items.push({ indice, texto });
   });
   return items;
 }

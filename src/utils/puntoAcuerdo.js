@@ -3,6 +3,7 @@ import { esDocVacio } from './documento.js';
 
 const BASE = { size: 24, color: '000000', font: 'Arial' };
 const ANCHO_LOGO = 100;
+const TWIPS_POR_NIVEL_SANGRIA = 720;
 
 export function nombreArchivoPuntoAcuerdo(codigo, numeroArchivo = 1) {
   return `${String(numeroArchivo).padStart(2, '0')}-Punto de acuerdo_${(codigo || '').replace(/\//g, '')}.docx`;
@@ -28,6 +29,7 @@ export async function generarWordPuntoAcuerdo({ punto, plantillas, tiposBloque, 
   };
 
   const corrida = (text, extra = {}) => new TextRun({ text, ...BASE, ...extra });
+  const sangriaDe = (nodo) => (nodo.attrs?.sangria || 0) * TWIPS_POR_NIVEL_SANGRIA;
 
   function runsDeParrafo(nodo, { mayusculas = false, negrita = false } = {}) {
     return (nodo.content || []).map((h) => {
@@ -50,6 +52,7 @@ export async function generarWordPuntoAcuerdo({ punto, plantillas, tiposBloque, 
         const esEncabezado = celda.type === 'tableHeader';
         const parrafos = (celda.content || []).filter((n) => n.type === 'paragraph').map((n) => new Paragraph({
           alignment: ALINEACION[n.attrs?.textAlign] ?? AlignmentType.CENTER,
+          indent: sangriaDe(n) ? { left: sangriaDe(n) } : undefined,
           children: runsDeParrafo(n, { negrita: esEncabezado }),
         }));
         return new TableCell({ children: parrafos.length ? parrafos : [new Paragraph({ children: [] })] });
@@ -67,13 +70,13 @@ export async function generarWordPuntoAcuerdo({ punto, plantillas, tiposBloque, 
         const runs = runsDeParrafo(nodo, { mayusculas, negrita });
         const k = items.findIndex((it) => it.indice === indice);
         if (prefijos && k >= 0) { const desde = prefijos.desde || 0; runs.unshift(corrida(`${prefijoOrdinal(desde + k, desde + items.length, prefijos.sinUnico)}. `, { bold: true })); }
-        piezas.push({ alineacion: ALINEACION[nodo.attrs?.textAlign] ?? AlignmentType.JUSTIFIED, runs });
+        piezas.push({ alineacion: ALINEACION[nodo.attrs?.textAlign] ?? AlignmentType.JUSTIFIED, sangria: sangriaDe(nodo), continuacion: !!nodo.attrs?.continuacion && k < 0, runs });
       } else if (nodo.type === 'orderedList') {
         let n = 0;
         (nodo.content || []).forEach((li) => {
           (li.content || []).filter((p) => p.type === 'paragraph' && tieneTexto(p)).forEach((p) => {
             n += 1;
-            piezas.push({ alineacion: AlignmentType.JUSTIFIED, sangria: 400, runs: [corrida(`${n}. `), ...runsDeParrafo(p, { mayusculas, negrita })] });
+            piezas.push({ alineacion: AlignmentType.JUSTIFIED, sangria: 400 + sangriaDe(p), runs: [corrida(`${n}. `), ...runsDeParrafo(p, { mayusculas, negrita })] });
           });
         });
       } else if (nodo.type === 'table') {
@@ -94,7 +97,7 @@ export async function generarWordPuntoAcuerdo({ punto, plantillas, tiposBloque, 
       resultado.push(new Paragraph({
         alignment: pz.alineacion,
         indent: pz.sangria ? { left: pz.sangria } : undefined,
-        spacing: { after: i === piezas.length - 1 ? afterUltima : 120 },
+        spacing: { after: i === piezas.length - 1 ? afterUltima : piezas[i + 1]?.continuacion ? 0 : 120 },
         children: pz.runs,
       }));
     });

@@ -22,7 +22,7 @@ function fechaEnLetras(fecha) {
   return `${dia} DE ${MESES[fecha.getMonth()].toUpperCase()} DE ${fecha.getFullYear()}`;
 }
 
-export async function generarWordOrdenDia({ sesion, tipoSesion = 'Ordinaria', puntos, secciones, hoy = new Date() }) {
+export async function generarWordOrdenDia({ sesion, tipoSesion = 'Ordinaria', puntos, secciones }) {
   const { Document, Packer, Paragraph, TextRun, AlignmentType, UnderlineType } = await import('docx');
 
   const corrida = (text, extra = {}) => new TextRun({ text, size: 24, color: '000000', font: 'Arial', ...extra });
@@ -78,7 +78,7 @@ export async function generarWordOrdenDia({ sesion, tipoSesion = 'Ordinaria', pu
   parrafos.push(new Paragraph({
     alignment: AlignmentType.CENTER,
     spacing: { before: 400 },
-    children: [corrida(fechaEnLetras(hoy), { bold: true })],
+    children: [corrida(fechaEnLetras(fecha), { bold: true })],
   }));
 
   const documento = new Document({

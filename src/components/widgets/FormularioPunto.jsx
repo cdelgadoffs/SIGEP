@@ -329,7 +329,10 @@ export default function FormularioPunto() {
 
       {!esInforme && (
         <div className="widget-formulario-punto-campo widget-formulario-punto-editor">
-          <label className="widget-formulario-punto-label">Acuerdo</label>
+          <div className="widget-formulario-punto-etiqueta-fila">
+            <label className="widget-formulario-punto-label">Acuerdo</label>
+            <span className="widget-formulario-punto-atajo">Shift + Enter: salto de línea sin numerar</span>
+          </div>
           <EditorTexto
             value={form.acuerdoDoc}
             onChange={(doc) => cambiarDoc('acuerdoDoc', doc)}

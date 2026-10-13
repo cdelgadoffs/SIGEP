@@ -19,6 +19,15 @@ export function exigirEscritura() {
   }
 }
 
+export function nuevoEventoPunto(puntoId, accion, detalle, ahora) {
+  const usuario = usuarioActual();
+  return { id: crypto.randomUUID(), puntoId, accion, detalle: detalle ?? null, creadoEn: ahora, creadoPor: usuario.id, autor: usuario.nombre ?? null };
+}
+
+export function eventoCreacionSintetico(punto) {
+  return { id: `sintetico:${punto.id}`, puntoId: punto.id, accion: 'creado', detalle: null, creadoEn: punto.creadoEn, creadoPor: punto.creadoPor, autor: null };
+}
+
 export function exigirDescarga() {
   if (usuarioActual().rol !== 'administrador') {
     throw new ApiError('NO_AUTORIZADO', 'No tienes permiso para descargar archivos.');
@@ -643,12 +652,13 @@ export function decorarPunto(p, catalogos) {
 const NODOS = new Set(['doc', 'paragraph', 'text', 'hardBreak', 'orderedList', 'listItem', 'table', 'tableRow', 'tableHeader', 'tableCell']);
 const MARCAS = new Set(['bold', 'italic', 'oculto', 'fontSize']);
 const ATRIBUTOS_NODO = {
-  paragraph: ['textAlign'],
+  paragraph: ['textAlign', 'sangria', 'continuacion'],
   orderedList: ['start', 'type'],
   tableHeader: ['colspan', 'rowspan', 'colwidth', 'align'],
   tableCell: ['colspan', 'rowspan', 'colwidth', 'align'],
 };
 const ALINEACIONES = ['left', 'center', 'right', 'justify'];
+const NIVEL_MAX_SANGRIA = 6;
 const MAX_PROFUNDIDAD_DOC = 12;
 const MAX_TAMANO_DOC = 200000;
 const MAX_BLOQUES = 20;
@@ -675,6 +685,12 @@ function validarNodo(n, profundidad) {
     });
     if (n.type === 'paragraph' && n.attrs.textAlign != null && !ALINEACIONES.includes(n.attrs.textAlign)) {
       throw invalido('Alineación inválida.');
+    }
+    if (n.type === 'paragraph' && n.attrs.sangria != null && !(Number.isInteger(n.attrs.sangria) && n.attrs.sangria >= 0 && n.attrs.sangria <= NIVEL_MAX_SANGRIA)) {
+      throw invalido('Sangría inválida.');
+    }
+    if (n.type === 'paragraph' && n.attrs.continuacion != null && typeof n.attrs.continuacion !== 'boolean') {
+      throw invalido('Indicador de continuación inválido.');
     }
     if ((n.type === 'tableHeader' || n.type === 'tableCell') && n.attrs.align != null && !ALINEACIONES.includes(n.attrs.align)) {
       throw invalido('Alineación inválida.');
@@ -710,10 +726,15 @@ export function textoPlanoDeDoc(doc) {
 }
 
 export function parrafosDeNivelSuperior(doc) {
-  return ((doc && doc.content) || [])
-    .filter((n) => n.type === 'paragraph')
-    .map(textoDeNodo)
-    .filter((t) => t.trim() !== '');
+  const items = [];
+  ((doc && doc.content) || []).filter((n) => n.type === 'paragraph').forEach((n) => {
+    const texto = textoDeNodo(n);
+    if (texto.trim() === '') return;
+    if (n.attrs?.continuacion && items.length > 0) items[items.length - 1] += `
+${texto}`;
+    else items.push(texto);
+  });
+  return items;
 }
 
 export function docVacio() {

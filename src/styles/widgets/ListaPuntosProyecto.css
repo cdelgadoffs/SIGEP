@@ -114,6 +114,15 @@
   font-size: 12.5px;
   color: #666;
 }
+.widget-lista-puntos-contenido .widget-editor-texto-contenido,
+.widget-lista-puntos-acuerdo .widget-editor-texto-contenido {
+  cursor: inherit;
+}
+.widget-lista-puntos-acuerdo .widget-editor-texto-contenido > p:not([data-continuacion='true']):not(:first-child) {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #ccc;
+}
 .widget-lista-puntos-archivos {
   position: relative;
   flex: 0 0 240px;

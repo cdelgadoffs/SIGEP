@@ -5,7 +5,7 @@ import '../../styles/widgets/BarraHerramientasTexto.css';
 const TABLA_MAX_FILAS = 8;
 const TABLA_MAX_COLS = 10;
 
-export default function BarraHerramientasTexto({ obtenerEditor, onError }) {
+export default function BarraHerramientasTexto({ obtenerEditor, onError, ocultar = [], sangria = false }) {
   const [tablaAbierta, setTablaAbierta] = useState(false);
   const [tablaHover, setTablaHover] = useState({ filas: 0, cols: 0 });
 
@@ -73,9 +73,9 @@ export default function BarraHerramientasTexto({ obtenerEditor, onError }) {
 
   return (
     <>
-      <span className="widget-barra-texto-separador"></span>
-      <BotonIcono icono="ri-file-copy-line" ariaLabel="Copiar" sinRobarFoco onClick={copiarSeleccion} />
-      <BotonIcono icono="ri-clipboard-line" ariaLabel="Pegar" sinRobarFoco onClick={pegarPortapapeles} />
+      {!(ocultar.includes('copiar') && ocultar.includes('pegar')) && <span className="widget-barra-texto-separador"></span>}
+      {!ocultar.includes('copiar') && <BotonIcono icono="ri-file-copy-line" ariaLabel="Copiar" sinRobarFoco onClick={copiarSeleccion} />}
+      {!ocultar.includes('pegar') && <BotonIcono icono="ri-clipboard-line" ariaLabel="Pegar" sinRobarFoco onClick={pegarPortapapeles} />}
       <div className="widget-barra-texto-tabla-envoltorio">
         <BotonIcono
           icono="ri-table-line"
@@ -116,6 +116,13 @@ export default function BarraHerramientasTexto({ obtenerEditor, onError }) {
       <BotonIcono icono="ri-align-left" ariaLabel="Alinear a la izquierda" sinRobarFoco onClick={() => cadena()?.setTextAlign('left').run()} />
       <BotonIcono icono="ri-align-center" ariaLabel="Centrar" sinRobarFoco onClick={() => cadena()?.setTextAlign('center').run()} />
       <BotonIcono icono="ri-align-right" ariaLabel="Alinear a la derecha" sinRobarFoco onClick={() => cadena()?.setTextAlign('right').run()} />
+      {sangria && (
+        <>
+          <span className="widget-barra-texto-separador"></span>
+          <BotonIcono icono="ri-indent-decrease" ariaLabel="Reducir sangría" sinRobarFoco onClick={() => cadena()?.cambiarSangria(-1).run()} />
+          <BotonIcono icono="ri-indent-increase" ariaLabel="Aumentar sangría" sinRobarFoco onClick={() => cadena()?.cambiarSangria(1).run()} />
+        </>
+      )}
     </>
   );
 }

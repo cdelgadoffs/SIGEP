@@ -26,7 +26,7 @@ export async function generarZipArchivosSesion({ sesion, sesiones, tipoSesion = 
 
   const ordenDiaWord = conOrdenDia ? await generarWordOrdenDia({ sesion, tipoSesion, puntos, secciones }) : null;
 
-  carpetasDeSesion(puntos, sesion, sesiones).forEach((c) => {
+  carpetasDeSesion(puntos, sesion, sesiones, secciones).forEach((c) => {
     const carpeta = zip.folder(c.nombre);
     if (c.id === ID_CARPETA_ORDEN_DIA) {
       if (ordenDiaWord) carpeta.file(ordenDiaWord.nombreArchivo, ordenDiaWord.blob);

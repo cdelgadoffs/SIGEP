@@ -30,7 +30,7 @@ function entradasDe(punto) {
   return archivosDescargables(punto).map((archivo) => ({ archivo, puntoId: punto.id }));
 }
 
-export function carpetasDeSesion(puntos, sesion, sesiones = []) {
+export function carpetasDeSesion(puntos, sesion, sesiones = [], secciones = []) {
   if (puntos.length === 0) return [];
   const esOrdinaria = (sesion?.tipo ?? 'ordinaria') === 'ordinaria';
   const fijo = (clave) => puntos.find((p) => p.fijo && p.clave === clave);
@@ -59,7 +59,7 @@ export function carpetasDeSesion(puntos, sesion, sesiones = []) {
     .forEach((punto, i) => {
       const numero = String(i + 1 + reservadas.size).padStart(2, '0');
       const esActaExtraordinaria = punto.fijo && punto.clave?.startsWith(PREFIJO_ACTA_EXTRAORDINARIA);
-      const resumen = punto.nombreCarpeta || (punto.contenido ? punto.contenido.slice(0, 35).trim() : 'Punto');
+      const resumen = punto.nombreCarpeta || (secciones.find((x) => x.id === punto.seccion)?.requiereAcuerdo === false ? 'Informe' : 'Proyecto de acuerdo');
       carpetas.push({
         id: punto.id,
         nombre: esActaExtraordinaria

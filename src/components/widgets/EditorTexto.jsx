@@ -40,6 +40,78 @@ const TamanoFuente = Mark.create({
   },
 });
 
+const NIVEL_MAX_SANGRIA = 6;
+const PX_POR_NIVEL_SANGRIA = 36;
+
+const SangriaParrafo = Extension.create({
+  name: 'sangriaParrafo',
+  addGlobalAttributes() {
+    return [{
+      types: ['paragraph'],
+      attributes: {
+        sangria: {
+          default: 0,
+          parseHTML: (elemento) => parseInt(elemento.dataset.sangria, 10) || 0,
+          renderHTML: (atributos) => (atributos.sangria
+            ? { 'data-sangria': atributos.sangria, style: `margin-left: ${atributos.sangria * PX_POR_NIVEL_SANGRIA}px` }
+            : {}),
+        },
+      },
+    }];
+  },
+  addCommands() {
+    return {
+      cambiarSangria: (delta) => ({ tr, dispatch }) => {
+        const { from, to } = tr.selection;
+        let cambiado = false;
+        tr.doc.nodesBetween(from, to, (nodo, posicion) => {
+          if (nodo.type.name !== 'paragraph') return true;
+          const actual = nodo.attrs.sangria || 0;
+          const nivel = Math.min(NIVEL_MAX_SANGRIA, Math.max(0, actual + delta));
+          if (nivel !== actual) {
+            if (dispatch) tr.setNodeMarkup(posicion, undefined, { ...nodo.attrs, sangria: nivel });
+            cambiado = true;
+          }
+          return false;
+        });
+        return cambiado;
+      },
+    };
+  },
+});
+
+const LineaContinuacion = Extension.create({
+  name: 'lineaContinuacion',
+  priority: 1000,
+  addGlobalAttributes() {
+    return [{
+      types: ['paragraph'],
+      attributes: {
+        continuacion: {
+          default: false,
+          parseHTML: (elemento) => elemento.dataset.continuacion === 'true',
+          renderHTML: (atributos) => (atributos.continuacion ? { 'data-continuacion': 'true' } : {}),
+        },
+      },
+    }];
+  },
+  addKeyboardShortcuts() {
+    const enParrafoSuperior = (estado) => estado.selection.$from.depth === 1 && estado.selection.$from.parent.type.name === 'paragraph';
+    return {
+      'Shift-Enter': ({ editor }) => {
+        if (!enParrafoSuperior(editor.state)) return false;
+        editor.chain().deleteSelection().splitBlock().updateAttributes('paragraph', { continuacion: true }).run();
+        return true;
+      },
+      Enter: ({ editor }) => {
+        if (!enParrafoSuperior(editor.state) || !editor.state.selection.$from.parent.attrs.continuacion) return false;
+        editor.chain().deleteSelection().splitBlock().updateAttributes('paragraph', { continuacion: false }).run();
+        return true;
+      },
+    };
+  },
+});
+
 const PrefijoOrdinal = Extension.create({
   name: 'prefijoOrdinal',
   addOptions() {
@@ -55,7 +127,7 @@ const PrefijoOrdinal = Extension.create({
           decorations(estado) {
             const posiciones = [];
             estado.doc.forEach((nodo, desplazamiento) => {
-              if (nodo.type.name === 'paragraph' && nodo.textContent.trim() !== '') posiciones.push(desplazamiento);
+              if (nodo.type.name === 'paragraph' && !nodo.attrs.continuacion && nodo.textContent.trim() !== '') posiciones.push(desplazamiento);
             });
             const desde = obtenerDesde();
             const decoraciones = posiciones.map((desplazamiento, k) => {
@@ -89,6 +161,8 @@ function extensiones(placeholder, ordinal, obtenerDesde) {
       link: false,
     }),
     TextAlign.configure({ types: ['paragraph'], defaultAlignment: 'left' }),
+    SangriaParrafo,
+    LineaContinuacion,
     Placeholder.configure({ placeholder, showOnlyCurrent: false }),
     Table.configure({ resizable: false, allowTableNodeSelection: true, HTMLAttributes: { class: 'acta-tabla' } }),
     TableRow,

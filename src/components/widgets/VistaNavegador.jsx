@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
+import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import Scrollbar from '../base/Scrollbar.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import BotonS from '../base/BotonS.jsx';
@@ -55,8 +56,9 @@ function buscarEnCarpetas(carpetas, consulta) {
 
 export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
-  const { sesionSeleccionada, FECHAS_SESIONES, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
-  const { abrirVistaArchivo, terminoBusqueda } = useUI();
+  const { sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
+  const { abrirVistaArchivo, terminoBusqueda, elementoNavegador, setElementoNavegador } = useUI();
+  const { infoNavegadorAbierta, cambiarAjuste } = useAjustesVisuales();
   const [posicion, setPosicion] = useState({ sesionId: null, ruta: [], busqueda: '' });
   const [renombrando, setRenombrando] = useState(null);
   const [textoNuevo, setTextoNuevo] = useState('');
@@ -67,7 +69,7 @@ export default function VistaNavegador() {
   const ruta = posicion.sesionId === sesionId ? posicion.ruta : [];
   const busqueda = posicion.sesionId === sesionId ? posicion.busqueda : '';
   const buscando = busqueda.trim() !== '';
-  const todasLasCarpetas = carpetasDeSesion(PUNTOS, sesionSeleccionada, FECHAS_SESIONES);
+  const todasLasCarpetas = carpetasDeSesion(PUNTOS, sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO);
   const terminoGlobal = terminoBusqueda.trim();
   const puntoDeCarpeta = (c) => PUNTOS.find((p) => p.id === c.puntoRef);
   const carpetas = terminoGlobal
@@ -78,14 +80,17 @@ export default function VistaNavegador() {
   const nivel = carpeta ? contenidoDeNivel(carpeta, subruta) : null;
   const puedeRenombrar = puedeEscribir && !!sesionSeleccionada && sesionSeleccionada.estado !== 'celebrada' && sesionSeleccionada.estado !== 'no-celebrada';
   const titulo = encabezadoSesion(sesionSeleccionada).titulo;
+  const claveSeleccionada = elementoNavegador && elementoNavegador.sesionId === sesionId ? elementoNavegador.clave : null;
 
   function ir(nuevaRuta) {
     setRenombrando(null);
+    setElementoNavegador(null);
     setPosicion({ sesionId, ruta: nuevaRuta, busqueda: '' });
   }
 
   function buscar(texto) {
     setRenombrando(null);
+    setElementoNavegador(null);
     setPosicion({ sesionId, ruta, busqueda: texto });
   }
 
@@ -117,6 +122,7 @@ export default function VistaNavegador() {
     try {
       await aplicar(nuevo);
       setRenombrando(null);
+      setElementoNavegador(null);
     } catch (e) {
       setErrorRenombrar(e.mensaje || 'No se pudo renombrar.');
     } finally {
@@ -160,6 +166,8 @@ export default function VistaNavegador() {
   const filasCarpetas = buscando
     ? resultados.carpetasEncontradas.map((r) => ({
       clave: r.clave, nombre: r.nombre, base: r.nombre, prefijo: '', origen: r.origen, cantidad: r.cantidad,
+      puntoId: carpetas.find((c) => c.id === r.rutaDestino[0])?.puntoRef ?? null,
+      ubicacion: r.origen,
       alAbrir: () => ir(r.rutaDestino),
       renombrable: false,
     }))
@@ -168,6 +176,8 @@ export default function VistaNavegador() {
       const rutaSub = [...subruta, sub.nombre].join('/');
       return {
         clave: `c:${rutaSub}`, nombre: sub.nombre, base: sub.nombre, prefijo: '', cantidad: sub.cantidad,
+        puntoId: carpeta.puntoRef,
+        ubicacion: [carpeta.nombre, ...subruta].join(' / '),
         alAbrir: () => ir([...ruta, sub.nombre]),
         renombrable: !!carpeta.renombrable,
         aplicar: (nuevo) => renombrarCarpeta(carpeta.puntoId, rutaSub, nuevo),
@@ -175,17 +185,51 @@ export default function VistaNavegador() {
     })
     : carpetas.map((c) => ({
       clave: `c:${c.id}`, nombre: c.nombre, base: c.prefijo ? c.nombre.slice(c.prefijo.length) : c.nombre, prefijo: c.prefijo || '', cantidad: c.archivos.length,
+      puntoId: c.puntoRef,
+      ubicacion: titulo,
       alAbrir: () => ir([c.id]),
       renombrable: !!c.renombrable,
       aplicar: (nuevo) => renombrarCarpeta(c.puntoId, '', nuevo),
     }));
-  const filasArchivos = buscando ? resultados.archivosEncontrados : nivel ? nivel.archivos : [];
+  const entradasArchivos = buscando ? resultados.archivosEncontrados : nivel ? nivel.archivos : [];
+  const filasArchivos = entradasArchivos.map((entrada) => {
+    const { archivo } = entrada;
+    const { base, extension } = partirNombre(archivo.nombre);
+    const nombreNumerado = nombreConNumero(archivo);
+    return {
+      entrada,
+      clave: `a:${archivo.id}`,
+      base,
+      extension,
+      prefijo: nombreNumerado.slice(0, nombreNumerado.length - archivo.nombre.length),
+      estilo: estiloArchivo(archivo.nombre),
+      renombrable: !archivo.autogenerado,
+      aplicar: (nuevo) => renombrarArchivo(entrada.puntoId, archivo.id, `${nuevo}${extension}`),
+    };
+  });
   const vacio = filasCarpetas.length === 0 && filasArchivos.length === 0;
+
+  function seleccionarCarpeta(f) {
+    setElementoNavegador({ sesionId, clave: f.clave, tipo: 'carpeta', nombre: f.nombre, icono: 'ri-folder-3-fill', tono: 'carpeta', cantidad: f.cantidad, ubicacion: f.ubicacion, puntoId: f.puntoId });
+  }
+
+  function seleccionarArchivo(f) {
+    const { archivo } = f.entrada;
+    setElementoNavegador({
+      sesionId, clave: f.clave, tipo: 'archivo', nombre: nombreConNumero(archivo), icono: f.estilo.icono, tono: f.estilo.tono, extension: f.extension,
+      tamano: archivo.tamano, fecha: archivo.creadoEn, puntoId: f.entrada.puntoId,
+      ubicacion: f.entrada.origen || [carpeta?.nombre, ...subruta].filter(Boolean).join(' / '),
+    });
+  }
+
+  const filaSeleccionada = claveSeleccionada
+    ? filasCarpetas.find((f) => f.clave === claveSeleccionada) || filasArchivos.find((f) => f.clave === claveSeleccionada)
+    : null;
+  const puedeRenombrarSeleccion = puedeRenombrar && !buscando && !!filaSeleccionada && filaSeleccionada.renombrable && renombrando === null;
 
   return (
     <div className="widget-vista-navegador" tabIndex={-1} onKeyDown={teclaNavegador}>
       <div className="widget-vista-navegador-barra">
-        <BotonIcono icono="ri-arrow-up-line" ariaLabel="Subir un nivel" onClick={subir} disabled={!buscando && ruta.length === 0} />
         <div className="widget-vista-navegador-migas">
           {migas.map((m, i) => (
             <span key={m.clave} className="widget-vista-navegador-miga-envoltorio">
@@ -219,15 +263,29 @@ export default function VistaNavegador() {
           )}
         </div>
       </div>
+      <div className="widget-vista-navegador-herramientas">
+        <BotonIcono icono="ri-arrow-up-line" ariaLabel="Subir un nivel" onClick={subir} disabled={!buscando && ruta.length === 0} />
+        <BotonIcono
+          icono="ri-pencil-line"
+          ariaLabel="Renombrar"
+          onClick={() => filaSeleccionada && empezarRenombrar(filaSeleccionada.clave, filaSeleccionada.base)}
+          disabled={!puedeRenombrarSeleccion}
+        />
+        <span className="widget-vista-navegador-herramientas-espacio"></span>
+        <BotonIcono
+          icono={infoNavegadorAbierta ? 'ri-information-fill' : 'ri-information-line'}
+          ariaLabel="Información"
+          onClick={() => cambiarAjuste('infoNavegadorAbierta', !infoNavegadorAbierta)}
+        />
+      </div>
 
       <div className="widget-vista-navegador-encabezado">
         <span className="widget-vista-navegador-col-nombre">Nombre</span>
         <span className="widget-vista-navegador-col-fecha">Fecha</span>
         <span className="widget-vista-navegador-col-tamano">Tamaño</span>
-        <span className="widget-vista-navegador-col-acciones"></span>
       </div>
 
-      <div className="widget-vista-navegador-cuerpo">
+      <div className="widget-vista-navegador-cuerpo" onClick={() => setElementoNavegador(null)}>
         <Scrollbar>
           {!sesionSeleccionada && <div className="widget-vista-navegador-vacio">Selecciona una sesión para ver sus archivos.</div>}
           {sesionSeleccionada && cargando && PUNTOS.length === 0 && <div className="widget-vista-navegador-vacio">Cargando…</div>}
@@ -237,7 +295,15 @@ export default function VistaNavegador() {
           {filasCarpetas.map((f) => {
             const editando = renombrando === f.clave;
             return (
-              <div key={f.clave} className="widget-vista-navegador-fila" onClick={() => { if (!editando) f.alAbrir(); }} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' && !editando) f.alAbrir(); }}>
+              <div
+                key={f.clave}
+                className={'widget-vista-navegador-fila' + (f.clave === claveSeleccionada ? ' widget-vista-navegador-fila-seleccionada' : '')}
+                onClick={(e) => { e.stopPropagation(); if (!editando) seleccionarCarpeta(f); }}
+                onDoubleClick={() => { if (!editando) f.alAbrir(); }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !editando) f.alAbrir(); }}
+              >
                 <span className="widget-vista-navegador-col-nombre">
                   <i className="ri-folder-3-fill widget-vista-navegador-icono-carpeta"></i>
                   {editando ? campoEdicion(f.clave, f.base, f.prefijo, '', f.aplicar) : <span className="widget-vista-navegador-nombre">{f.nombre}</span>}
@@ -245,46 +311,32 @@ export default function VistaNavegador() {
                 </span>
                 <span className="widget-vista-navegador-col-fecha"></span>
                 <span className="widget-vista-navegador-col-tamano">{f.cantidad} {f.cantidad === 1 ? 'elemento' : 'elementos'}</span>
-                <span className="widget-vista-navegador-col-acciones" onClick={(e) => e.stopPropagation()}>
-                  {puedeRenombrar && f.renombrable && !editando && (
-                    <BotonIcono icono="ri-pencil-line" ariaLabel="Renombrar carpeta" onClick={() => empezarRenombrar(f.clave, f.base)} />
-                  )}
-                </span>
               </div>
             );
           })}
 
-          {filasArchivos.map((entrada) => {
-            const { archivo } = entrada;
-            const estilo = estiloArchivo(archivo.nombre);
-            const claveArchivo = `a:${archivo.id}`;
-            const editando = renombrando === claveArchivo;
-            const aplicarArchivo = (nuevo) => renombrarArchivo(entrada.puntoId, archivo.id, `${nuevo}${partirNombre(archivo.nombre).extension}`);
-            const { base, extension } = partirNombre(archivo.nombre);
-            const prefijo = nombreConNumero(archivo).slice(0, nombreConNumero(archivo).length - archivo.nombre.length);
+          {filasArchivos.map((f) => {
+            const { archivo } = f.entrada;
+            const editando = renombrando === f.clave;
             return (
               <div
                 key={archivo.id}
-                className="widget-vista-navegador-fila"
-                onClick={() => { if (!editando) abrirVistaArchivo(archivo); }}
+                className={'widget-vista-navegador-fila' + (f.clave === claveSeleccionada ? ' widget-vista-navegador-fila-seleccionada' : '')}
+                onClick={(e) => { e.stopPropagation(); if (!editando) seleccionarArchivo(f); }}
+                onDoubleClick={() => { if (!editando) abrirVistaArchivo(archivo); }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !editando) abrirVistaArchivo(archivo); }}
               >
                 <span className="widget-vista-navegador-col-nombre">
-                  <i className={`${estilo.icono} widget-vista-navegador-icono widget-vista-navegador-icono-${estilo.tono}`}></i>
-                  {editando ? campoEdicion(claveArchivo, base, prefijo, extension, aplicarArchivo) : (
-                    <span className="widget-vista-navegador-nombre" title={`${prefijo}${base}${extension}`}>{nombreConNumero(archivo)}</span>
+                  <i className={`${f.estilo.icono} widget-vista-navegador-icono widget-vista-navegador-icono-${f.estilo.tono}`}></i>
+                  {editando ? campoEdicion(f.clave, f.base, f.prefijo, f.extension, f.aplicar) : (
+                    <span className="widget-vista-navegador-nombre" title={nombreConNumero(archivo)}>{nombreConNumero(archivo)}</span>
                   )}
-                  {entrada.origen && <span className="widget-vista-navegador-origen" title={entrada.origen}>{entrada.origen}</span>}
+                  {f.entrada.origen && <span className="widget-vista-navegador-origen" title={f.entrada.origen}>{f.entrada.origen}</span>}
                 </span>
                 <span className="widget-vista-navegador-col-fecha">{fechaCorta(archivo.creadoEn)}</span>
                 <span className="widget-vista-navegador-col-tamano">{archivo.tamano ? formatoTamano(archivo.tamano) : '—'}</span>
-                <span className="widget-vista-navegador-col-acciones" onClick={(e) => e.stopPropagation()}>
-                  {puedeRenombrar && !buscando && !archivo.autogenerado && !editando && (
-                    <BotonIcono icono="ri-pencil-line" ariaLabel="Renombrar archivo" onClick={() => empezarRenombrar(claveArchivo, base)} />
-                  )}
-                </span>
               </div>
             );
           })}

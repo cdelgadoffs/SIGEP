@@ -78,7 +78,7 @@ Generación de fechas (regla del servidor): desde el primer `diaSemana` del año
 
 Un `Documento` es un **documento ProseMirror/TipTap en JSON** (`{ type: 'doc', content: [...] }`), no un texto con marcas. Es la forma estable de guardar texto con formato: estructurada, validable y sin analizar cadenas.
 
-- **Nodos permitidos:** `doc`, `paragraph` (atributo opcional `textAlign`: `left`, `center`, `right`, `justify`), `text`, `hardBreak`, `orderedList`, `listItem`, `table`, `tableRow`, `tableHeader`, `tableCell` (atributos `colspan`, `rowspan`, `colwidth`, `align`). **Marcas permitidas:** `bold`, `italic`, `oculto` (texto marcado para ocultar en la versión pública) y `fontSize` (atributo `size`, ej. `"18px"`). Cualquier otro nodo, marca o atributo → `VALIDACION`.
+- **Nodos permitidos:** `doc`, `paragraph` (atributos opcionales `textAlign`: `left`, `center`, `right`, `justify`, y `sangria`: entero de 0 a 6, niveles de sangría de bloque de 1,27 cm cada uno, 0 por omisión; y `continuacion`: booleano, `false` por omisión; un párrafo de **continuación** es una línea más del ítem anterior —se crea con Shift + Enter—, no es un ítem nuevo (no lleva ordinal ni cuenta en `acuerdoLineas`), se une al texto del ítem anterior y tiene su propia sangría; el nodo `hardBreak` sigue admitido para los documentos anteriores), `text`, `hardBreak`, `orderedList`, `listItem`, `table`, `tableRow`, `tableHeader`, `tableCell` (atributos `colspan`, `rowspan`, `colwidth`, `align`). **Marcas permitidas:** `bold`, `italic`, `oculto` (texto marcado para ocultar en la versión pública) y `fontSize` (atributo `size`, ej. `"18px"`). Cualquier otro nodo, marca o atributo → `VALIDACION`.
 - **Límites:** profundidad máxima 12; tamaño serializado máximo 200 000 caracteres; texto plano máximo 20 000.
 - **Texto plano derivado:** los párrafos de nivel superior, de las listas y de las celdas se unen con `\n` (las celdas de una fila, con tabulador); `hardBreak` es un `\n`.
 - **Ítems del acuerdo:** para `acuerdoLineas` y para los prefijos ÚNICO/PRIMERO…, cada **párrafo de nivel superior con texto** es un ítem (las listas y las tablas no cuentan como ítems). El ítem *k* de `acuerdoLineas` corresponde al *k*-ésimo párrafo de nivel superior con texto.
@@ -198,6 +198,28 @@ Cuando el administrador edita un punto, queda pendiente avisar de ese cambio al 
 - **`enviarAvisoEdicion`** exige que el remitente tenga correo vinculado (`CorreoRemitente`); si no, `SIN_CORREO_REMITENTE`. **El prototipo solo simula el envío** (espera un momento y elimina el aviso; no crea nada en Enviados): el contenido del correo está por definirse con el usuario y el servidor real lo mandará.
 - **No se puede cerrar la lista** de una sesión con avisos pendientes: `establecerListaCerrada(id, true)` → `AVISOS_PENDIENTES`. Hay que enviarlos o descartarlos antes.
 - **Limpieza:** eliminar un punto, eliminar una sesión extraordinaria o regenerar el calendario con "sobrescribir" elimina los avisos de los puntos afectados (no se archivan: son notificaciones, no datos del acta).
+
+### Historial de un punto
+
+Cada cambio importante de un punto queda registrado por el servidor como un evento. Es un dato del API (persistido, de solo lectura para el cliente): los eventos **los crea el propio servidor**, en la misma transacción que el cambio, nunca el cliente.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | string | Del servidor. |
+| `puntoId` | string | Punto al que pertenece. |
+| `accion` | string | `creado` · `editado` · `trasladado` · `eliminado`. Por ahora solo estas; se sumarán más cuando haya más elementos relativos al punto. |
+| `detalle` | objeto \| null | `editado`: el mismo resumen `diff` de los avisos de edición. `trasladado`: `{ origenId, destinoId }` (ids de sesión). `creado` y `eliminado`: `null`. |
+| `creadoEn`, `creadoPor` | | Del servidor (fecha y id del usuario). |
+| `autor` | string \| null | Nombre del usuario al momento del evento (`null` en el evento sintético). |
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `listarHistorialPunto(puntoId)` | id de un punto de trabajo (en una sesión o en la papelera) | `EventoPunto[]`, del más reciente al más antiguo | `NO_ENCONTRADO` |
+
+- Se registran en `crearPunto`, `editarPunto`, `trasladarPunto` y `eliminarPunto`. Retirar, restaurar, mover de orden, adjuntar, votar y marcar como tratado **no** generan evento por ahora.
+- **Evento sintético:** un punto sin evento `creado` (anterior al historial) entrega uno con `id` `sintetico:<puntoId>`, tomado de `creadoEn` y `creadoPor` del punto, para que el historial nunca quede en blanco.
+- Los **puntos fijos** no tienen historial propio (son derivados): `[]`. Un punto confidencial devuelve `[]` a quien no puede verlo.
+- **Ciclo de vida:** el historial vive con el punto. La papelera lo conserva (el punto sigue existiendo); regenerar el calendario con "sobrescribir" lo archiva junto con el punto; eliminar una sesión extraordinaria borra el de sus puntos.
 
 ### Orden
 - `Punto.orden`: entero (1…n) dentro de cada (`sesionId`, `seccion`). Al crear un punto queda **al final** de su sección. `listarPuntos` devuelve ordenado por `orden`.
@@ -398,7 +420,7 @@ Una entrada de la papelera es un `Punto` sin `sesionId`, con estos campos más: 
 - `marcarPuntos` fija `tratado` en **todos** los puntos de la sesión que el usuario puede ver, en una sola operación **atómica** (o se aplican todos o ninguno). Es idempotente: solo cambian de `version` y `modificadoEn` los puntos cuyo valor cambió.
 - `editarPunto` **no** modifica `tratado`.
 - `crearPunto` / `editarPunto` aceptan, además de los campos de siempre, `contenidoDoc`, `acuerdoDoc`, `plantilla`, `introDoc`, `puenteDoc`, `bloquesActa` y `considerandosFijos` (ver "Documento"; `crearPunto` sin `considerandosFijos` los toma del catálogo, `editarPunto` sin ellos conserva los del punto). Cambiar de sección reinicia la votación; cambiar de plantilla no borra los bloques que el cliente envía.
-- `crearPunto` / `editarPunto` aceptan además `nombreCarpeta` (opcional): el nombre de la carpeta del punto en el explorador de archivos y el ZIP de la sesión (el número del punto se antepone solo). Se recorta; máx. 100 caracteres, sin `\ / : * ? " < > |` ni `.`/`..` (`ARCHIVO_INVALIDO`, las mismas reglas de `renombrarCarpeta`). Vacío = sin nombre propio (la carpeta se nombra con el inicio del contenido): al crear no se guarda y al editar se borra. Un `editarPunto` que no lo envía lo conserva.
+- `crearPunto` / `editarPunto` aceptan además `nombreCarpeta` (opcional): el nombre de la carpeta del punto en el explorador de archivos y el ZIP de la sesión (el número del punto se antepone solo). Se recorta; máx. 100 caracteres, sin `\ / : * ? " < > |` ni `.`/`..` (`ARCHIVO_INVALIDO`, las mismas reglas de `renombrarCarpeta`). Vacío = sin nombre propio (el cliente nombra la carpeta por omisión según la sección: «Proyecto de acuerdo», o «Informe» en las secciones sin acuerdo): al crear no se guarda y al editar se borra. Un `editarPunto` que no lo envía lo conserva.
 - `crearPunto` / `editarPunto` aceptan además `origenAG` (booleano, opcional): el punto se registró desde la sección que `permiteCambiarSeccion` (Asuntos generales) con otra sección como destino. Solo se guarda si la sección del punto es distinta de esa; en otro caso se descarta, y un valor no booleano → `VALIDACION`. El punto sigue perteneciendo a su sección (`seccion`: numeración, orden del documento, acta, ZIP y acciones); `origenAG` solo le dice al cliente que muestre un enlace a él en Asuntos generales. Con la lista cerrada, `crearPunto`, `restaurarPunto` y `trasladarPunto` evalúan la regla de `admiteConListaCerrada` contra Asuntos generales y no contra la sección del punto. `editarPunto` sin el campo lo conserva. Los puntos creados antes del campo no lo tienen.
 - `trasladarPunto(id, sesionDestinoId)` pasa un punto del administrador de su sesión a otra sesión **próxima**, en una sola operación **atómica**, y devuelve el `Punto` ya en la sesión destino (al final de su misma sección, con su remitente y archivos, tratado y sin votación; se limpia su aviso de edición). Errores: `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION` (punto fijo, destino igual al origen o sin indicar), `SESION_CELEBRADA`, `SESION_VENCIDA` (origen o destino), `SESION_COMENZADA` (origen o destino ya comenzados), `LISTA_CERRADA` (origen con la lista cerrada; destino con la lista cerrada salvo en las secciones que `admiteConListaCerrada`, igual que crear un punto). Como renumera ambas sesiones, el cliente vuelve a pedir la lista tras trasladar.
 - `crearPunto` (salvo en una sección que `admiteConListaCerrada`), `editarPunto`, `eliminarPunto` y `reordenarPuntos` rechazan con `LISTA_CERRADA` si la sesión tiene la lista cerrada.

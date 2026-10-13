@@ -63,4 +63,5 @@ export const {
   listarAvisosEdicion,
   enviarAvisoEdicion,
   descartarAvisoEdicion,
+  listarHistorialPunto,
 } = implementacion;

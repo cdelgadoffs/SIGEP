@@ -2,7 +2,7 @@ import { ApiError } from '../ApiError.js';
 import {
   STORE_SESIONES, STORE_PUNTOS, STORE_PAPELERA, STORE_CATALOGOS, STORE_ARCHIVOS, STORE_CALENDARIOS, STORE_INTEGRANTES, STORE_SECRETARIO,
   STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_REMITENTES, STORE_CORREOS_ENVIADOS, STORE_AVISOS_EDICION,
-  STORE_GENERACIONES, STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS,
+  STORE_GENERACIONES, STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS, STORE_HISTORIAL, STORE_ARCHIVO_HISTORIAL,
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
@@ -12,7 +12,7 @@ import {
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
-  numerarArchivos, exigirSeccionAbierta, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
+  nuevoEventoPunto, eventoCreacionSintetico, numerarArchivos, exigirSeccionAbierta, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -82,6 +82,10 @@ export async function obtenerCalendario(anio) {
   return (await obtener(STORE_CALENDARIOS, anio)) ?? null;
 }
 
+async function eventosDe(idsPuntos) {
+  return (await obtenerTodos(STORE_HISTORIAL)).filter((e) => idsPuntos.has(e.puntoId));
+}
+
 async function puntosPorSesion() {
   return new Set((await obtenerTodos(STORE_PUNTOS)).map((p) => p.sesionId));
 }
@@ -105,7 +109,7 @@ async function reunirDelAnio(anio) {
   const puntos = (await obtenerTodos(STORE_PUNTOS)).filter((p) => idsSesiones.has(p.sesionId));
   const idsPuntos = new Set(puntos.map((p) => p.id));
   const binarios = (await obtenerTodos(STORE_ARCHIVOS)).filter((a) => idsPuntos.has(a.puntoId));
-  return { sesiones, puntos, binarios };
+  return { sesiones, puntos, binarios, eventos: await eventosDe(idsPuntos) };
 }
 
 function resumenDe({ sesiones, puntos, binarios }) {
@@ -141,7 +145,7 @@ export async function generarCalendarioAnual(anio, datos, sobrescribir) {
   const calendario = { ...base, asuetos: [] };
   const fechas = generarFechasAnuales(calendario);
   const ahora = new Date().toISOString();
-  const archivar = sobrescribir === true ? await reunirDelAnio(anio) : { sesiones: [], puntos: [], binarios: [] };
+  const archivar = sobrescribir === true ? await reunirDelAnio(anio) : { sesiones: [], puntos: [], binarios: [], eventos: [] };
   const idsArchivadas = new Set(archivar.sesiones.map((s) => s.id));
   const vigentes = (await obtenerTodos(STORE_SESIONES)).filter((s) => !idsArchivadas.has(s.id));
   const nuevas = fechas.filter((id) => !vigentes.some((s) => s.id === id)).map((id) => nuevaSesion(id, ahora));
@@ -158,12 +162,14 @@ export async function generarCalendarioAnual(anio, datos, sobrescribir) {
       ...archivar.sesiones.map((valor) => ({ store: STORE_ARCHIVO_SESIONES, valor: copia(valor) })),
       ...archivar.puntos.map((valor) => ({ store: STORE_ARCHIVO_PUNTOS, valor: copia(valor) })),
       ...archivar.binarios.map((valor) => ({ store: STORE_ARCHIVO_BINARIOS, valor: copia(valor) })),
+      ...archivar.eventos.map((valor) => ({ store: STORE_ARCHIVO_HISTORIAL, valor: copia(valor) })),
     ],
     borrar: [
       ...archivar.sesiones.map((s) => ({ store: STORE_SESIONES, id: s.id })),
       ...archivar.puntos.map((p) => ({ store: STORE_PUNTOS, id: p.id })),
       ...archivar.binarios.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
       ...archivar.puntos.map((p) => ({ store: STORE_AVISOS_EDICION, id: p.id })),
+      ...archivar.eventos.map((e) => ({ store: STORE_HISTORIAL, id: e.id })),
     ],
   });
   return { calendario: registro, sesiones: await listarSesiones(), generacion };
@@ -260,9 +266,11 @@ export async function eliminarSesion(id) {
   const puntos = (await obtenerTodos(STORE_PUNTOS)).filter((p) => p.sesionId === id);
   const idsPuntos = new Set(puntos.map((p) => p.id));
   const archivos = (await obtenerTodos(STORE_ARCHIVOS)).filter((a) => idsPuntos.has(a.puntoId));
+  const eventos = await eventosDe(idsPuntos);
   await escribirVarios({
     borrar: [
       { store: STORE_SESIONES, id },
+      ...eventos.map((e) => ({ store: STORE_HISTORIAL, id: e.id })),
       ...puntos.map((p) => ({ store: STORE_PUNTOS, id: p.id })),
       ...puntos.map((p) => ({ store: STORE_AVISOS_EDICION, id: p.id })),
       ...archivos.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
@@ -476,6 +484,7 @@ export async function crearPunto(sesionId, datos) {
   await escribirVarios({
     poner: [
       { store: STORE_PUNTOS, valor: punto },
+      { store: STORE_HISTORIAL, valor: nuevoEventoPunto(id, 'creado', null, ahora) },
       ...registros.map((valor) => ({ store: STORE_ARCHIVOS, valor })),
     ],
   });
@@ -525,6 +534,7 @@ export async function editarPunto(id, version, cambios) {
     poner: [
       { store: STORE_PUNTOS, valor: punto },
       { store: STORE_AVISOS_EDICION, valor: aviso },
+      { store: STORE_HISTORIAL, valor: nuevoEventoPunto(id, 'editado', aviso.diff, punto.modificadoEn) },
     ],
   });
   return puntoArmado(punto.sesionId, id);
@@ -555,7 +565,10 @@ export async function trasladarPunto(id, sesionDestinoId) {
     modificadoEn: ahora,
   };
   await escribirVarios({
-    poner: [{ store: STORE_PUNTOS, valor: punto }],
+    poner: [
+      { store: STORE_PUNTOS, valor: punto },
+      { store: STORE_HISTORIAL, valor: nuevoEventoPunto(id, 'trasladado', { origenId: actual.sesionId, destinoId: sesionDestinoId }, ahora) },
+    ],
     borrar: [{ store: STORE_AVISOS_EDICION, id }],
   });
   return puntoArmado(sesionDestinoId, id);
@@ -620,6 +633,16 @@ export async function registrarVotacion(id, votacion) {
   return puntoArmado(actual.sesionId, id);
 }
 
+export async function listarHistorialPunto(puntoId) {
+  if (esPuntoFijo(puntoId)) return [];
+  const punto = (await obtener(STORE_PUNTOS, puntoId)) ?? (await obtener(STORE_PAPELERA, puntoId));
+  if (!punto) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  if (punto.confidencial && !puedeVerConfidencial()) return [];
+  const eventos = (await obtenerTodos(STORE_HISTORIAL)).filter((e) => e.puntoId === puntoId);
+  if (!eventos.some((e) => e.accion === 'creado')) eventos.push(eventoCreacionSintetico(punto));
+  return eventos.sort((a, b) => (a.creadoEn < b.creadoEn ? 1 : -1));
+}
+
 export async function marcarPuntos(sesionId, tratado) {
   exigirEscritura();
   if (typeof tratado !== 'boolean') throw new ApiError('VALIDACION', 'El valor de "tratado" debe ser verdadero o falso.');
@@ -652,8 +675,12 @@ export async function eliminarPunto(id) {
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   exigirListaAbierta(await exigirSesionAbierta(actual.sesionId));
+  const ahora = new Date().toISOString();
   await escribirVarios({
-    poner: [{ store: STORE_PAPELERA, valor: aPapelera(actual, 'eliminado', new Date().toISOString()) }],
+    poner: [
+      { store: STORE_PAPELERA, valor: aPapelera(actual, 'eliminado', ahora) },
+      { store: STORE_HISTORIAL, valor: nuevoEventoPunto(id, 'eliminado', null, ahora) },
+    ],
     borrar: [{ store: STORE_PUNTOS, id }, { store: STORE_AVISOS_EDICION, id }],
   });
 }

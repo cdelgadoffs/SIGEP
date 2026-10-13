@@ -260,7 +260,7 @@ export default function VistaPreviaFlotante({
                 <BotonIcono icono="ri-add-line" ariaLabel="Añadir sección" onClick={agregarBloque} disabled={esPersonalizada && !tituloPersonalizado.trim()} />
               </>
             )}
-            <BarraHerramientasTexto obtenerEditor={() => editorActivoRef.current} onError={setErrorDescarga} />
+            <BarraHerramientasTexto obtenerEditor={() => editorActivoRef.current} onError={setErrorDescarga} ocultar={['copiar', 'pegar']} sangria />
             <span className="widget-vista-previa-separador"></span>
             {permitirDescarga && <BotonIcono icono="ri-download-2-line" ariaLabel={descargando ? 'Generando...' : 'Descargar Word'} onClick={descargarWord} disabled={descargando} />}
           </div>

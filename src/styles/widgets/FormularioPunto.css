@@ -101,6 +101,12 @@
   align-items: center;
   gap: 8px;
 }
+.widget-formulario-punto-etiqueta-fila {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
 .widget-formulario-punto-atajo {
   margin-right: 4px;
   font-size: 11px;

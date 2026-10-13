@@ -1,0 +1,57 @@
+.widget-info-navegador {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+  min-height: 0;
+  text-align: left;
+}
+.widget-info-navegador-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.widget-info-navegador-icono {
+  font-size: 30px;
+  flex-shrink: 0;
+}
+.widget-info-navegador-nombre {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  word-break: break-word;
+}
+.widget-info-navegador-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.widget-info-navegador-etiqueta {
+  font-size: 11.5px;
+  color: #888;
+}
+.widget-info-navegador-valor {
+  font-size: 13.5px;
+  color: #222;
+  word-break: break-word;
+}
+.widget-info-navegador-ayuda,
+.widget-info-navegador-vacio {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #999;
+}
+.widget-info-navegador-separador {
+  width: 100%;
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid #d0d0d0;
+}
+.widget-info-navegador-icono-carpeta { color: #f2b01e; }
+.widget-info-navegador-icono-rojo { color: #c62828; }
+.widget-info-navegador-icono-azul { color: #1a56db; }
+.widget-info-navegador-icono-verde { color: #1e7d34; }
+.widget-info-navegador-icono-morado { color: #6a3fc1; }
+.widget-info-navegador-icono-gris { color: #777; }

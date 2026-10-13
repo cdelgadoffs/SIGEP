@@ -25,9 +25,15 @@ export function esDocVacio(doc) {
   return textoDeDoc(doc).trim() === '';
 }
 
+const ES_VALOR_POR_OMISION = {
+  textAlign: (valor) => valor === 'left' || valor === null,
+  sangria: (valor) => valor === 0 || valor === null,
+  continuacion: (valor) => valor === false || valor === null,
+};
+
 function sinValoresPorOmision(clave, valor) {
-  if (clave === 'textAlign' && (valor === 'left' || valor === null)) return undefined;
-  if (clave === 'attrs' && valor && typeof valor === 'object' && Object.keys(valor).every((k) => valor[k] === undefined || (k === 'textAlign' && (valor[k] === 'left' || valor[k] === null)))) return undefined;
+  if (ES_VALOR_POR_OMISION[clave]?.(valor)) return undefined;
+  if (clave === 'attrs' && valor && typeof valor === 'object' && Object.keys(valor).every((k) => valor[k] === undefined || ES_VALOR_POR_OMISION[k]?.(valor[k]))) return undefined;
   return valor;
 }
 

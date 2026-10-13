@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 33;
+const DB_VERSION = 34;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -18,10 +18,12 @@ export const STORE_LISTAS_CORREO = 'listasCorreo';
 export const STORE_CORREOS_REMITENTES = 'correosRemitentes';
 export const STORE_CORREOS_ENVIADOS = 'correosEnviados';
 export const STORE_AVISOS_EDICION = 'avisosEdicion';
+export const STORE_HISTORIAL = 'historialPuntos';
 export const STORE_GENERACIONES = 'generaciones';
 export const STORE_ARCHIVO_SESIONES = 'archivoSesiones';
 export const STORE_ARCHIVO_PUNTOS = 'archivoPuntos';
 export const STORE_ARCHIVO_BINARIOS = 'archivoBinarios';
+export const STORE_ARCHIVO_HISTORIAL = 'archivoHistorial';
 
 function abrirDB() {
   return new Promise((resolve, reject) => {
@@ -49,13 +51,13 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_GENERACIONES)) {
         db.createObjectStore(STORE_GENERACIONES, { keyPath: 'id' });
       }
-      [STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_ENVIADOS, STORE_AVISOS_EDICION].forEach((nombre) => {
+      [STORE_CONTACTOS_CORREO, STORE_PLANTILLAS_CORREO, STORE_LISTAS_CORREO, STORE_CORREOS_ENVIADOS, STORE_AVISOS_EDICION, STORE_HISTORIAL].forEach((nombre) => {
         if (!db.objectStoreNames.contains(nombre)) db.createObjectStore(nombre, { keyPath: 'id' });
       });
       if (!db.objectStoreNames.contains(STORE_CORREOS_REMITENTES)) {
         db.createObjectStore(STORE_CORREOS_REMITENTES, { keyPath: 'remitenteId' });
       }
-      [STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS].forEach((nombre) => {
+      [STORE_ARCHIVO_SESIONES, STORE_ARCHIVO_PUNTOS, STORE_ARCHIVO_BINARIOS, STORE_ARCHIVO_HISTORIAL].forEach((nombre) => {
         if (!db.objectStoreNames.contains(nombre)) db.createObjectStore(nombre, { keyPath: 'clave' });
       });
       if (!db.objectStoreNames.contains(STORE_SECRETARIO)) {

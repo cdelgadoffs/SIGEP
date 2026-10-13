@@ -17,6 +17,22 @@
   gap: 10px;
   padding-bottom: 10px;
 }
+.widget-vista-navegador-herramientas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+.widget-vista-navegador-herramientas-espacio {
+  flex: 1;
+}
+.widget-vista-navegador-fila-seleccionada,
+.widget-vista-navegador-fila-seleccionada:hover {
+  background: #e3ecff;
+}
+.widget-vista-navegador-fila {
+  user-select: none;
+}
 .widget-vista-navegador-migas {
   display: flex;
   align-items: center;
@@ -140,27 +156,6 @@
   width: 110px;
   flex-shrink: 0;
   color: #666;
-}
-.widget-vista-navegador-col-acciones {
-  display: flex;
-  justify-content: flex-end;
-  width: 40px;
-  flex-shrink: 0;
-}
-.widget-vista-navegador-col-acciones .base-boton-icono {
-  width: 28px;
-  height: 28px;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.widget-vista-navegador-fila:hover .widget-vista-navegador-col-acciones .base-boton-icono,
-.widget-vista-navegador-col-acciones .base-boton-icono:focus-visible {
-  opacity: 1;
-}
-@media (hover: none) {
-  .widget-vista-navegador-col-acciones .base-boton-icono {
-    opacity: 1;
-  }
 }
 .widget-vista-navegador-nombre {
   overflow: hidden;

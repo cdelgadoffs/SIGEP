@@ -1,0 +1,55 @@
+.widget-historial-punto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+.widget-historial-punto-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-historial-punto-vacio {
+  margin: 0;
+  font-size: 13px;
+  color: #999;
+}
+.widget-historial-punto-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.widget-historial-punto-evento {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.widget-historial-punto-icono {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 17px;
+  color: #1a56db;
+}
+.widget-historial-punto-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.widget-historial-punto-accion {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #222;
+}
+.widget-historial-punto-detalle {
+  font-size: 12.5px;
+  color: #444;
+  word-break: break-word;
+}
+.widget-historial-punto-meta {
+  font-size: 11.5px;
+  color: #888;
+}

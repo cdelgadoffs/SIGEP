@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
+import EditorTexto from './EditorTexto.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import TrasladarPunto from './TrasladarPunto.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -11,7 +12,10 @@ import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import ListaArchivosAdjuntos from './ListaArchivosAdjuntos.jsx';
 import Scrollbar from '../base/Scrollbar.jsx';
 import { tituloPunto, puntoCoincide } from '../../utils/puntos.js';
+import { esDocVacio } from '../../utils/documento.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
+
+const sinCambios = () => {};
 
 function seleccionarSiNoEsControl(e, seleccionar) {
   if (e.target.closest('button, a, input, label')) return;
@@ -40,12 +44,18 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
         <div className="widget-lista-puntos-columnas">
           <div className="widget-lista-puntos-columna widget-lista-puntos-principal">
             <span className="widget-lista-puntos-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</span>
-            <div className="widget-lista-puntos-contenido">{punto.contenido || 'Sin contenido'}</div>
+            <div className="widget-lista-puntos-contenido">
+              {punto.contenidoDoc && !esDocVacio(punto.contenidoDoc)
+                ? <EditorTexto value={punto.contenidoDoc} onChange={sinCambios} soloLectura />
+                : (punto.contenido || 'Sin contenido')}
+            </div>
             {!esInforme && !punto.fijo && (
               <div className="widget-lista-puntos-bloque-acuerdo">
                 <span className="widget-lista-puntos-label">Acuerdo</span>
                 <div className="widget-lista-puntos-acuerdo">
-                  {punto.acuerdoLineas?.length > 0 ? punto.acuerdoLineas.map((l, i) => (
+                  {punto.acuerdoDoc && !esDocVacio(punto.acuerdoDoc) ? (
+                    <EditorTexto value={punto.acuerdoDoc} onChange={sinCambios} soloLectura ordinal="acuerdo" />
+                  ) : punto.acuerdoLineas?.length > 0 ? punto.acuerdoLineas.map((l, i) => (
                     <div key={i}>
                       {i > 0 && <hr className="widget-lista-puntos-separador" />}
                       <strong>{l.prefijo}.</strong> {l.texto}
