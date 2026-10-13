@@ -39,6 +39,7 @@
 }
 .base-boton-seleccionable-menu-badge {
   background: #e0e0e0;
+  border: 1px solid #c4c4c4;
   border-radius: 10px;
   padding: 0 6px;
   font-size: 10px;
@@ -49,10 +50,15 @@
 }
 .base-boton-seleccionable-menu-activo .base-boton-seleccionable-menu-badge {
   background: #d0e0ff;
+  border-color: #a9c4f5;
   color: #1a56db;
 }
 .base-boton-seleccionable-menu-chevron {
-  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5px;
+  flex-shrink: 0;
   transform: rotate(90deg);
   transition: transform 0.15s ease;
   font-size: 14px;
@@ -85,6 +91,7 @@
 }
 .base-boton-seleccionable-menu-submenu.base-boton-seleccionable-menu-activo .base-boton-seleccionable-menu-badge {
   background: #e0e0e0;
+  border-color: #c4c4c4;
   color: #666;
 }
 .base-boton-seleccionable-menu-completado,

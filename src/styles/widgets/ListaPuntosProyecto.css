@@ -175,6 +175,14 @@
 .widget-lista-puntos-header .widget-opciones-navegacion {
   flex-direction: row;
 }
+.widget-lista-puntos-item-reciente {
+  border-radius: 8px;
+  animation: widget-lista-puntos-reciente 2.4s ease-out;
+}
+@keyframes widget-lista-puntos-reciente {
+  0% { box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.45); background: #e3ecfd; }
+  100% { box-shadow: 0 0 0 4px rgba(26, 86, 219, 0); background: transparent; }
+}
 .widget-lista-puntos-item-seleccionado .widget-lista-puntos-header {
   background: #e3ecfd;
 }

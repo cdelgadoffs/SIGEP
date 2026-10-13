@@ -5,6 +5,7 @@ export default function BotonSeleccionableMenu({ activo = false, deshabilitado =
     <div
       className={
         'base-boton-seleccionable-menu' +
+        (expandible ? ' base-boton-seleccionable-menu-expandible' : '') +
         (variante ? ` base-boton-seleccionable-menu-${variante}` : '') +
         (activo ? ' base-boton-seleccionable-menu-activo' : '') +
         (completado ? ' base-boton-seleccionable-menu-completado' : '') +
@@ -12,12 +13,7 @@ export default function BotonSeleccionableMenu({ activo = false, deshabilitado =
       }
       onClick={deshabilitado ? undefined : onClick}
     >
-      <span className="base-boton-seleccionable-menu-punto"></span>
-      <span>{children}</span>
-      {badge !== undefined && (
-        <span className="base-boton-seleccionable-menu-badge">{badge}</span>
-      )}
-      {expandible && (
+      {expandible ? (
         <span
           className={
             'base-boton-seleccionable-menu-chevron' +
@@ -26,6 +22,12 @@ export default function BotonSeleccionableMenu({ activo = false, deshabilitado =
         >
           &#8250;
         </span>
+      ) : (
+        <span className="base-boton-seleccionable-menu-punto"></span>
+      )}
+      <span>{children}</span>
+      {badge !== undefined && (
+        <span className="base-boton-seleccionable-menu-badge">{badge}</span>
       )}
       {accion}
     </div>

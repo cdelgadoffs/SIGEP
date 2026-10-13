@@ -270,27 +270,6 @@ export default function FormularioPunto() {
   return (
     <div className="widget-formulario-punto-wrap">
       <div className="widget-formulario-punto" key={form.seccion} ref={contenedorRef} onScroll={onScroll}>
-      <div className="widget-formulario-punto-fila">
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Categoría</label>
-          <ListaExpandible
-            valorActual={categoriaActual?.id}
-            etiquetaActual={categoriaActual?.nombre ?? ''}
-            opciones={CATEGORIAS.map((c) => ({ id: c.id, label: c.nombre }))}
-            onSeleccionar={cambiarCategoria}
-          />
-        </div>
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Remitente</label>
-          <ListaExpandible
-            valorActual={remitenteActual}
-            etiquetaActual={remitentesDeCategoria.find((r) => r.id === remitenteActual)?.nombre ?? ''}
-            opciones={remitentesDeCategoria.map((r) => ({ id: r.id, label: r.nombre }))}
-            onSeleccionar={cambiarRemitente}
-          />
-        </div>
-      </div>
-
       {mostrarSeccion && (
         <div className="widget-formulario-punto-campo">
           <label className="widget-formulario-punto-label">Sección</label>
@@ -342,6 +321,27 @@ export default function FormularioPunto() {
           />
         </div>
       )}
+
+      <div className="widget-formulario-punto-fila">
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Categoría</label>
+          <ListaExpandible
+            valorActual={categoriaActual?.id}
+            etiquetaActual={categoriaActual?.nombre ?? ''}
+            opciones={CATEGORIAS.map((c) => ({ id: c.id, label: c.nombre }))}
+            onSeleccionar={cambiarCategoria}
+          />
+        </div>
+        <div className="widget-formulario-punto-campo">
+          <label className="widget-formulario-punto-label">Remitente</label>
+          <ListaExpandible
+            valorActual={remitenteActual}
+            etiquetaActual={remitentesDeCategoria.find((r) => r.id === remitenteActual)?.nombre ?? ''}
+            opciones={remitentesDeCategoria.map((r) => ({ id: r.id, label: r.nombre }))}
+            onSeleccionar={cambiarRemitente}
+          />
+        </div>
+      </div>
 
       {!editando && (
         <div className="widget-formulario-punto-campo">

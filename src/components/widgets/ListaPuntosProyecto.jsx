@@ -22,10 +22,14 @@ function seleccionarSiNoEsControl(e, seleccionar) {
   seleccionar();
 }
 
-function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opciones, onAbrir, seleccionada, onSeleccionar }) {
+function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opciones, onAbrir, seleccionada, onSeleccionar, reciente, onTerminarReciente }) {
   const esInforme = !requiereAcuerdo;
   return (
-    <div id={`punto-${punto.id}`} className={'widget-lista-puntos-item' + (seleccionada ? ' widget-lista-puntos-item-seleccionado' : '')}>
+    <div
+      id={`punto-${punto.id}`}
+      className={'widget-lista-puntos-item' + (seleccionada ? ' widget-lista-puntos-item-seleccionado' : '') + (reciente ? ' widget-lista-puntos-item-reciente' : '')}
+      onAnimationEnd={reciente ? onTerminarReciente : undefined}
+    >
       <Card onClick={(e) => seleccionarSiNoEsControl(e, onSeleccionar)}>
         <div className="widget-lista-puntos-header">
           <span className={'widget-lista-puntos-titulo' + (punto.confidencial ? ' widget-lista-puntos-titulo-confidencial' : '')}>
@@ -101,8 +105,9 @@ function BadgeOrigenAG({ punto, nombreSeccion, nombreRemitente, onIr }) {
   );
 }
 
-function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onAbrir, seleccionadoId, seleccionar, secciones, termino) {
+function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onAbrir, seleccionadoId, seleccionar, secciones, termino, invertido, recienteId, onTerminarReciente) {
   const deLaSeccion = puntos.filter((p) => p.seccion === seccion.id);
+  const enPantalla = invertido ? [...deLaSeccion].reverse() : deLaSeccion;
   const registradosAqui = seccion.permiteCambiarSeccion ? puntos.filter((p) => p.origenAG && p.seccion !== seccion.id) : [];
   const hayPuntos = deLaSeccion.some((p) => !p.encabezado) || registradosAqui.length > 0;
   let aviso = null;
@@ -113,7 +118,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
   }
   return (
     <>
-      {deLaSeccion.map((p) => (p.encabezado ? (
+      {enPantalla.map((p) => (p.encabezado ? (
         <div key={p.id} className="widget-lista-puntos-encabezado">
           <span className="widget-lista-puntos-encabezado-codigo">{tituloPunto(p.numero)}</span>
           <span>{p.contenido}</span>
@@ -129,6 +134,8 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
           onAbrir={onAbrir}
           seleccionada={seleccionadoId === p.id}
           onSeleccionar={() => seleccionar(p.id, seccion.id)}
+          reciente={recienteId === p.id}
+          onTerminarReciente={onTerminarReciente}
         />
       )))}
       {secciones.map((destino) => {
@@ -160,9 +167,11 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo, terminoBusqueda, puntoDestinoProyecto } = useUI();
+  const { seccionActivaProyecto, setSeccionActivaProyecto, abrirVistaArchivo, terminoBusqueda, puntoDestinoProyecto, sidebar3Abierto } = useUI();
   const [destinoAplicado, setDestinoAplicado] = useState(null);
   const destinoDesplazado = useRef(null);
+  const [idsPrevios, setIdsPrevios] = useState(null);
+  const [recienteId, setRecienteId] = useState(null);
   if (puntoDestinoProyecto !== destinoAplicado) {
     setDestinoAplicado(puntoDestinoProyecto);
     if (puntoDestinoProyecto) setSeleccionadoId(puntoDestinoProyecto);
@@ -170,6 +179,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   const termino = terminoBusqueda.trim();
   const puntos = termino ? todosLosPuntos.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : todosLosPuntos;
   const { vistaCompletaProyecto } = useAjustesVisuales();
+  const vistaCompleta = vistaCompletaProyecto && !sidebar3Abierto;
   const seleccionar = (id, seccionId, desplazar = false) => {
     setSeccionActivaProyecto(seccionId);
     setSeleccionadoId(id);
@@ -187,7 +197,19 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
     if (!tarjeta) return;
     destinoDesplazado.current = puntoDestinoProyecto;
     tarjeta.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [puntoDestinoProyecto, todosLosPuntos, vistaCompletaProyecto, seccionActivaProyecto]);
+  }, [puntoDestinoProyecto, todosLosPuntos, vistaCompleta, seccionActivaProyecto]);
+  const idsActuales = todosLosPuntos.filter((p) => !p.fijo).map((p) => p.id).join('|');
+  if (idsActuales !== idsPrevios) {
+    setIdsPrevios(idsActuales);
+    if (idsPrevios !== null && sidebar3Abierto) {
+      const anteriores = new Set(idsPrevios.split('|'));
+      const nuevos = todosLosPuntos.filter((p) => !p.fijo && !anteriores.has(p.id));
+      if (nuevos.length === 1) {
+        setRecienteId(nuevos[0].id);
+        setSeleccionadoId(nuevos[0].id);
+      }
+    }
+  }
   const estadoCarga = error ? 'error' : cargando ? 'cargando' : 'listo';
   const avisoError = (error || errorAccion) && (
     <div className="widget-lista-puntos-error">
@@ -210,7 +232,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   }
   const renderOpciones = (punto, deLaSeccion, seccionId) => {
     if (sesionFinalizada || punto.fijo || !puedeEscribir) return null;
-    const sinMover = termino ? [...opcionesOcultas, 'mover'] : opcionesOcultas;
+    const sinMover = termino || sidebar3Abierto ? [...opcionesOcultas, 'mover'] : opcionesOcultas;
     const ocultas = listaCerrada ? [...sinMover, 'mover', 'editar', 'eliminar', 'trasladar'] : sinMover;
     const delUsuario = deLaSeccion.filter((p) => !p.fijo);
     const indice = delUsuario.findIndex((p) => p.id === punto.id);
@@ -235,7 +257,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
     );
   };
 
-  if (vistaCompletaProyecto) {
+  if (vistaCompleta) {
     const seccionesVisibles = termino
       ? SECCIONES_DOCUMENTO.filter((s) => puntos.some((p) => p.seccion === s.id || (s.permiteCambiarSeccion && p.origenAG)))
       : SECCIONES_DOCUMENTO;
@@ -248,7 +270,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
         {seccionesVisibles.map((s) => (
           <div key={s.id} className="widget-lista-puntos-grupo">
             <div className="widget-lista-puntos-separador">{s.nombre}</div>
-            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO, termino)}
+            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO, termino, sidebar3Abierto, recienteId, () => setRecienteId(null))}
           </div>
         ))}
       </div>
@@ -261,7 +283,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   return (
     <div className="widget-lista-puntos-proyecto">
       {avisoError}
-      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO, termino) : (
+      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, seleccionadoId, seleccionar, SECCIONES_DOCUMENTO, termino, sidebar3Abierto, recienteId, () => setRecienteId(null)) : (
         estadoCarga === 'listo' && <div className="widget-lista-puntos-vacio">Sin secciones definidas.</div>
       )}
       {!seccion && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}

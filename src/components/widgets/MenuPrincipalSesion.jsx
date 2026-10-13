@@ -10,8 +10,8 @@ import { nombreTipoSesion } from '../../utils/sesiones.js';
 const VISTAS_MENU_PRINCIPAL = [
   { id: 'inicio', label: 'Inicio' },
   { id: 'proyecto', label: 'Proyecto del orden del día', expandible: true, mostrarTotalPuntos: true, estados: ['proxima', 'pendiente'] },
-  { id: 'sesion', label: 'Celebrar sesión', estados: ['proxima', 'celebrada'] },
-  { id: 'historial', label: 'Historial' },
+  { id: 'sesion', label: 'Celebrar sesión', estados: ['proxima', 'celebrada'], soloEscritura: true },
+  { id: 'historial', label: 'Historial', soloEscritura: true },
 ];
 
 export default function MenuPrincipalSesion() {
@@ -27,7 +27,7 @@ export default function MenuPrincipalSesion() {
   } = useUI();
 
   const estadoSesion = sesionSeleccionada?.estado;
-  const disponibles = VISTAS_MENU_PRINCIPAL.filter((v) => !v.estados || v.estados.includes(estadoSesion));
+  const disponibles = VISTAS_MENU_PRINCIPAL.filter((v) => (!v.estados || v.estados.includes(estadoSesion)) && (!v.soloEscritura || puedeEscribir));
   const vistaDisponible = disponibles.some((v) => v.id === vistaActual);
 
   useEffect(() => {
