@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import '../../styles/base/ListaExpandible.css';
 
-export default function ListaExpandible({ valorActual, etiquetaActual, opciones, onSeleccionar }) {
+export default function ListaExpandible({ valorActual, etiquetaActual, opciones, onSeleccionar, unaLinea = false, alinearDerecha = false }) {
   const [abierto, setAbierto] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [pos, setPos] = useState({ top: 0, left: 0, right: 0, width: 0, maxAncho: 0 });
   const botonRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -36,7 +36,14 @@ export default function ListaExpandible({ valorActual, etiquetaActual, opciones,
   function toggle() {
     if (!abierto && botonRef.current) {
       const rect = botonRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+      const anchoVentana = document.documentElement.clientWidth;
+      setPos({
+        top: rect.bottom + 6,
+        left: rect.left,
+        right: anchoVentana - rect.right,
+        width: rect.width,
+        maxAncho: (alinearDerecha ? rect.right : anchoVentana - rect.left) - 12,
+      });
     }
     setAbierto((v) => !v);
   }
@@ -54,13 +61,14 @@ export default function ListaExpandible({ valorActual, etiquetaActual, opciones,
       {abierto && createPortal(
         <div
           ref={menuRef}
-          className="base-lista-expandible-menu"
-          style={{ top: pos.top, left: pos.left, minWidth: pos.width }}
+          className={'base-lista-expandible-menu' + (unaLinea ? ' base-lista-expandible-menu-una-linea' : '')}
+          style={{ top: pos.top, ...(alinearDerecha ? { right: pos.right } : { left: pos.left }), minWidth: pos.width, ...(unaLinea ? { maxWidth: pos.maxAncho } : null) }}
         >
           {opciones.map((op) => (
             <div
               key={op.id}
               className={'base-lista-expandible-item' + (op.id === valorActual ? ' base-lista-expandible-item-activo' : '')}
+              title={op.title}
               onClick={() => { onSeleccionar(op.id); setAbierto(false); }}
             >
               {op.label}

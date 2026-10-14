@@ -25,6 +25,15 @@
   z-index: 2100;
   padding: 4px 0;
 }
+.base-lista-expandible-menu-una-linea {
+  width: max-content;
+  box-sizing: border-box;
+}
+.base-lista-expandible-menu-una-linea .base-lista-expandible-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .base-lista-expandible-item {
   padding: 6px 14px;
   font-size: 12.5px;

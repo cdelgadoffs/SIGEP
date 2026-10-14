@@ -10,7 +10,7 @@ import Modal from '../base/Modal.jsx';
 import { carpetasDeSesion, contenidoDeNivel, nombreConNumero } from '../../utils/arbolArchivos.js';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { formatoTamano } from '../../utils/correos.js';
-import { encabezadoSesion, listaNoPublicada, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
+import { encabezadoSesion, listaNoPublicada, hayActaVisible, claveAjusteInfoNavegador, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
 import { normalizarTexto, puntoCoincide } from '../../utils/puntos.js';
 import '../../styles/widgets/VistaNavegador.css';
 
@@ -58,7 +58,7 @@ export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
   const { abrirVistaArchivo, terminoBusqueda, elementoNavegador, setElementoNavegador, irAPunto } = useUI();
-  const { infoNavegadorAbierta, cambiarAjuste } = useAjustesVisuales();
+  const { infoNavegadorAbierta, infoNavegadorConActa, cambiarAjuste } = useAjustesVisuales();
   const [posicion, setPosicion] = useState({ sesionId: null, ruta: [], busqueda: '' });
   const [renombrando, setRenombrando] = useState(null);
   const [textoNuevo, setTextoNuevo] = useState('');
@@ -80,6 +80,8 @@ export default function VistaNavegador() {
   const nivel = carpeta ? contenidoDeNivel(carpeta, subruta) : null;
   const puedeRenombrar = puedeEscribir && !!sesionSeleccionada && sesionSeleccionada.estado !== 'celebrada' && sesionSeleccionada.estado !== 'no-celebrada';
   const titulo = encabezadoSesion(sesionSeleccionada).titulo;
+  const hayActa = hayActaVisible(sesionSeleccionada, puedeEscribir);
+  const infoAbierta = hayActa ? infoNavegadorConActa : infoNavegadorAbierta;
   const hayVistaProyecto = sesionSeleccionada?.estado === 'proxima' || sesionSeleccionada?.estado === 'pendiente';
   const claveSeleccionada = elementoNavegador && elementoNavegador.sesionId === sesionId ? elementoNavegador.clave : null;
 
@@ -291,9 +293,9 @@ export default function VistaNavegador() {
         />
         <span className="widget-vista-navegador-herramientas-espacio"></span>
         <BotonIcono
-          icono={infoNavegadorAbierta ? 'ri-information-fill' : 'ri-information-line'}
+          icono={infoAbierta ? 'ri-information-fill' : 'ri-information-line'}
           ariaLabel="Información"
-          onClick={() => cambiarAjuste('infoNavegadorAbierta', !infoNavegadorAbierta)}
+          onClick={() => cambiarAjuste(claveAjusteInfoNavegador(hayActa), !infoAbierta)}
         />
       </div>
 

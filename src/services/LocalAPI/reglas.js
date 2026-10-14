@@ -176,6 +176,7 @@ export function calcularEstados(sesiones) {
       horaFin: s.horaFin || null,
       enCurso: !!s.horaInicio && !s.celebrada,
       listaCerrada: !!s.listaCerrada,
+      actaBloques: s.celebrada && usuarioActual().rol === 'administrador' ? s.actaBloques ?? {} : null,
       asistentes: s.celebrada ? s.asistentes ?? null : null,
       version: s.version,
     };
@@ -707,6 +708,14 @@ function validarNodo(n, profundidad) {
   }
   if (n.content !== undefined && !Array.isArray(n.content)) throw invalido('Contenido inválido en el documento.');
   (n.content || []).forEach((hijo) => validarNodo(hijo, profundidad + 1));
+}
+
+const CLAVE_BLOQUE_ACTA = /^(intro|cierre|punto_(.+)_(contenido|votacion|acuerdo|anexo))$/;
+
+export function validarClaveBloqueActa(clave) {
+  const coincidencia = typeof clave === 'string' ? clave.match(CLAVE_BLOQUE_ACTA) : null;
+  if (!coincidencia) throw invalido('El bloque del acta no es válido.');
+  return { puntoId: coincidencia[2] ?? null };
 }
 
 export function validarDocumento(doc) {

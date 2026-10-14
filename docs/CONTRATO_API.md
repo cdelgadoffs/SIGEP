@@ -28,6 +28,7 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `horaFin` | string \| null | Hecho persistido: timestamp (ISO) en que terminó la celebración; la fija `celebrarSesion`. |
 | `enCurso` | bool | **Derivado.** `horaInicio` fijada y sesión aún no celebrada. |
 | `listaCerrada` | bool | Hecho persistido: el registro de puntos de la sesión está cerrado (ver "Lista cerrada"). Empieza en `false`. |
+| `actaBloques` | `{ [clave]: Documento }` \| null | Hecho persistido: los bloques del acta que el administrador editó a mano (ver "Acta editable"). Solo se entrega al `administrador` y con la sesión celebrada; para los demás es `null`. |
 | `version` | int | |
 
 Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas por `id`):
@@ -333,6 +334,21 @@ Una sesión se celebra en tres pasos: **cerrar la lista**, **comenzar** y **cele
 - **Estado y operaciones.** Solo la sesión **próxima** se puede comenzar o celebrar (`SESION_NO_PROXIMA`; las pendientes todavía no y las demás ya no). Una sesión **no celebrada** (roja) es de solo lectura: toda operación que cambie sus puntos, su lista, su asistencia o sus horarios se rechaza con `SESION_VENCIDA` (se puede seguir leyendo, y eliminar si es extraordinaria). Una sesión celebrada ya se rechazaba con `SESION_CELEBRADA`.
 - `celebrarSesion` exige que la sesión haya comenzado (`SESION_NO_COMENZADA`) y además de `celebrada` fija `horaFin` = ahora.
 - `editarHorario` corrige la **hora del día** de una marca ya existente, **conservando su fecha**: no se puede editar `horaFin` sin que exista, ni `horaInicio` sin haber comenzado (`VALIDACION`); el formato es `HH:MM` (`VALIDACION`); y la hora de inicio no puede ser posterior a la de fin (`HORARIO_INVALIDO`). **No se permite con la sesión ya celebrada** (`SESION_CELEBRADA`): las horas se corrigen mientras la sesión está en curso. (PlenoLOCAL las dejaba corregir siempre; SIGEP no.)
+
+### Acta editable
+
+El acta de una sesión celebrada se arma con **bloques** derivados de la sesión (introducción, y por cada punto su contenido, votación, acuerdo y anexo, más el cierre). El administrador puede editar cualquier bloque a mano; lo editado se guarda aparte, por bloque, y es la versión que se descarga. Los bloques sin editar se siguen generando solos con los datos de la sesión.
+
+- **Clave de bloque:** `intro`, `cierre` o `punto_<id del punto>_<contenido|votacion|acuerdo|anexo>`. El texto automático de cada bloque lo construye el cliente (`utils/actaSesion.js`); el servidor solo guarda la versión editada.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `editarBloqueActa(sesionId, clave, doc)` | id de sesión, clave de bloque y un `Documento` | `Sesion` actualizada (con `actaBloques`) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_NO_CELEBRADA`, `VALIDACION` |
+| `restablecerBloqueActa(sesionId, clave)` | id de sesión y clave de bloque | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_NO_CELEBRADA`, `VALIDACION` |
+
+- Solo el `administrador` escribe y **solo con la sesión celebrada** (`SESION_NO_CELEBRADA`): antes de celebrar el acta aún no existe. La clave debe tener el formato de arriba y, si es de un punto, ese punto debe existir en la sesión (`NO_ENCONTRADO`); los puntos **confidenciales** no se editan (`VALIDACION`). El documento se valida con la lista blanca de `Documento`.
+- `restablecerBloqueActa` borra la versión editada y es **idempotente** (si el bloque no estaba editado, no cambia nada).
+- El Word del acta (`utils/actaSesion.js`, también el archivo automático `Acta - …`) usa la versión editada de cada bloque cuando existe. El **acta pública** queda fuera por ahora.
 
 ### Asistencia a la sesión
 

@@ -9,6 +9,8 @@ export const {
   celebrarSesion,
   comenzarSesion,
   editarHorario,
+  editarBloqueActa,
+  restablecerBloqueActa,
   listarAsistencia,
   registrarAsistencia,
   listarFechasExtraordinaria,

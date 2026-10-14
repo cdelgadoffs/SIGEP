@@ -17,6 +17,8 @@ export const establecerListaCerrada = () => noImplementado();
 export const celebrarSesion = () => noImplementado();
 export const comenzarSesion = () => noImplementado();
 export const editarHorario = () => noImplementado();
+export const editarBloqueActa = () => noImplementado();
+export const restablecerBloqueActa = () => noImplementado();
 export const listarAsistencia = () => noImplementado();
 export const registrarAsistencia = () => noImplementado();
 export const listarFechasExtraordinaria = () => noImplementado();

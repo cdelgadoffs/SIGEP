@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi,
+  listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, editarBloqueActa as editarBloqueActaEnApi, restablecerBloqueActa as restablecerBloqueActaEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi,
   obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi, resumenArchivoCalendario,
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
@@ -46,6 +46,7 @@ export function ProyectoProvider({ children }) {
   const [avisos, setAvisos] = useState([]);
   const [papelera, setPapelera] = useState([]);
   const [sesionDeDatos, setSesionDeDatos] = useState(null);
+  const [recarga, setRecarga] = useState(0);
   const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, calendario: { cargando: true }, puntos: {} });
 
   function marcarCarga(recurso, estado) {
@@ -143,7 +144,7 @@ export function ProyectoProvider({ children }) {
       })
       .catch((e) => vigente && marcarCarga('puntos', { error: e }));
     return () => { vigente = false; };
-  }, [sesionActivaFecha]);
+  }, [sesionActivaFecha, recarga]);
 
   useEffect(() => {
     if (!sesionActivaFecha) return;
@@ -163,7 +164,7 @@ export function ProyectoProvider({ children }) {
       })
       .catch((e) => vigente && marcarCarga('asistencia', { error: e }));
     return () => { vigente = false; };
-  }, [sesionActivaFecha]);
+  }, [sesionActivaFecha, recarga]);
 
   useEffect(() => {
     if (!sesionActivaFecha) return;
@@ -183,7 +184,7 @@ export function ProyectoProvider({ children }) {
       })
       .catch((e) => vigente && marcarCarga('avisos', { error: e }));
     return () => { vigente = false; };
-  }, [sesionActivaFecha]);
+  }, [sesionActivaFecha, recarga]);
 
   useEffect(() => {
     let vigente = true;
@@ -219,7 +220,10 @@ export function ProyectoProvider({ children }) {
   async function generarCalendarioAnual(anio, datos, sobrescribir) {
     const respuesta = await generarCalendarioAnualEnApi(anio, datos, sobrescribir);
     aplicarCalendario(respuesta);
-    if (respuesta.generacion) setSesionActivaFecha(null);
+    if (respuesta.generacion) {
+      setSesionActivaFecha(null);
+      setRecarga((r) => r + 1);
+    }
     return respuesta.generacion;
   }
   async function agregarAsueto(anio, asueto) {
@@ -300,6 +304,14 @@ export function ProyectoProvider({ children }) {
   }
   async function editarHorario(cambios) {
     await editarHorarioEnApi(sesionActivaFecha, cambios);
+    aplicarSesiones(await listarSesiones());
+  }
+  async function editarBloqueActa(clave, doc) {
+    await editarBloqueActaEnApi(sesionActivaFecha, clave, doc);
+    aplicarSesiones(await listarSesiones());
+  }
+  async function restablecerBloqueActa(clave) {
+    await restablecerBloqueActaEnApi(sesionActivaFecha, clave);
     aplicarSesiones(await listarSesiones());
   }
   async function finalizarSesion() {
@@ -417,7 +429,7 @@ export function ProyectoProvider({ children }) {
     ASISTENCIA: asistencia, registrarAsistencia, refrescarAsistencia,
     sesionActivaFecha, cargarSesion, obtenerFechasExtraordinaria, crearSesionExtraordinaria, eliminarSesion,
     TIPOS_SESION: catalogos.tiposSesion,
-    sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
+    sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario, editarBloqueActa, restablecerBloqueActa,
     listaCerrada, establecerListaCerrada,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion, listarHistorialPunto,
     PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,

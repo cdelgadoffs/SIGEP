@@ -1,0 +1,65 @@
+.widget-encabezado-acta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  text-align: left;
+}
+.widget-encabezado-acta-titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.widget-encabezado-acta-subtitulo {
+  font-size: 12px;
+  color: #777;
+}
+.widget-encabezado-acta-estado {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #1e7d34;
+}
+.widget-encabezado-acta-estado-editada {
+  color: #b26a00;
+}
+.widget-encabezado-acta-acciones {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.widget-encabezado-acta-acciones .widget-boton-descargar-acta .base-boton-s {
+  width: auto;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.widget-encabezado-acta-acciones .base-lista-expandible-toggle {
+  background: #fff;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: #333;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background 0.15s, border-color 0.15s;
+}
+.widget-encabezado-acta-acciones .base-lista-expandible-toggle:hover {
+  background: #f5f7fa;
+  border-color: #a8a8a8;
+}
+.widget-encabezado-acta-acciones .base-lista-expandible-toggle-abierto {
+  border-color: #1a56db;
+}
+.widget-encabezado-acta-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-encabezado-acta-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

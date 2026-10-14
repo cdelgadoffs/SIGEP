@@ -114,8 +114,14 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
   let aviso = null;
   if (!hayPuntos && estadoCarga !== 'error') {
     aviso = estadoCarga === 'cargando'
-      ? <div className="widget-lista-puntos-vacio">Cargando…</div>
-      : <div className="widget-lista-puntos-vacio">{termino ? `Sin coincidencias para «${termino}» en ${seccion.nombre}.` : `Sin puntos en ${seccion.nombre}.`}</div>;
+      ? <div className="widget-lista-puntos-vacio"><i className="ri-loader-4-line widget-lista-puntos-vacio-icono"></i><span className="widget-lista-puntos-vacio-titulo">Cargando…</span></div>
+      : (
+        <div className="widget-lista-puntos-vacio">
+          <i className="ri-inbox-line widget-lista-puntos-vacio-icono"></i>
+          <span className="widget-lista-puntos-vacio-titulo">{termino ? `Sin coincidencias para «${termino}»` : 'Sin puntos registrados'}</span>
+          <span className="widget-lista-puntos-vacio-detalle">{seccion.nombre}</span>
+        </div>
+      );
   }
   return (
     <>

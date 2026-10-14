@@ -37,8 +37,16 @@ function sinValoresPorOmision(clave, valor) {
   return valor;
 }
 
+function conClavesOrdenadas(valor) {
+  if (Array.isArray(valor)) return valor.map(conClavesOrdenadas);
+  if (valor && typeof valor === 'object') {
+    return Object.fromEntries(Object.keys(valor).sort().map((k) => [k, conClavesOrdenadas(valor[k])]));
+  }
+  return valor;
+}
+
 export function claveDeDoc(doc) {
-  return JSON.stringify(doc, sinValoresPorOmision);
+  return JSON.stringify(conClavesOrdenadas(doc), sinValoresPorOmision);
 }
 
 export function docsEquivalentes(a, b) {

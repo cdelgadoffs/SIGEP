@@ -32,6 +32,14 @@ export function filtroDeOpcion(id) {
 
 export const TEXTO_LISTA_NO_PUBLICADA = 'La lista de puntos estará disponible cuando el administrador la cierre.';
 
+export function hayActaVisible(sesion, puedeEscribir) {
+  return !!sesion?.celebrada && !!puedeEscribir;
+}
+
+export function claveAjusteInfoNavegador(hayActa) {
+  return hayActa ? 'infoNavegadorConActa' : 'infoNavegadorAbierta';
+}
+
 export function listaNoPublicada(sesion, puedeEscribir) {
   return !puedeEscribir && !!sesion && !sesion.listaCerrada;
 }

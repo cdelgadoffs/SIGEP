@@ -18,7 +18,9 @@ export function AjustesVisualesProvider({ children }) {
   const value = {
     vistaCompletaProyecto: ajustes.vistaCompletaProyecto === true,
     vistaCompletaSesion: ajustes.vistaCompletaSesion === true,
-    infoNavegadorAbierta: ajustes.infoNavegadorAbierta === true,
+    infoNavegadorAbierta: ajustes.infoNavegadorAbierta !== false,
+    infoNavegadorConActa: ajustes.infoNavegadorConActa === true,
+    actaPlegada: ajustes.actaPlegada === true,
     filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'todos',
     filtroCinta: FILTROS_CINTA.some((f) => f.id === ajustes.filtroCinta) ? ajustes.filtroCinta : 'todas',
     brilloPantalla: NIVELES_BRILLO.includes(ajustes.brilloPantalla) ? ajustes.brilloPantalla : 0,

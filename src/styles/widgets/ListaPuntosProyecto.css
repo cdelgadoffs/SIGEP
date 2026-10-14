@@ -23,10 +23,26 @@
   border-bottom: 1px solid #c9c9ca;
 }
 .widget-lista-puntos-vacio {
-  color: #aaa;
-  font-size: 13px;
-  font-style: italic;
-  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 72px 16px;
+  text-align: center;
+  color: #888;
+}
+.widget-lista-puntos-vacio-icono {
+  font-size: 44px;
+  color: #c4c4c4;
+}
+.widget-lista-puntos-vacio-titulo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #555;
+}
+.widget-lista-puntos-vacio-detalle {
+  font-size: 14px;
+  color: #999;
 }
 .widget-lista-puntos-error {
   background: #fdecea;

@@ -4,6 +4,8 @@ export const ANCHO_SIDEBAR1 = 270;
 export const ANCHO_SIDEBAR2 = 250;
 export const ANCHO_SIDEBAR3 = 500;
 export const ANCHO_SIDEBAR4 = 320;
+export const ANCHO_ACTA = 560;
+export const ANCHO_PESTANA_ACTA = 34;
 export const ANCHO_SIDEBAR5 = 300;
 export const ANCHO_SIDEBAR5_ANCHO = 420;
 export const ANCHO_VISTA_PREVIA = 650;
@@ -37,6 +39,9 @@ export function UIProvider({ children }) {
   const [vistaPreviaAbierta, setVistaPreviaAbiertaInterna] = useState(false);
   const [elementoNavegador, setElementoNavegador] = useState(null);
   const [puntoDestinoProyecto, setPuntoDestinoProyecto] = useState(null);
+  const [actaEditandoDe, setActaEditandoDe] = useState(null);
+  const [actaPuntoFiltrado, setActaPuntoFiltrado] = useState(null);
+  const [actaEstadoGuardado, setActaEstadoGuardado] = useState('inactivo');
   const setSidebar4Abierto = useCallback((abierto) => {
     if (abierto) setVistaPreviaAbiertaInterna(false);
     setSidebar4AbiertoInterno(abierto);
@@ -71,6 +76,8 @@ export function UIProvider({ children }) {
   function setVistaActual(vista) {
     cerrarVistaArchivo();
     setElementoNavegador(null);
+    setActaEditandoDe(null);
+    setActaPuntoFiltrado(null);
     if (vista !== 'proyecto') setPuntoDestinoProyecto(null);
     if (vista !== 'proyecto') cerrarSidebar3();
     if (vista !== 'proyecto' && vista !== 'sesion') setSidebar4Abierto(false);
@@ -112,6 +119,9 @@ export function UIProvider({ children }) {
     vistaPreviaAbierta, setVistaPreviaAbierta,
     elementoNavegador, setElementoNavegador,
     puntoDestinoProyecto, setPuntoDestinoProyecto, irAPunto,
+    actaEditandoDe, setActaEditandoDe,
+    actaPuntoFiltrado, setActaPuntoFiltrado,
+    actaEstadoGuardado, setActaEstadoGuardado,
     izquierdaSidebar1, izquierdaSidebar3, izquierdaSidebar6,
   };
 

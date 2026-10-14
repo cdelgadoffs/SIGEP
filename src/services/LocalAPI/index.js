@@ -12,7 +12,7 @@ import {
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
-  nuevoEventoPunto, eventoCreacionSintetico, numerarArchivos, exigirSeccionAbierta, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
+  validarClaveBloqueActa, validarDocumento, nuevoEventoPunto, eventoCreacionSintetico, numerarArchivos, exigirSeccionAbierta, validarContactoCorreo, validarPlantillaCorreo, validarListaCorreo, validarCorreoRemitente, validarEnvioCorreo, textoPlanoDeDoc, diferenciaTexto, archivosAutomaticosDe,
 } from './reglas.js';
 
 async function estadoDeSesion(sesionId) {
@@ -350,6 +350,37 @@ export async function editarHorario(id, cambios) {
   }
   await guardar(STORE_SESIONES, { ...nuevo, version: sesion.version + 1 });
   return (await listarSesiones()).find((s) => s.id === id);
+}
+
+async function sesionConActaEditable(sesionId, clave) {
+  exigirEscritura();
+  const sesion = await obtener(STORE_SESIONES, sesionId);
+  if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
+  if (!sesion.celebrada) throw new ApiError('SESION_NO_CELEBRADA', 'El acta solo se edita cuando la sesión ya fue celebrada.');
+  const { puntoId } = validarClaveBloqueActa(clave);
+  if (puntoId) {
+    const punto = (await armarPuntos(sesionId)).find((p) => p.id === puntoId);
+    if (!punto) throw new ApiError('NO_ENCONTRADO', 'El punto del bloque no existe en la sesión.');
+    if (punto.confidencial) throw new ApiError('VALIDACION', 'Los puntos confidenciales no se editan en el acta.');
+  }
+  return sesion;
+}
+
+export async function editarBloqueActa(sesionId, clave, doc) {
+  const sesion = await sesionConActaEditable(sesionId, clave);
+  const documento = validarDocumento(doc);
+  await guardar(STORE_SESIONES, { ...sesion, actaBloques: { ...(sesion.actaBloques ?? {}), [clave]: documento }, version: sesion.version + 1 });
+  return (await listarSesiones()).find((s) => s.id === sesionId);
+}
+
+export async function restablecerBloqueActa(sesionId, clave) {
+  const sesion = await sesionConActaEditable(sesionId, clave);
+  if (sesion.actaBloques && clave in sesion.actaBloques) {
+    const resto = { ...sesion.actaBloques };
+    delete resto[clave];
+    await guardar(STORE_SESIONES, { ...sesion, actaBloques: resto, version: sesion.version + 1 });
+  }
+  return (await listarSesiones()).find((s) => s.id === sesionId);
 }
 
 async function armarPuntos(sesionId) {
