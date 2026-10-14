@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import { NIVELES_BRILLO } from '../../utils/brillo.js';
 import { URL_LOGO } from '../../utils/logo.js';
+import logoSigepNegro from '../../assets/SIGEP-black.jpg';
 import '../../styles/widgets/Topbar.css';
 
 const PREFIJO_BRILLO = 'brillo:';
@@ -39,6 +40,7 @@ export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesCon
           src={URL_LOGO}
           alt="Logo institucional"
         />
+        <img className="widget-topbar-logo-sigep" src={logoSigepNegro} alt="SIGEP" />
       </div>
       <div className="widget-topbar-right">
         <BuscadorGlobal value={terminoBusqueda} onChange={onCambiarBusqueda} placeholder="Buscar punto..." />

@@ -36,6 +36,13 @@
   width: auto;
   margin-right: 8px;
 }
+.widget-topbar-logo-sigep {
+  height: 40px;
+  width: auto;
+  padding-left: 14px;
+  border-left: 1px solid #3a3a3a;
+  mix-blend-mode: lighten;
+}
 .widget-topbar-right {
   display: flex;
   align-items: center;
