@@ -15,11 +15,19 @@ export function AjustesVisualesProvider({ children }) {
     setAjustes((a) => ({ ...a, [clave]: valor }));
   }
 
+  const infoNavegadorPorSesion = ajustes.infoNavegadorPorSesion && typeof ajustes.infoNavegadorPorSesion === 'object' && !Array.isArray(ajustes.infoNavegadorPorSesion)
+    ? ajustes.infoNavegadorPorSesion
+    : {};
+
+  function cambiarInfoNavegador(sesionId, abierto) {
+    cambiarAjuste('infoNavegadorPorSesion', { ...infoNavegadorPorSesion, [sesionId]: abierto });
+  }
+
   const value = {
     vistaCompletaProyecto: ajustes.vistaCompletaProyecto === true,
     vistaCompletaSesion: ajustes.vistaCompletaSesion === true,
-    infoNavegadorAbierta: ajustes.infoNavegadorAbierta !== false,
-    infoNavegadorConActa: ajustes.infoNavegadorConActa === true,
+    infoNavegadorPorSesion,
+    cambiarInfoNavegador,
     actaPlegada: ajustes.actaPlegada === true,
     filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'todos',
     filtroCinta: FILTROS_CINTA.some((f) => f.id === ajustes.filtroCinta) ? ajustes.filtroCinta : 'todas',

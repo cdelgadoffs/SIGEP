@@ -35,6 +35,7 @@ const ANCHO_SIDEBAR1_SESION = 340;
 export default function Sesion() {
   const {
     izquierdaSidebar1,
+    anchoSidebar1Sesion,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
     sidebar5Amplio,
@@ -47,7 +48,8 @@ export default function Sesion() {
   const { sesionSeleccionada, sesionFinalizada, CALENDARIO, PUNTOS } = useProyecto();
   const { vistaCompletaSesion, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
-  const izquierdaSidebar2 = izquierdaSidebar1 + ANCHO_SIDEBAR1_SESION;
+  const anchoSidebar1 = Math.max(ANCHO_SIDEBAR1_SESION, anchoSidebar1Sesion);
+  const izquierdaSidebar2 = izquierdaSidebar1 + anchoSidebar1;
   const panelIzquierda = sesionFinalizada ? izquierdaSidebar2 : izquierdaSidebar2 + ANCHO_SIDEBAR2;
 
   return (
@@ -66,7 +68,7 @@ export default function Sesion() {
       />
       <Sidebar1
         izquierda={izquierdaSidebar1}
-        ancho={ANCHO_SIDEBAR1_SESION}
+        ancho={anchoSidebar1}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
         accionesHeader={sesionSeleccionada ? <BadgeDinamico grande texto={sesionFinalizada ? 'Celebrada' : 'Previa'} tono={sesionFinalizada ? 'verde' : 'azul'} /> : null}

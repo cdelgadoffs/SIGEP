@@ -36,8 +36,8 @@ export function hayActaVisible(sesion, puedeEscribir) {
   return !!sesion?.celebrada && !!puedeEscribir;
 }
 
-export function claveAjusteInfoNavegador(hayActa) {
-  return hayActa ? 'infoNavegadorConActa' : 'infoNavegadorAbierta';
+export function infoNavegadorAbierta(porSesion, sesionId, hayActa) {
+  return porSesion[sesionId] ?? !hayActa;
 }
 
 export function listaNoPublicada(sesion, puedeEscribir) {

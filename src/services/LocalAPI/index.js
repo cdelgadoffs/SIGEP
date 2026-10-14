@@ -332,7 +332,8 @@ export async function comenzarSesion(id) {
 
 export async function editarHorario(id, cambios) {
   exigirEscritura();
-  const sesion = await exigirSesionAbierta(id);
+  const sesion = await obtener(STORE_SESIONES, id);
+  if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
   const claves = ['horaInicio', 'horaFin'].filter((k) => cambios && k in cambios);
   if (claves.length === 0) throw new ApiError('VALIDACION', 'Indica la hora de inicio o la de fin.');
   const nuevo = { ...sesion };

@@ -204,6 +204,18 @@
   font-size: 22px;
   color: #f2b01e;
 }
+.widget-vista-navegador-fila-vacia,
+.widget-vista-navegador-fila-vacia:hover {
+  background: transparent;
+  color: #aaa;
+  cursor: default;
+}
+.widget-vista-navegador-fila-vacia .widget-vista-navegador-icono-carpeta {
+  color: #c9c9c9;
+}
+.widget-vista-navegador-fila-vacia .widget-vista-navegador-col-tamano {
+  color: #bbb;
+}
 .widget-vista-navegador-icono {
   font-size: 20px;
 }

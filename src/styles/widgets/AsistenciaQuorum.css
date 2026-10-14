@@ -30,6 +30,7 @@
   gap: 8px;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .widget-asistencia-quorum-vacio {
   font-size: 12px;
@@ -71,18 +72,26 @@
   color: #fff;
 }
 .widget-asistencia-quorum-datos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   flex: 1;
   min-width: 0;
 }
 .widget-asistencia-quorum-nombre {
-  overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
   font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
 }
+.widget-asistencia-quorum-rol {
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
 .widget-asistencia-quorum-grado {
+  white-space: nowrap;
   font-size: 10.5px;
   color: #999;
 }

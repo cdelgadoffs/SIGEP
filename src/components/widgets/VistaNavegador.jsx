@@ -10,7 +10,7 @@ import Modal from '../base/Modal.jsx';
 import { carpetasDeSesion, contenidoDeNivel, nombreConNumero } from '../../utils/arbolArchivos.js';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { formatoTamano } from '../../utils/correos.js';
-import { encabezadoSesion, listaNoPublicada, hayActaVisible, claveAjusteInfoNavegador, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
+import { encabezadoSesion, listaNoPublicada, hayActaVisible, infoNavegadorAbierta, TEXTO_LISTA_NO_PUBLICADA } from '../../utils/sesiones.js';
 import { normalizarTexto, puntoCoincide } from '../../utils/puntos.js';
 import '../../styles/widgets/VistaNavegador.css';
 
@@ -58,7 +58,7 @@ export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
   const { sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
   const { abrirVistaArchivo, terminoBusqueda, elementoNavegador, setElementoNavegador, irAPunto } = useUI();
-  const { infoNavegadorAbierta, infoNavegadorConActa, cambiarAjuste } = useAjustesVisuales();
+  const { infoNavegadorPorSesion, cambiarInfoNavegador } = useAjustesVisuales();
   const [posicion, setPosicion] = useState({ sesionId: null, ruta: [], busqueda: '' });
   const [renombrando, setRenombrando] = useState(null);
   const [textoNuevo, setTextoNuevo] = useState('');
@@ -81,7 +81,7 @@ export default function VistaNavegador() {
   const puedeRenombrar = puedeEscribir && !!sesionSeleccionada && sesionSeleccionada.estado !== 'celebrada' && sesionSeleccionada.estado !== 'no-celebrada';
   const titulo = encabezadoSesion(sesionSeleccionada).titulo;
   const hayActa = hayActaVisible(sesionSeleccionada, puedeEscribir);
-  const infoAbierta = hayActa ? infoNavegadorConActa : infoNavegadorAbierta;
+  const infoAbierta = infoNavegadorAbierta(infoNavegadorPorSesion, sesionSeleccionada?.id, hayActa);
   const hayVistaProyecto = sesionSeleccionada?.estado === 'proxima' || sesionSeleccionada?.estado === 'pendiente';
   const claveSeleccionada = elementoNavegador && elementoNavegador.sesionId === sesionId ? elementoNavegador.clave : null;
 
@@ -295,7 +295,7 @@ export default function VistaNavegador() {
         <BotonIcono
           icono={infoAbierta ? 'ri-information-fill' : 'ri-information-line'}
           ariaLabel="Información"
-          onClick={() => cambiarAjuste(claveAjusteInfoNavegador(hayActa), !infoAbierta)}
+          onClick={() => cambiarInfoNavegador(sesionSeleccionada?.id, !infoAbierta)}
         />
       </div>
 
@@ -315,15 +315,17 @@ export default function VistaNavegador() {
 
           {filasCarpetas.map((f) => {
             const editando = renombrando === f.clave;
+            const vacia = f.cantidad === 0;
             return (
               <div
                 key={f.clave}
-                className={'widget-vista-navegador-fila' + (f.clave === claveSeleccionada ? ' widget-vista-navegador-fila-seleccionada' : '')}
-                onClick={(e) => { e.stopPropagation(); if (!editando) seleccionarCarpeta(f); }}
-                onDoubleClick={() => { if (!editando) f.alAbrir(); }}
+                className={'widget-vista-navegador-fila' + (f.clave === claveSeleccionada ? ' widget-vista-navegador-fila-seleccionada' : '') + (vacia ? ' widget-vista-navegador-fila-vacia' : '')}
+                onClick={(e) => { e.stopPropagation(); if (!editando && !vacia) seleccionarCarpeta(f); }}
+                onDoubleClick={() => { if (!editando && !vacia) f.alAbrir(); }}
                 role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !editando) f.alAbrir(); }}
+                aria-disabled={vacia}
+                tabIndex={vacia ? -1 : 0}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !editando && !vacia) f.alAbrir(); }}
               >
                 <span className="widget-vista-navegador-col-nombre">
                   <i className="ri-folder-3-fill widget-vista-navegador-icono-carpeta"></i>

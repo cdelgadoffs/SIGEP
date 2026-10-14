@@ -21,7 +21,7 @@ import { useUI, ALTO_TOPBAR, ALTO_CINTA, ANCHO_SIDEBAR1, ANCHO_SIDEBAR4, ANCHO_A
 import { useAuth } from '../context/AuthContext.jsx';
 import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
-import { encabezadoSesion, subtituloAsuetos, opcionesFiltroCinta, filtroDeOpcion, hayActaVisible, claveAjusteInfoNavegador } from '../utils/sesiones.js';
+import { encabezadoSesion, subtituloAsuetos, opcionesFiltroCinta, filtroDeOpcion, hayActaVisible, infoNavegadorAbierta } from '../utils/sesiones.js';
 
 const ANCHO_SIDEBAR1_CELEBRADA = 340;
 
@@ -36,7 +36,7 @@ export default function Inicio() {
   } = useUI();
   const { usuario, puedeEscribir } = useAuth();
   const { sesionSeleccionada, sesionFinalizada, CALENDARIO } = useProyecto();
-  const { infoNavegadorAbierta, infoNavegadorConActa, actaPlegada, filtroCinta, cambiarAjuste } = useAjustesVisuales();
+  const { infoNavegadorPorSesion, cambiarInfoNavegador, actaPlegada, filtroCinta, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const anchoSidebar1 = sesionFinalizada ? ANCHO_SIDEBAR1_CELEBRADA : ANCHO_SIDEBAR1;
   const panelIzquierda = izquierdaSidebar1 + anchoSidebar1;
@@ -45,7 +45,7 @@ export default function Inicio() {
   const hayActa = hayActaVisible(sesionSeleccionada, puedeEscribir);
   const actaAbierta = hayActa && !actaPlegada;
   const ocupaActa = hayActa ? (actaAbierta ? ANCHO_ACTA : ANCHO_PESTANA_ACTA) : 0;
-  const infoAbierta = hayActa ? infoNavegadorConActa : infoNavegadorAbierta;
+  const infoAbierta = infoNavegadorAbierta(infoNavegadorPorSesion, sesionSeleccionada?.id, hayActa);
 
   return (
     <>
@@ -93,7 +93,7 @@ export default function Inicio() {
         derecha={ocupaActa}
         arriba={arriba}
         titulo="Información"
-        onCerrar={() => cambiarAjuste(claveAjusteInfoNavegador(hayActa), false)}
+        onCerrar={() => cambiarInfoNavegador(sesionSeleccionada?.id, false)}
       >
         <InfoElementoNavegador />
       </Sidebar4>

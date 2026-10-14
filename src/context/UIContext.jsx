@@ -40,6 +40,7 @@ export function UIProvider({ children }) {
   const [elementoNavegador, setElementoNavegador] = useState(null);
   const [puntoDestinoProyecto, setPuntoDestinoProyecto] = useState(null);
   const [actaEditandoDe, setActaEditandoDe] = useState(null);
+  const [anchoSidebar1Sesion, setAnchoSidebar1Sesion] = useState(0);
   const [actaPuntoFiltrado, setActaPuntoFiltrado] = useState(null);
   const [actaEstadoGuardado, setActaEstadoGuardado] = useState('inactivo');
   const setSidebar4Abierto = useCallback((abierto) => {
@@ -120,6 +121,7 @@ export function UIProvider({ children }) {
     elementoNavegador, setElementoNavegador,
     puntoDestinoProyecto, setPuntoDestinoProyecto, irAPunto,
     actaEditandoDe, setActaEditandoDe,
+    anchoSidebar1Sesion, setAnchoSidebar1Sesion,
     actaPuntoFiltrado, setActaPuntoFiltrado,
     actaEstadoGuardado, setActaEstadoGuardado,
     izquierdaSidebar1, izquierdaSidebar3, izquierdaSidebar6,
