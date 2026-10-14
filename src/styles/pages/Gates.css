@@ -103,6 +103,14 @@
   background: #fff;
 }
 
+.lg-logo-sigep {
+  display: block;
+  width: 290px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 36px;
+}
+
 .lg-box {
   width: 100%;
   max-width: 360px;

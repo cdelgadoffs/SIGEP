@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
+import logoSigep from '../assets/SIGEP.jpg';
 import '../styles/pages/Gates.css';
 
 export default function LoginGate() {
@@ -45,6 +46,7 @@ export default function LoginGate() {
 
       <div className="lg-panel-claro">
         <div className="lg-box">
+          <img src={logoSigep} alt="SIGEP" className="lg-logo-sigep" />
           <div className="lg-box-eyebrow">Acceso institucional</div>
           <h2 className="lg-box-titulo">Inicia sesión</h2>
           <p className="lg-box-sub">Acceso restringido a cuentas institucionales autorizadas.</p>
