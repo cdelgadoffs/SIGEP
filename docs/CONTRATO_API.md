@@ -19,7 +19,8 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 |---|---|---|
 | `id` | string | Fecha `YYYY-MM-DD`. Es la identidad natural: **una sesión por fecha**. |
 | `tipo` | string | `id` del catálogo `tiposSesion` (`ordinaria` · `extraordinaria`). Hecho persistido; las sesiones anteriores al campo se leen como `ordinaria`. Las ordinarias salen del calendario; las extraordinarias se crean una a una (`crearSesionExtraordinaria`). |
-| `numeroSesion` | int \| null | Derivado. Consecutivo oficial **dentro de su año** (el de `id`) **y de su tipo**: reinicia en 1 cada año y las extraordinarias llevan su propia cuenta, sin avanzar la de las ordinarias. Avanza en `celebrada`, `proxima` y `pendiente`; una `no-celebrada` no tiene número (`null`) ni consume uno. |
+| `numeroSesion` | int \| null | Derivado. Consecutivo oficial **dentro de su año** (el de `id`) **y de su tipo**: reinicia en 1 cada año y las extraordinarias llevan su propia cuenta, sin avanzar la de las ordinarias. Avanza en `celebrada`, `proxima` y `pendiente`; una `no-celebrada` no tiene número (`null`) ni consume uno. Si alguna sesión del mismo año y tipo tiene `numeroAncla`, la cuenta continúa desde ese valor a partir de esa sesión (ver "Ajuste del número de sesión"). |
+| `numeroAncla` | int \| null | Hecho persistido (solo en el servidor; no se entrega al cliente): el número que el administrador fijó para esta sesión. Las sesiones posteriores del mismo año y tipo continúan la cuenta desde él. |
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
 | `celebradaEn` | string \| null | Timestamp. |
@@ -376,6 +377,19 @@ La asistencia es **por sesión** (en PlenoLOCAL era una marca global de cada int
 - `crearSesionExtraordinaria` rechaza con `FECHA_NO_DISPONIBLE` cualquier fecha que no esté en esa lista. Crea la sesión con `tipo: 'extraordinaria'`, sin celebrar y con la lista abierta.
 - `eliminarSesion` solo aplica a **extraordinarias** (`SESION_ORDINARIA` si es ordinaria; las ordinarias se ajustan con vacaciones o asuetos) y no a las celebradas (`SESION_CELEBRADA`). Elimina también los puntos de la sesión y sus archivos, en una sola transacción.
 - Las extraordinarias no pertenecen al calendario: `agregarAsueto` / `quitarAsueto` rechazan (`VALIDACION`) una sesión extraordinaria como origen o destino, y `generarCalendarioAnual` con `sobrescribir` las **archiva** junto con el resto de las sesiones del año (ver "Sobrescribir = archivar y empezar de cero").
+
+### Ajuste del número de sesión
+
+El consecutivo oficial se calcula desde el inicio del año; si el órgano ya había celebrado sesiones antes de usar el sistema, el administrador fija el número real con un **ancla**.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `establecerNumeroSesion(sesionId, numero)` | id de sesión, entero ≥ 1 | `Sesion[]` (lista completa, con derivados) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `SESION_CELEBRADA`, `SESION_VENCIDA` |
+
+- Guarda `numeroAncla` en la sesión. Desde esa sesión, la cuenta de su año y tipo continúa a partir de `numero` (las posteriores se renumeran solas); las anteriores no cambian.
+- Se quitan los `numeroAncla` de las sesiones **posteriores** del mismo año y tipo (el nuevo ancla manda desde su fecha); los de sesiones anteriores se conservan.
+- Solo aplica a sesiones no celebradas ni vencidas (`proxima` o `pendiente`). Una sesión celebrada conserva su número.
+- Regenerar el calendario con "sobrescribir" archiva las sesiones con su ancla: la numeración del año nuevo vuelve a empezar en 1.
 
 ### Operaciones de calendario
 

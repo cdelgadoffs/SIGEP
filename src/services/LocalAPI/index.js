@@ -292,6 +292,26 @@ export async function establecerListaCerrada(id, cerrada) {
   return (await listarSesiones()).find((s) => s.id === id);
 }
 
+export async function establecerNumeroSesion(id, numero) {
+  exigirEscritura();
+  if (!Number.isInteger(numero) || numero < 1 || numero > 9999) {
+    throw new ApiError('VALIDACION', 'El número de sesión debe ser un entero entre 1 y 9999.');
+  }
+  const sesion = await exigirSesionAbierta(id);
+  const clave = `${id.slice(0, 4)}_${tipoDeSesion(sesion)}`;
+  const ahora = new Date().toISOString();
+  const posteriores = (await obtenerTodos(STORE_SESIONES)).filter(
+    (s) => s.id > id && s.numeroAncla != null && `${s.id.slice(0, 4)}_${tipoDeSesion(s)}` === clave,
+  );
+  await escribirVarios({
+    poner: [
+      { store: STORE_SESIONES, valor: { ...sesion, numeroAncla: numero, version: sesion.version + 1, modificadaEn: ahora } },
+      ...posteriores.map((s) => ({ store: STORE_SESIONES, valor: { ...s, numeroAncla: null, version: s.version + 1, modificadaEn: ahora } })),
+    ],
+  });
+  return listarSesiones();
+}
+
 export async function celebrarSesion(id) {
   exigirEscritura();
   const sesion = await exigirSesionProxima(id);

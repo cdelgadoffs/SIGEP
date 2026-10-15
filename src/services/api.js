@@ -17,6 +17,7 @@ export const {
   crearSesionExtraordinaria,
   eliminarSesion,
   establecerListaCerrada,
+  establecerNumeroSesion,
   obtenerCalendario,
   generarCalendarioAnual,
   resumenArchivoCalendario,

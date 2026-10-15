@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, editarBloqueActa as editarBloqueActaEnApi, restablecerBloqueActa as restablecerBloqueActaEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi,
+  listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, editarBloqueActa as editarBloqueActaEnApi, restablecerBloqueActa as restablecerBloqueActaEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi, establecerNumeroSesion as establecerNumeroSesionEnApi,
   obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi, resumenArchivoCalendario,
   agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
@@ -298,6 +298,10 @@ export function ProyectoProvider({ children }) {
     aplicarSesiones(await listarSesiones());
     await refrescarPuntos();
   }
+  async function establecerNumeroSesion(numero) {
+    await establecerNumeroSesionEnApi(sesionActivaFecha, numero);
+    aplicarSesiones(await listarSesiones());
+  }
   async function comenzarSesion() {
     await comenzarSesionEnApi(sesionActivaFecha);
     aplicarSesiones(await listarSesiones());
@@ -430,7 +434,7 @@ export function ProyectoProvider({ children }) {
     sesionActivaFecha, cargarSesion, obtenerFechasExtraordinaria, crearSesionExtraordinaria, eliminarSesion,
     TIPOS_SESION: catalogos.tiposSesion,
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario, editarBloqueActa, restablecerBloqueActa,
-    listaCerrada, establecerListaCerrada,
+    listaCerrada, establecerListaCerrada, establecerNumeroSesion,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion, listarHistorialPunto,
     PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, renombrarArchivo, renombrarCarpeta, reordenarArchivos, descargarArchivo,

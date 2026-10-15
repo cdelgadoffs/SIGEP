@@ -14,6 +14,7 @@ export const listarGeneraciones = () => noImplementado();
 export const agregarAsueto = () => noImplementado();
 export const quitarAsueto = () => noImplementado();
 export const establecerListaCerrada = () => noImplementado();
+export const establecerNumeroSesion = () => noImplementado();
 export const celebrarSesion = () => noImplementado();
 export const comenzarSesion = () => noImplementado();
 export const editarHorario = () => noImplementado();

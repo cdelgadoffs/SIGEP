@@ -14,6 +14,7 @@ import ListaAdjuntosPunto from '../components/widgets/ListaAdjuntosPunto.jsx';
 import TituloFormularioPunto from '../components/widgets/TituloFormularioPunto.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
+import EditarNumeroSesion from '../components/widgets/EditarNumeroSesion.jsx';
 import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
 import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import BotonReciclaje from '../components/widgets/BotonReciclaje.jsx';
@@ -70,6 +71,7 @@ export default function ProyectoOrdenDia() {
         arriba={arribaSidebar}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
+        accionesHeader={<EditarNumeroSesion />}
         pie={sesionSeleccionada && !sesionFinalizada && !sidebar3Abierto ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <BotonCerrarLista />

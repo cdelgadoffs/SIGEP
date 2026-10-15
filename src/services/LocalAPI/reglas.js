@@ -164,7 +164,9 @@ export function calcularEstados(sesiones) {
     if (s.celebrada) estado = 'celebrada';
     else if (proxima && s.id === proxima.id) estado = 'proxima';
     else if (s.id < hoyISO) estado = 'no-celebrada';
-    if (estado !== 'no-celebrada') contadores[clave] = (contadores[clave] ?? 0) + 1;
+    if (estado !== 'no-celebrada') {
+      contadores[clave] = s.numeroAncla ?? (contadores[clave] ?? 0) + 1;
+    }
     return {
       id: s.id,
       tipo,
