@@ -4,6 +4,11 @@ services:
     runtime: static
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
+    buildFilter:
+      ignoredPaths:
+        - server/**
+        - docs/**
+        - "*.md"
     routes:
       - type: rewrite
         source: /*
