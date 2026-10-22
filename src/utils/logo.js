@@ -1,4 +1,4 @@
-export const URL_LOGO_DOCUMENTO = `${import.meta.env.BASE_URL}logo.png`;
+export const URL_LOGO_DOCUMENTO = `${import.meta.env.BASE_URL}vertical-negro.png`;
 
 export const URL_LOGO = 'https://raw.githubusercontent.com/cdelgadoffs/CGD/535876195bedc1b602f98438ee3a42ff11cbb817/logo.png';
 
