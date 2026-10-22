@@ -496,13 +496,34 @@ Notas de comportamiento:
 | `DUPLICADO` | Ya existe un integrante, contacto, plantilla o lista con ese correo o nombre. |
 | `LIMITE_ALCANZADO` | Ya hay 5 integrantes. |
 | `EN_USO` | El integrante figura en la votación de una sesión celebrada. |
-| `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
+| `NO_IMPLEMENTADO` | Solo `ServerConnection`, en las operaciones que el backend aún no implementa. |
+| `ERROR_SERVIDOR` | Error inesperado del servidor (HTTP 500). |
+| `SIN_CONEXION` | Solo `ServerConnection`: no se pudo contactar al servidor o su respuesta no es del contrato. Lo genera el cliente, nunca el servidor. |
+
+## Transporte HTTP (backend real)
+
+`ServerConnection` llama al backend en `VITE_API_URL` con JSON y `Authorization: Bearer <token>`. Cada error responde con su código HTTP y el cuerpo `{ codigo, mensaje }`: `VALIDACION` → 400, sin token o token inválido → 401 (`NO_AUTORIZADO`), `NO_AUTORIZADO` → 403, `NO_ENCONTRADO` → 404, `ERROR_SERVIDOR` → 500 y el resto de los códigos de regla → 409. Rutas implementadas:
+
+| Operación | Ruta |
+|---|---|
+| `listarCatalogos()` | `GET /catalogos` |
+| `listarSesiones()` | `GET /sesiones` |
+| `obtenerCalendario(anio)` | `GET /calendarios/{anio}` (sin calendario responde `null`) |
+| `generarCalendarioAnual(anio, datos, sobrescribir)` | `POST /calendarios/{anio}/generar` con `{ diaSemana, vacaciones, sobrescribir }` |
+| `resumenArchivoCalendario(anio)` | `GET /calendarios/{anio}/resumen-archivo` |
+| `listarGeneraciones(anio)` | `GET /calendarios/{anio}/generaciones` |
+| `agregarAsueto(anio, asueto)` | `POST /calendarios/{anio}/asuetos` con `{ fecha, destino }` |
+| `quitarAsueto(anio, fecha)` | `DELETE /calendarios/{anio}/asuetos/{fecha}` |
+| (usuario del token) | `GET /info/usuario` → `{ id, nombre, correo, rol }` |
+| (chequeo de salud, sin token) | `GET /salud` |
+
+Las demás operaciones se agregan aquí a medida que el backend las implementa.
 
 ## Autenticación y roles
 
 La identidad es **Microsoft Entra ID** (un solo tenant). El cliente inicia sesión con MSAL (código de autorización con PKCE, en ventana emergente) y el servidor valida el token en **cada** petición; el cliente nunca decide el rol.
 
-- **Token:** `Authorization: Bearer <access token>` con el scope del API (`access_as_user`). El servidor valida firma, tenant (`tid`), audiencia (`aud`) y el claim `roles`.
+- **Token:** `Authorization: Bearer <access token>` con el scope del API (`acceso`, en `VITE_ENTRA_API_SCOPE` como `api://<client id>/acceso`; tokens v2). El servidor valida firma, emisor (tenant), audiencia (`aud`), el scope (`scp`) y el claim `roles`.
 - **App Roles** (definidos en Entra y asignados a usuarios en la Enterprise Application; con "asignación requerida" quien no tiene rol no entra): `Administrador` y `Lector`. Internamente son los roles `administrador` y `lector`. Sin ninguno de los dos no se puede usar la aplicación (el cliente muestra "Acceso restringido" y el servidor rechaza con `NO_AUTORIZADO`).
 - **Usuario:** `{ id, nombre, correo, rol }`, tomado del token.
 - **Modos del cliente** (`VITE_AUTH_MODE`, igual que `VITE_API_MODE` para el API): `local` (prototipo: usuario simulado, rol de `VITE_LOCAL_ROL`, por omisión `administrador`) y `entra` (`VITE_ENTRA_CLIENT_ID`, `VITE_ENTRA_TENANT_ID` y `VITE_ENTRA_API_SCOPE`). En modo `local`, `LocalAPI` toma el rol del mismo "token" simulado, como lo haría el servidor al validar el real.

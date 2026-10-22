@@ -1,18 +1,51 @@
 import { ApiError } from '../ApiError.js';
+import { obtenerToken } from '../auth.js';
+
+const URL_API = (import.meta.env.VITE_API_URL ?? '').replace(/\/$/, '');
 
 function noImplementado() {
-  return Promise.reject(new ApiError('NO_IMPLEMENTADO', 'La conexión con el servidor aún no está implementada.'));
+  return Promise.reject(new ApiError('NO_IMPLEMENTADO', 'Esta función aún no está disponible en el servidor.'));
 }
 
-export const listarCatalogos = () => noImplementado();
-export const listarSesiones = () => noImplementado();
+async function solicitar(metodo, ruta, cuerpo) {
+  const token = await obtenerToken();
+  const encabezados = { Accept: 'application/json' };
+  if (token) encabezados.Authorization = `Bearer ${token}`;
+  if (cuerpo !== undefined) encabezados['Content-Type'] = 'application/json';
+
+  let respuesta;
+  try {
+    respuesta = await fetch(`${URL_API}${ruta}`, {
+      method: metodo,
+      headers: encabezados,
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+  } catch {
+    throw new ApiError('SIN_CONEXION', 'No se pudo contactar al servidor.');
+  }
+
+  const datos = await respuesta.json().catch(() => null);
+  if (respuesta.ok) return datos;
+  if (datos?.codigo) throw new ApiError(datos.codigo, datos.mensaje ?? 'El servidor rechazó la operación.');
+  throw new ApiError('SIN_CONEXION', `El servidor respondió con un error inesperado (${respuesta.status}).`);
+}
+
+export const listarCatalogos = () => solicitar('GET', '/catalogos');
+export const listarSesiones = () => solicitar('GET', '/sesiones');
 export const crearSesiones = () => noImplementado();
-export const obtenerCalendario = () => noImplementado();
-export const generarCalendarioAnual = () => noImplementado();
-export const resumenArchivoCalendario = () => noImplementado();
-export const listarGeneraciones = () => noImplementado();
-export const agregarAsueto = () => noImplementado();
-export const quitarAsueto = () => noImplementado();
+export const obtenerCalendario = (anio) => solicitar('GET', `/calendarios/${anio}`);
+export const generarCalendarioAnual = (anio, datos, sobrescribir) =>
+  solicitar('POST', `/calendarios/${anio}/generar`, {
+    diaSemana: datos?.diaSemana,
+    vacaciones: datos?.vacaciones ?? [],
+    sobrescribir: sobrescribir === true,
+  });
+export const resumenArchivoCalendario = (anio) => solicitar('GET', `/calendarios/${anio}/resumen-archivo`);
+export const listarGeneraciones = (anio) => solicitar('GET', `/calendarios/${anio}/generaciones`);
+export const agregarAsueto = (anio, asueto) =>
+  solicitar('POST', `/calendarios/${anio}/asuetos`, { fecha: asueto?.fecha, destino: asueto?.destino });
+export const quitarAsueto = (anio, fecha) =>
+  solicitar('DELETE', `/calendarios/${anio}/asuetos/${encodeURIComponent(fecha)}`);
 export const establecerListaCerrada = () => noImplementado();
 export const establecerNumeroSesion = () => noImplementado();
 export const celebrarSesion = () => noImplementado();
