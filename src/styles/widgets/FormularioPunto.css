@@ -143,3 +143,9 @@
 .widget-formulario-punto-editor-contenido .widget-editor-texto-contenido {
   font-weight: 700;
 }
+.widget-formulario-punto-boton-borrador .base-boton-s:not(:disabled) {
+  color: #1a5fd0;
+}
+.widget-formulario-punto-boton-confirmar .base-boton-s:not(:disabled) {
+  color: #1e8e3e;
+}

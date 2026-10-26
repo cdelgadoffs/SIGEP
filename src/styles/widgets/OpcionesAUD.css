@@ -18,3 +18,9 @@
   justify-content: flex-end;
   gap: 8px;
 }
+.widget-opciones-aud-borradores .base-boton-s {
+  color: #1a5fd0;
+}
+.widget-opciones-aud-eliminar .base-boton-s:not(:disabled) {
+  color: #c62828;
+}

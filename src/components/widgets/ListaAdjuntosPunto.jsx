@@ -12,14 +12,15 @@ import '../../styles/widgets/ListaAdjuntosPunto.css';
 const rellenar = (numero) => String(numero).padStart(2, '0');
 
 export default function ListaAdjuntosPunto() {
-  const { PUNTOS, SECCIONES_DOCUMENTO, eliminarArchivo, reordenarArchivos } = useProyecto();
-  const { puntoEnEdicionId, seccionNuevoPunto, seccionFormulario, archivosNuevoPunto, setArchivosNuevoPunto } = useUI();
+  const { PUNTOS, PAPELERA, SECCIONES_DOCUMENTO, eliminarArchivo, reordenarArchivos } = useProyecto();
+  const { puntoEnEdicionId, borradorEnEdicionId, seccionNuevoPunto, seccionFormulario, archivosNuevoPunto, setArchivosNuevoPunto } = useUI();
   const [seleccionadoId, setSeleccionadoId] = useState(null);
   const [archivoAQuitar, setArchivoAQuitar] = useState(null);
   const [errorQuitar, setErrorQuitar] = useState(null);
   const [errorOrden, setErrorOrden] = useState(null);
 
   const punto = puntoEnEdicionId ? PUNTOS.find((p) => p.id === puntoEnEdicionId) : null;
+  const borrador = borradorEnEdicionId ? PAPELERA.find((p) => p.id === borradorEnEdicionId) : null;
   const seccion = SECCIONES_DOCUMENTO.find((s) => s.id === (seccionFormulario ?? seccionNuevoPunto));
 
   const items = punto
@@ -27,10 +28,15 @@ export default function ListaAdjuntosPunto() {
         clave: a.id ?? `sin-id-${i}`, nombre: a.nombre, ruta: a.ruta ?? '', numero: a.origen === 'punto' ? null : a.numero,
         guardado: a.id ? a : null, suelto: !!a.id && !a.ruta && !a.autogenerado, quitable: !!a.id && !a.autogenerado,
       }))
-    : numerarPendientes(archivosNuevoPunto, seccion?.primerNumeroArchivo ?? 1, !!seccion?.requiereAcuerdo).map((e) => ({
-        clave: `${e.ruta}/${e.archivo.name}-${e.indice}`, nombre: e.archivo.name, ruta: e.ruta, numero: e.numero,
-        indice: e.indice, suelto: !e.ruta, quitable: true,
-      }));
+    : [
+        ...(borrador?.archivos ?? []).map((a) => ({
+          clave: a.id, nombre: a.nombre, ruta: a.ruta ?? '', numero: null, suelto: false, quitable: false,
+        })),
+        ...numerarPendientes(archivosNuevoPunto, seccion?.primerNumeroArchivo ?? 1, !!seccion?.requiereAcuerdo).map((e) => ({
+          clave: `${e.ruta}/${e.archivo.name}-${e.indice}`, nombre: e.archivo.name, ruta: e.ruta, numero: borrador ? null : e.numero,
+          indice: e.indice, suelto: !e.ruta, quitable: true,
+        })),
+      ];
   const sueltos = items.filter((item) => item.suelto);
 
   async function mover(item, delta) {

@@ -5,7 +5,7 @@ import { NIVELES_BRILLO } from '../utils/brillo.js';
 
 const AjustesVisualesContext = createContext(null);
 
-const FILTROS_RECICLAJE = ['todos', 'pendiente', 'eliminado'];
+const FILTROS_RECICLAJE = ['borrador', 'todos', 'pendiente', 'eliminado'];
 
 export function AjustesVisualesProvider({ children }) {
   const [ajustes, setAjustes] = useState(leerAjustesVisuales);
@@ -29,7 +29,7 @@ export function AjustesVisualesProvider({ children }) {
     infoNavegadorPorSesion,
     cambiarInfoNavegador,
     actaPlegada: ajustes.actaPlegada === true,
-    filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'todos',
+    filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'borrador',
     filtroCinta: FILTROS_CINTA.some((f) => f.id === ajustes.filtroCinta) ? ajustes.filtroCinta : 'todas',
     brilloPantalla: NIVELES_BRILLO.includes(ajustes.brilloPantalla) ? ajustes.brilloPantalla : 0,
     cambiarAjuste,

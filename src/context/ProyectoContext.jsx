@@ -6,6 +6,7 @@ import {
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, trasladarPunto as trasladarPuntoEnApi, listarPapelera,
+  guardarPuntoBorrador as guardarPuntoBorradorEnApi, editarPuntoBorrador as editarPuntoBorradorEnApi, eliminarPuntoBorrador as eliminarPuntoBorradorEnApi, moverABorradores as moverABorradoresEnApi,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi, renombrarArchivo as renombrarArchivoEnApi, renombrarCarpeta as renombrarCarpetaEnApi, reordenarArchivos as reordenarArchivosEnApi,
   descargarArchivo as descargarArchivoEnApi,
   listarAvisosEdicion, listarHistorialPunto, enviarAvisoEdicion as enviarAvisoEdicionEnApi, descartarAvisoEdicion as descartarAvisoEdicionEnApi,
@@ -280,6 +281,35 @@ export function ProyectoProvider({ children }) {
     await refrescarPuntos();
     await refrescarPapelera();
   }
+  async function guardarPuntoBorrador(datos) {
+    const borrador = await guardarPuntoBorradorEnApi(datos);
+    await refrescarPapelera();
+    return borrador;
+  }
+  async function editarPuntoBorrador(id, version, cambios) {
+    try {
+      const borrador = await editarPuntoBorradorEnApi(id, version, cambios);
+      await refrescarPapelera();
+      return borrador;
+    } catch (e) {
+      if (e.codigo === 'CONFLICTO') await refrescarPapelera();
+      throw e;
+    }
+  }
+  async function registrarPuntoBorrador(id, version, cambios) {
+    await editarPuntoBorrador(id, version, cambios);
+    await restaurarPunto(id);
+  }
+  async function moverABorradores(id) {
+    await moverABorradoresEnApi(id);
+    await refrescarPuntos();
+    await refrescarPapelera();
+    await refrescarAvisos();
+  }
+  async function eliminarPuntoBorrador(id) {
+    await eliminarPuntoBorradorEnApi(id);
+    await refrescarPapelera();
+  }
   async function trasladarPunto(id, sesionDestinoId) {
     await trasladarPuntoEnApi(id, sesionDestinoId);
     await refrescarPuntos();
@@ -436,7 +466,7 @@ export function ProyectoProvider({ children }) {
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario, editarBloqueActa, restablecerBloqueActa,
     listaCerrada, establecerListaCerrada, establecerNumeroSesion,
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion, listarHistorialPunto,
-    PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
+    PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, guardarPuntoBorrador, editarPuntoBorrador, registrarPuntoBorrador, eliminarPuntoBorrador, moverABorradores, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, renombrarArchivo, renombrarCarpeta, reordenarArchivos, descargarArchivo,
     CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
     guardarBorrador, obtenerBorrador, eliminarBorrador,

@@ -34,6 +34,8 @@ export function UIProvider({ children }) {
   const [acordeonAbierto, setAcordeonAbierto] = useState(false);
   const [seccionNuevoPunto, setSeccionNuevoPunto] = useState(null);
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
+  const [borradorEnEdicionId, setBorradorEnEdicionId] = useState(null);
+  const [borradorRecienteId, setBorradorRecienteId] = useState(null);
   const [seccionActivaProyecto, setSeccionActivaProyecto] = useState(null);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
   const [vistaPreviaAbierta, setVistaPreviaAbiertaInterna] = useState(false);
@@ -45,6 +47,7 @@ export function UIProvider({ children }) {
   const [actaEstadoGuardado, setActaEstadoGuardado] = useState('inactivo');
   const setSidebar4Abierto = useCallback((abierto) => {
     if (abierto) setVistaPreviaAbiertaInterna(false);
+    else setBorradorRecienteId(null);
     setSidebar4AbiertoInterno(abierto);
   }, []);
   const setVistaPreviaAbierta = useCallback((abierta) => {
@@ -60,12 +63,14 @@ export function UIProvider({ children }) {
     setSidebar5Abierto((a) => !a);
   }
   function abrirEdicionPunto(id) {
+    setBorradorEnEdicionId(null);
     setPuntoEnEdicionId(id);
     setSidebar3Abierto(true);
   }
   function cerrarSidebar3() {
     setSidebar3Abierto(false);
     setPuntoEnEdicionId(null);
+    setBorradorEnEdicionId(null);
     setSeccionFormulario(null);
   }
   function abrirVistaArchivo(archivo, opciones) {
@@ -83,6 +88,14 @@ export function UIProvider({ children }) {
     if (vista !== 'proyecto') cerrarSidebar3();
     if (vista !== 'proyecto' && vista !== 'sesion') setSidebar4Abierto(false);
     setVistaActualInterna(vista);
+  }
+  function continuarBorrador(id, seccionId) {
+    setVistaActual('proyecto');
+    setPuntoEnEdicionId(null);
+    setSeccionNuevoPunto(seccionId);
+    setSeccionActivaProyecto(seccionId);
+    setBorradorEnEdicionId(id);
+    setSidebar3Abierto(true);
   }
   function irAPunto(puntoId, seccionId) {
     setSeccionActivaProyecto(seccionId);
@@ -115,6 +128,8 @@ export function UIProvider({ children }) {
     acordeonAbierto, setAcordeonAbierto,
     seccionNuevoPunto, setSeccionNuevoPunto,
     puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto,
+    borradorEnEdicionId, setBorradorEnEdicionId, continuarBorrador,
+    borradorRecienteId, setBorradorRecienteId,
     seccionActivaProyecto, setSeccionActivaProyecto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
     vistaPreviaAbierta, setVistaPreviaAbierta,

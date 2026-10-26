@@ -8,6 +8,7 @@ import BotonIcono from '../base/BotonIcono.jsx';
 import EditorTexto from './EditorTexto.jsx';
 import VistaPreviaFlotante from './VistaPreviaFlotante.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
+import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../../context/UIContext.jsx';
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import { docDesdeTexto, docVacio, esDocVacio } from '../../utils/documento.js';
@@ -43,8 +44,9 @@ function aDocumentos(borrador) {
 }
 
 export default function FormularioPunto() {
-  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, CONSIDERANDOS_FIJOS, sesionActivaFecha, PUNTOS, listaCerrada, agregarPunto, editarPunto, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, izquierdaSidebar3, archivosNuevoPunto, setArchivosNuevoPunto, setSeccionFormulario } = useUI();
+  const { SECCIONES_DOCUMENTO, REMITENTES, CATEGORIAS, PLANTILLAS_ACTA, TIPOS_BLOQUE_ACTA, TEXTOS_ACTA, CONSIDERANDOS_FIJOS, sesionActivaFecha, PUNTOS, PAPELERA, listaCerrada, agregarPunto, editarPunto, guardarPuntoBorrador, editarPuntoBorrador, registrarPuntoBorrador, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
+  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId, borradorEnEdicionId, izquierdaSidebar3, archivosNuevoPunto, setArchivosNuevoPunto, setSeccionFormulario, setSidebar4Abierto, setBorradorRecienteId } = useUI();
+  const { filtroReciclaje, cambiarAjuste } = useAjustesVisuales();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
   const [ultimaSeleccion, setUltimaSeleccion] = useState({ categoria: '', remitente: '' });
   const formularioVacio = (seccion) => ({ ...estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision, CONSIDERANDOS_FIJOS), ...ultimaSeleccion });
@@ -62,10 +64,16 @@ export default function FormularioPunto() {
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   const punto = puntoEnEdicionId ? PUNTOS.find((p) => p.id === puntoEnEdicionId) : null;
   const editando = !!punto;
+  const borrador = borradorEnEdicionId ? PAPELERA.find((p) => p.id === borradorEnEdicionId) : null;
+  const enBorrador = !!borrador;
 
   useEffect(() => {
     if (puntoEnEdicionId && !punto) cerrarSidebar3();
   }, [puntoEnEdicionId, punto]);
+
+  useEffect(() => {
+    if (borradorEnEdicionId && !borrador) cerrarSidebar3();
+  }, [borradorEnEdicionId, borrador]);
 
   useEffect(() => {
     if (!sidebar3Abierto) return;
@@ -94,6 +102,34 @@ export default function FormularioPunto() {
       }
       return;
     }
+    if (borradorEnEdicionId) {
+      const original = PAPELERA.find((p) => p.id === borradorEnEdicionId);
+      if (original) {
+        const base = formularioVacio(original.seccion);
+        const remitente = REMITENTES.find((r) => r.id === original.remitente);
+        setForm({
+          ...base,
+          seccion: original.seccion,
+          categoria: remitente?.categoria ?? base.categoria,
+          remitente: remitente?.id ?? base.remitente,
+          nombreCarpeta: original.nombreCarpeta ?? '',
+          contenidoDoc: original.contenidoDoc ?? docDesdeTexto(original.contenido),
+          acuerdoDoc: original.acuerdoDoc ?? docDesdeTexto(original.acuerdo),
+          confidencial: original.confidencial === true,
+          archivos: [],
+          plantilla: original.plantilla,
+          introDoc: original.introDoc,
+          puenteDoc: original.puenteDoc,
+          bloquesActa: original.bloquesActa,
+          considerandosFijos: original.considerandosFijos ?? [],
+        });
+        setArchivosNuevoPunto([]);
+        setAporte(true);
+        setPreviaVisible(false);
+        reiniciarEditor();
+      }
+      return;
+    }
     let vigente = true;
     const seccion = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
     setForm(formularioVacio(seccion));
@@ -115,7 +151,7 @@ export default function FormularioPunto() {
         setRestaurado(true);
       });
     return () => { vigente = false; };
-  }, [sidebar3Abierto, seccionNuevoPunto, puntoEnEdicionId]);
+  }, [sidebar3Abierto, seccionNuevoPunto, puntoEnEdicionId, borradorEnEdicionId]);
 
   useEffect(() => {
     const campo = carpetaRef.current;
@@ -156,7 +192,7 @@ export default function FormularioPunto() {
   const remitentesDeCategoria = REMITENTES.filter((r) => r.categoria === categoriaActual?.id);
   const remitenteActual = remitentesDeCategoria.some((r) => r.id === form.remitente) ? form.remitente : (remitentesDeCategoria[0]?.id || '');
   const seccionOrigen = SECCIONES_DOCUMENTO.find((s) => s.id === seccionNuevoPunto);
-  const mostrarSeccion = editando || !!seccionOrigen?.permiteCambiarSeccion;
+  const mostrarSeccion = editando || enBorrador || !!seccionOrigen?.permiteCambiarSeccion;
 
   function cambiarCategoria(id) {
     const remitente = REMITENTES.find((r) => r.categoria === id)?.id || '';
@@ -200,35 +236,70 @@ export default function FormularioPunto() {
     reiniciarEditor();
   }
 
+  function datosDelFormulario() {
+    return {
+      seccion: form.seccion,
+      remitente: remitenteActual,
+      nombreCarpeta: form.nombreCarpeta.trim(),
+      contenidoDoc: form.contenidoDoc,
+      acuerdoDoc: esInforme ? docVacio() : form.acuerdoDoc,
+      confidencial: form.confidencial,
+      plantilla: form.plantilla,
+      introDoc: form.introDoc,
+      puenteDoc: form.puenteDoc,
+      bloquesActa: form.bloquesActa,
+      considerandosFijos: form.considerandosFijos,
+    };
+  }
+
+  function reiniciarTrasEnviar() {
+    setAvisoArchivos(null);
+    setArchivosNuevoPunto([]);
+    setForm(formularioVacio(form.seccion));
+    setAporte(false);
+    setPreviaVisible(false);
+    reiniciarEditor();
+  }
+
+  const origenAGActual = !!seccionOrigen?.permiteCambiarSeccion && form.seccion !== seccionOrigen.id;
+
+  async function guardarComoBorrador() {
+    setEnviando(true);
+    setError(null);
+    try {
+      const datos = { ...datosDelFormulario(), origenAG: origenAGActual, archivos: archivosNuevoPunto };
+      if (enBorrador) {
+        await editarPuntoBorrador(borrador.id, borrador.version, datos);
+        setBorradorRecienteId(borrador.id);
+        cerrarSidebar3();
+      } else {
+        const nuevo = await guardarPuntoBorrador(datos);
+        setBorradorRecienteId(nuevo?.id ?? null);
+        reiniciarTrasEnviar();
+      }
+      if (filtroReciclaje !== 'borrador' && filtroReciclaje !== 'todos') cambiarAjuste('filtroReciclaje', 'borrador');
+      setSidebar4Abierto(true);
+    } catch (e) {
+      setError(e.mensaje || 'No se pudo guardar el borrador.');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   async function confirmar() {
     setEnviando(true);
     setError(null);
     try {
-      const datos = {
-        seccion: form.seccion,
-        remitente: remitenteActual,
-        nombreCarpeta: form.nombreCarpeta.trim(),
-        contenidoDoc: form.contenidoDoc,
-        acuerdoDoc: esInforme ? docVacio() : form.acuerdoDoc,
-        confidencial: form.confidencial,
-        plantilla: form.plantilla,
-        introDoc: form.introDoc,
-        puenteDoc: form.puenteDoc,
-        bloquesActa: form.bloquesActa,
-        considerandosFijos: form.considerandosFijos,
-      };
-      if (editando) {
+      const datos = datosDelFormulario();
+      if (enBorrador) {
+        await registrarPuntoBorrador(borrador.id, borrador.version, { ...datos, origenAG: origenAGActual, archivos: archivosNuevoPunto });
+        cerrarSidebar3();
+      } else if (editando) {
         await editarPunto(punto.id, punto.version, datos);
         cerrarSidebar3();
       } else {
-        const origenAG = !!seccionOrigen?.permiteCambiarSeccion && form.seccion !== seccionOrigen.id;
-        await agregarPunto({ ...datos, origenAG, archivos: archivosNuevoPunto });
-        setAvisoArchivos(null);
-        setArchivosNuevoPunto([]);
-        setForm(formularioVacio(form.seccion));
-        setAporte(false);
-        setPreviaVisible(false);
-        reiniciarEditor();
+        await agregarPunto({ ...datos, origenAG: origenAGActual, archivos: archivosNuevoPunto });
+        reiniciarTrasEnviar();
       }
     } catch (e) {
       setError(e.mensaje || (editando ? 'No se pudo guardar el punto.' : 'No se pudo añadir el punto.'));
@@ -243,6 +314,9 @@ export default function FormularioPunto() {
     : nombreCarpetaLimpio === '.' || nombreCarpetaLimpio === '..' || /[\\/:*?"<>|]/.test(nombreCarpetaLimpio)
       ? 'No puede incluir \\ / : * ? " < > |.'
       : null;
+
+  const puedeGuardarBorrador = !enviando && !errorNombreCarpeta && !!seccionActual && !seccionActual.soloPuntosFijos
+    && (enBorrador || aporte || archivosNuevoPunto.length > 0);
 
   const puedeConfirmar = !enviando && !errorNombreCarpeta && !!seccionActual && !!remitenteActual && !esDocVacio(form.contenidoDoc) && (esInforme || !esDocVacio(form.acuerdoDoc));
 
@@ -364,11 +438,18 @@ export default function FormularioPunto() {
       )}
 
       <div className="widget-formulario-punto-acciones">
-        {editando ? <span></span> : <BotonIcono icono="ri-eraser-line" ariaLabel="Borrar formulario" onClick={borrar} />}
+        {editando || enBorrador ? <span></span> : <BotonIcono icono="ri-eraser-line" ariaLabel="Borrar formulario" onClick={borrar} />}
         <div className="widget-formulario-punto-acciones-grupo">
           <span className="widget-formulario-punto-atajo">Ctrl + Enter para {editando ? 'guardar' : 'añadir'}</span>
           <BotonS variant="claro" onClick={cancelar}>Cancelar</BotonS>
-          <BotonS variant="claro" onClick={confirmar} disabled={!puedeConfirmar}>{editando ? 'Guardar' : 'Añadir'}</BotonS>
+          {!editando && (
+            <span className="widget-formulario-punto-boton-borrador">
+              <BotonS variant="claro" onClick={guardarComoBorrador} disabled={!puedeGuardarBorrador}>Guardar borrador</BotonS>
+            </span>
+          )}
+          <span className="widget-formulario-punto-boton-confirmar">
+            <BotonS variant="claro" onClick={confirmar} disabled={!puedeConfirmar}>{editando ? 'Guardar' : 'Añadir'}</BotonS>
+          </span>
         </div>
       </div>
       </div>

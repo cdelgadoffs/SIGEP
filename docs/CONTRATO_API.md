@@ -414,7 +414,7 @@ El consecutivo oficial se calcula desde el inicio del año; si el órgano ya hab
 
 Un punto que sale de la lista de una sesión **no se pierde**: pasa a la **papelera**, un almacén **global**, que no pertenece a ninguna sesión. Por eso sobrevive a todo: la eliminación de una extraordinaria, el archivado de un año al regenerar el calendario con "sobrescribir" y la celebración. Ninguna operación de sesión o de calendario toca la papelera, y los archivos adjuntos del punto se conservan.
 
-Una entrada de la papelera es un `Punto` sin `sesionId`, con estos campos más: `motivo` (`pendiente` · `eliminado`), `sesionOrigenId` (id de la sesión de la que salió, aunque ya no exista), `movidoEn` y `movidoPor`. No lleva `numero`. Para el `lector`, los confidenciales salen ocultos como en `listarPuntos`.
+Una entrada de la papelera es un `Punto` sin `sesionId`, con estos campos más: `motivo` (`pendiente` · `eliminado` · `borrador`), `sesionOrigenId` (id de la sesión de la que salió, aunque ya no exista; `null` en un borrador), `movidoEn` y `movidoPor`. No lleva `numero`. Para el `lector`, los confidenciales salen ocultos como en `listarPuntos`, y los borradores no se le entregan.
 
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
@@ -429,6 +429,22 @@ Una entrada de la papelera es un `Punto` sin `sesionId`, con estos campos más: 
 - Retirar, eliminar, restaurar y celebrar **renumeran** la sesión: el cliente vuelve a pedir `listarPuntos` (y `listarPapelera`). Una entrada de la papelera no se puede editar, marcar, votar ni adjuntar (`NO_ENCONTRADO`: no es un punto de ninguna lista).
 - Sus archivos adjuntos no se descargan desde la papelera hasta que el punto vuelve a una lista.
 - Por definir: eliminar definitivamente (vaciar) entradas de la papelera.
+
+#### Puntos en borrador
+
+Un **borrador** es un punto que todavía no pertenece a ninguna sesión: se guarda con datos incompletos y vive en la papelera con `motivo: "borrador"` (sin `sesionOrigenId`). No se numera, no aparece en ninguna lista, documento, acta ni ZIP, y no bloquea cerrar la lista ni celebrar.
+
+| Operación | Entrada | Salida | Errores |
+|---|---|---|---|
+| `guardarPuntoBorrador(datos)` | Los campos de `crearPunto` (todos opcionales salvo `seccion`) y `archivos` | Entrada de la papelera con `motivo: "borrador"` | `NO_AUTORIZADO`, `VALIDACION`, `ARCHIVO_INVALIDO` |
+| `editarPuntoBorrador(id, version, cambios)` | id, `version` y los campos a cambiar; `archivos` se **agregan** a los del borrador | Entrada actualizada (`version` + 1) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `CONFLICTO`, `VALIDACION`, `ARCHIVO_INVALIDO` |
+| `eliminarPuntoBorrador(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
+| `moverABorradores(id)` | id de un punto de una sesión | Entrada de la papelera con `motivo: "borrador"` | Los de `eliminarPunto` (`NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_VENCIDA`, `LISTA_CERRADA`, `VALIDACION` en fijos) |
+
+- **Validación mínima:** `seccion` válida y que no sea de solo puntos fijos; `remitente`, contenido, acuerdo y archivos pueden faltar; lo que venga se valida igual que en un punto (remitente del catálogo, largo del texto, documento, nombre de carpeta, tipos y límites de archivos). Debe traer al menos un dato (contenido, acuerdo, nombre de carpeta o un archivo).
+- **Registrar** un borrador es `restaurarPunto(id, sesionId)`: aplica la **validación completa** de `crearPunto` (`VALIDACION` con lo que falte, p. ej. "El acuerdo es obligatorio.") y la regla de la lista cerrada (un borrador no tiene sesión de origen), registra el evento `creado` en el historial y lo deja como un punto normal, tratado y al final de su sección.
+- `moverABorradores` saca el punto de su sesión (renumera) y lo deja como borrador: sin `sesionOrigenId`, sin votación, conserva su texto y archivos, y borra su aviso de edición.
+- `eliminarPuntoBorrador` borra el borrador y sus archivos de forma definitiva; solo aplica a borradores (`NO_ENCONTRADO` para otras entradas).
 
 ### Operaciones de archivos, de orden y de celebración
 

@@ -8,7 +8,7 @@ import {
 import {
   usuarioActual, exigirEscritura, puedeVerConfidencial, puedeVerLista,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
-  validarPunto, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta, seccionParaLista,
+  validarPunto, validarBorrador, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta, seccionParaLista,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
   combinarCambios, validarHoraDelDia, conHoraDelDia, fechasDisponiblesExtraordinaria, tipoDeSesion, decorarIntegrante, validarIntegrante, exigirEspacioEnQuorum, validarSecretario,
@@ -445,6 +445,7 @@ export async function listarPuntos(sesionId) {
 async function armarPapelera() {
   const catalogos = await catalogosConIntegrantes();
   const lista = (await obtenerTodos(STORE_PAPELERA))
+    .filter((p) => p.motivo !== 'borrador' || puedeVerConfidencial())
     .sort((a, b) => (a.movidoEn < b.movidoEn ? 1 : -1))
     .map((p) => decorarPunto(p, catalogos));
   return puedeVerConfidencial() ? lista : lista.map(ocultarConfidencial);
@@ -485,8 +486,18 @@ export async function restaurarPunto(id, sesionId) {
   if (!sesionId) throw new ApiError('VALIDACION', 'Debes indicar la sesión a la que se reintegra el punto.');
   const sesion = await exigirSesionAbierta(sesionId);
   if (sesion.horaInicio) throw new ApiError('SESION_COMENZADA', 'La sesión ya comenzó y no admite reintegrar puntos.');
-  if (sesionId !== entrada.sesionOrigenId) {
+  const esBorrador = entrada.motivo === 'borrador';
+  if (esBorrador || sesionId !== entrada.sesionOrigenId) {
     const catalogos = await listarCatalogos();
+    if (esBorrador) {
+      try {
+        if (!entrada.remitente) throw new ApiError('VALIDACION', 'Falta el remitente.');
+        validarPunto(entrada, catalogos);
+      } catch (e) {
+        throw new ApiError(e.codigo, `El borrador está incompleto: ${e.mensaje}`);
+      }
+      exigirSeccionAbierta(entrada.seccion, catalogos);
+    }
     exigirListaAbierta(sesion, seccionParaLista(entrada, catalogos), catalogos);
   }
   const punto = {
@@ -500,11 +511,107 @@ export async function restaurarPunto(id, sesionId) {
   };
   ['motivo', 'sesionOrigenId', 'movidoEn', 'movidoPor'].forEach((campo) => delete punto[campo]);
   await escribirVarios({
-    poner: [{ store: STORE_PUNTOS, valor: punto }],
+    poner: [
+      { store: STORE_PUNTOS, valor: punto },
+      ...(esBorrador ? [{ store: STORE_HISTORIAL, valor: nuevoEventoPunto(id, 'creado', null, punto.modificadoEn) }] : []),
+    ],
     borrar: [{ store: STORE_PAPELERA, id }],
   });
   const armado = await puntoArmado(sesionId, id);
   return puedeVerConfidencial() ? armado : ocultarConfidencial(armado);
+}
+
+function camposDeBorrador(datos, catalogos, esNuevo) {
+  const normalizado = normalizarPunto({ ...datos, confidencial: datos.confidencial === true }, catalogos, esNuevo);
+  return { ...normalizado, remitente: datos.remitente || null };
+}
+
+async function borradorExistente(id) {
+  const entrada = await obtener(STORE_PAPELERA, id);
+  if (!entrada || entrada.motivo !== 'borrador') throw new ApiError('NO_ENCONTRADO', 'El borrador no existe.');
+  return entrada;
+}
+
+async function borradorArmado(id) {
+  return (await armarPapelera()).find((p) => p.id === id);
+}
+
+export async function guardarPuntoBorrador(datos) {
+  exigirEscritura();
+  if (!datos || typeof datos !== 'object') throw new ApiError('VALIDACION', 'Datos del borrador inválidos.');
+  const catalogos = await listarCatalogos();
+  const archivos = entradasDeArchivos(Array.from(datos.archivos || []));
+  validarBorrador(datos, catalogos, archivos.length);
+  validarArchivos(archivos);
+  const id = crypto.randomUUID();
+  const { registros, metadatos } = prepararArchivos(id, archivos);
+  const ahora = new Date().toISOString();
+  const entrada = {
+    id,
+    ...camposDeBorrador(datos, catalogos, true),
+    archivos: metadatos,
+    tratado: true,
+    votacion: null,
+    motivo: 'borrador',
+    sesionOrigenId: null,
+    movidoEn: ahora,
+    movidoPor: usuarioActual().id,
+    version: 1,
+    creadoPor: usuarioActual().id,
+    creadoEn: ahora,
+    modificadoEn: ahora,
+  };
+  await escribirVarios({
+    poner: [
+      { store: STORE_PAPELERA, valor: entrada },
+      ...registros.map((valor) => ({ store: STORE_ARCHIVOS, valor })),
+    ],
+  });
+  return borradorArmado(id);
+}
+
+export async function editarPuntoBorrador(id, version, cambios) {
+  exigirEscritura();
+  const actual = await borradorExistente(id);
+  if (actual.version !== version) {
+    throw new ApiError('CONFLICTO', 'El borrador cambió desde que lo cargaste. Recarga e intenta de nuevo.');
+  }
+  const catalogos = await listarCatalogos();
+  const combinado = combinarCambios(actual, cambios || {});
+  const nuevos = entradasDeArchivos(Array.from(cambios?.archivos || []));
+  validarBorrador(combinado, catalogos, actual.archivos.length + nuevos.length);
+  validarArchivos(nuevos, actual.archivos.length);
+  const ordenBase = Math.max(0, ...actual.archivos.map((a, i) => a.orden ?? i + 1));
+  const { registros, metadatos } = prepararArchivos(id, nuevos, ordenBase);
+  const almacenado = { ...actual };
+  ['contenido', 'acuerdo', 'nombreCarpeta', 'origenAG'].forEach((campo) => delete almacenado[campo]);
+  const ahora = new Date().toISOString();
+  const entrada = {
+    ...almacenado,
+    ...camposDeBorrador(combinado, catalogos),
+    archivos: [...actual.archivos, ...metadatos],
+    movidoEn: ahora,
+    version: actual.version + 1,
+    modificadoEn: ahora,
+  };
+  await escribirVarios({
+    poner: [
+      { store: STORE_PAPELERA, valor: entrada },
+      ...registros.map((valor) => ({ store: STORE_ARCHIVOS, valor })),
+    ],
+  });
+  return borradorArmado(id);
+}
+
+export async function eliminarPuntoBorrador(id) {
+  exigirEscritura();
+  const actual = await borradorExistente(id);
+  await escribirVarios({
+    borrar: [
+      { store: STORE_PAPELERA, id },
+      ...actual.archivos.map((a) => ({ store: STORE_ARCHIVOS, id: a.id })),
+    ],
+  });
 }
 
 export async function crearPunto(sesionId, datos) {
@@ -737,6 +844,20 @@ export async function eliminarPunto(id) {
     ],
     borrar: [{ store: STORE_PUNTOS, id }, { store: STORE_AVISOS_EDICION, id }],
   });
+}
+
+export async function moverABorradores(id) {
+  exigirEscritura();
+  exigirNoFijo(id);
+  const actual = await obtener(STORE_PUNTOS, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  exigirListaAbierta(await exigirSesionAbierta(actual.sesionId));
+  const entrada = { ...aPapelera(actual, 'borrador', new Date().toISOString()), sesionOrigenId: null, votacion: null };
+  await escribirVarios({
+    poner: [{ store: STORE_PAPELERA, valor: entrada }],
+    borrar: [{ store: STORE_PUNTOS, id }, { store: STORE_AVISOS_EDICION, id }],
+  });
+  return (await armarPapelera()).find((p) => p.id === id);
 }
 
 export async function adjuntarArchivos(puntoId, archivos, opciones = {}) {

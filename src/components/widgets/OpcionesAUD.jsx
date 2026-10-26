@@ -8,7 +8,7 @@ import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/OpcionesAUD.css';
 
 export default function OpcionesAUD({ punto, ocultar = [], children }) {
-  const { eliminarPunto, adjuntarArchivos } = useProyecto();
+  const { eliminarPunto, moverABorradores, adjuntarArchivos } = useProyecto();
   const { puntoEnEdicionId, abrirEdicionPunto, cerrarSidebar3 } = useUI();
   const [confirmando, setConfirmando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
@@ -32,15 +32,16 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
     }
   }
 
-  async function eliminar() {
+  async function eliminar(aBorradores) {
     setEliminando(true);
     setError(null);
     try {
-      await eliminarPunto(punto.id);
+      if (aBorradores) await moverABorradores(punto.id);
+      else await eliminarPunto(punto.id);
       if (puntoEnEdicionId === punto.id) cerrarSidebar3();
       setConfirmando(false);
     } catch (e) {
-      setError(e.mensaje || 'No se pudo eliminar el punto.');
+      setError(e.mensaje || (aBorradores ? 'No se pudo mover el punto a borradores.' : 'No se pudo eliminar el punto.'));
     } finally {
       setEliminando(false);
     }
@@ -65,11 +66,16 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
         </div>
       </Modal>
       <Modal abierto={confirmando} titulo="Eliminar punto" onCerrar={cancelar}>
-        <p className="widget-opciones-aud-mensaje">Esta acción no se puede deshacer. ¿Quieres eliminar este punto?</p>
+        <p className="widget-opciones-aud-mensaje">¿Quieres eliminar este punto? También puedes moverlo a borradores para completarlo después.</p>
         {error && <div className="widget-opciones-aud-error">{error}</div>}
         <div className="widget-opciones-aud-acciones">
           <BotonS variant="claro" onClick={cancelar}>Cancelar</BotonS>
-          <BotonS variant="claro" onClick={eliminar} disabled={eliminando}>Eliminar</BotonS>
+          <span className="widget-opciones-aud-eliminar">
+            <BotonS variant="claro" onClick={() => eliminar(false)} disabled={eliminando}>Eliminar</BotonS>
+          </span>
+          <span className="widget-opciones-aud-borradores">
+            <BotonS variant="claro" onClick={() => eliminar(true)} disabled={eliminando}>Mover a borradores</BotonS>
+          </span>
         </div>
       </Modal>
     </div>

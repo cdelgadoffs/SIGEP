@@ -428,6 +428,25 @@ export function validarPunto(p, catalogos) {
   if (p.origenAG !== undefined && typeof p.origenAG !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de origen en Asuntos generales inválido.');
 }
 
+export function validarBorrador(p, catalogos, archivosTotales = 0) {
+  const seccion = buscarSeccion(catalogos, p.seccion);
+  if (!seccion) throw new ApiError('VALIDACION', 'Sección inválida.');
+  exigirSeccionAbierta(p.seccion, catalogos);
+  if (p.remitente && !(catalogos.remitentes || []).some((r) => r.id === p.remitente)) {
+    throw new ApiError('VALIDACION', 'Remitente inválido.');
+  }
+  const contenido = textoDeEntrada(p, 'contenido');
+  if (contenido.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El contenido es demasiado largo.');
+  const acuerdo = seccion.requiereAcuerdo ? textoDeEntrada(p, 'acuerdo') : '';
+  if (acuerdo.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El acuerdo es demasiado largo.');
+  if (p.confidencial !== undefined && typeof p.confidencial !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de confidencialidad inválido.');
+  if (p.origenAG !== undefined && typeof p.origenAG !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de origen en Asuntos generales inválido.');
+  const nombreCarpeta = typeof p.nombreCarpeta === 'string' ? p.nombreCarpeta.trim() : '';
+  if (!contenido.trim() && !acuerdo.trim() && !nombreCarpeta && archivosTotales === 0) {
+    throw new ApiError('VALIDACION', 'El borrador está vacío: escribe algo o adjunta un archivo.');
+  }
+}
+
 const MAX_NIVELES_RUTA = 8;
 const MAX_LARGO_RUTA = 260;
 
