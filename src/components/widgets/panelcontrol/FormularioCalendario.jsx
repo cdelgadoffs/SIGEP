@@ -19,11 +19,14 @@ const DIAS = [
 const DIA_POR_DEFECTO = 3;
 
 export default function FormularioCalendario({ onGenerado }) {
-  const { CALENDARIO, ANIO_CALENDARIO: anio, generarCalendarioAnual, resumenArchivoCalendario } = useProyecto();
+  const { CALENDARIO, ANIO_CALENDARIO: anio, generarCalendarioAnual, resumenArchivoCalendario, agregarVacaciones, quitarVacaciones } = useProyecto();
   const existe = !!CALENDARIO;
   const diaGuardado = CALENDARIO ? CALENDARIO.diaSemana : null;
   const [diaSemana, setDiaSemana] = useState(diaGuardado ?? DIA_POR_DEFECTO);
-  const [vacaciones, setVacaciones] = useState(CALENDARIO ? CALENDARIO.vacaciones : []);
+  const [vacacionesNuevas, setVacacionesNuevas] = useState([]);
+  const vacaciones = existe ? CALENDARIO.vacaciones : vacacionesNuevas;
+  const [vacacionAQuitar, setVacacionAQuitar] = useState(null);
+  const [aplicandoVacacion, setAplicandoVacacion] = useState(false);
   const [vacInicio, setVacInicio] = useState('');
   const [vacFin, setVacFin] = useState('');
   const [sobrescribir, setSobrescribir] = useState(!CALENDARIO);
@@ -40,10 +43,46 @@ export default function FormularioCalendario({ onGenerado }) {
       setEstado({ texto: 'La fecha de inicio debe ser anterior a la de fin.', ok: false });
       return;
     }
-    setVacaciones((lista) => [...lista, { inicio: vacInicio, fin: vacFin }]);
-    setVacInicio('');
-    setVacFin('');
+    if (!existe) {
+      setVacacionesNuevas((lista) => [...lista, { inicio: vacInicio, fin: vacFin }]);
+      setVacInicio('');
+      setVacFin('');
+      setEstado(null);
+      return;
+    }
+    aplicarVacacion(() => agregarVacaciones(anio, { inicio: vacInicio, fin: vacFin }), 'Periodo vacacional agregado.', () => {
+      setVacInicio('');
+      setVacFin('');
+    });
+  }
+
+  async function aplicarVacacion(accion, textoOk, alTerminar) {
+    if (aplicandoVacacion) return;
+    setAplicandoVacacion(true);
     setEstado(null);
+    try {
+      await accion();
+      setEstado({ texto: textoOk, ok: true });
+      if (alTerminar) alTerminar();
+    } catch (e) {
+      setEstado({ texto: e.mensaje || 'No se pudo actualizar el periodo vacacional.', ok: false });
+    } finally {
+      setAplicandoVacacion(false);
+    }
+  }
+
+  function quitarPeriodo(v, i) {
+    if (!existe) {
+      setVacacionesNuevas((lista) => lista.filter((_, j) => j !== i));
+      return;
+    }
+    setVacacionAQuitar(v);
+  }
+
+  function confirmarQuitarPeriodo() {
+    const v = vacacionAQuitar;
+    setVacacionAQuitar(null);
+    aplicarVacacion(() => quitarVacaciones(anio, v.inicio), 'Periodo vacacional quitado.');
   }
 
   async function generar() {
@@ -112,6 +151,10 @@ export default function FormularioCalendario({ onGenerado }) {
         {existe && (
           <div className="widget-formulario-calendario-aviso">Al regenerar el calendario se archivan las sesiones, los puntos y los asuetos del año, y se empieza de cero.</div>
         )}
+        <div className="widget-formulario-calendario-sobrescribir">
+          <Checkbox checked={sobrescribir} onChange={setSobrescribir} label="Sobrescribir y empezar de cero" />
+        </div>
+        <BotonS onClick={generar} disabled={enviando}>Generar calendario anual</BotonS>
       </div>
 
       <div className="widget-formulario-calendario-seccion">
@@ -129,8 +172,11 @@ export default function FormularioCalendario({ onGenerado }) {
             <CampoFecha value={vacFin} onChange={setVacFin} min={vacInicio || desde} max={hasta} ariaLabel="Fin del periodo vacacional" />
           </div>
         </div>
+        {existe && (
+          <div className="widget-formulario-calendario-pista">Se aplica de inmediato al calendario, sin regenerarlo.</div>
+        )}
         <div className="widget-formulario-calendario-accion">
-          <BotonS onClick={agregarVacacion}>Agregar periodo vacacional</BotonS>
+          <BotonS onClick={agregarVacacion} disabled={aplicandoVacacion}>Agregar periodo vacacional</BotonS>
         </div>
         <div className="widget-formulario-calendario-chips">
           {vacaciones.length === 0
@@ -139,17 +185,25 @@ export default function FormularioCalendario({ onGenerado }) {
                 <BadgeDinamico
                   key={`${v.inicio}-${v.fin}-${i}`}
                   texto={`${etiquetaFecha(v.inicio)} — ${etiquetaFecha(v.fin)}`}
-                  onEliminar={() => setVacaciones((lista) => lista.filter((_, j) => j !== i))}
+                  onEliminar={() => quitarPeriodo(v, i)}
                 />
               ))}
         </div>
       </div>
 
-      <div className="widget-formulario-calendario-sobrescribir">
-        <Checkbox checked={sobrescribir} onChange={setSobrescribir} label="Sobrescribir y empezar de cero" />
-      </div>
-
-      <BotonS onClick={generar} disabled={enviando}>Generar calendario anual</BotonS>
+      <Modal abierto={!!vacacionAQuitar} titulo="Quitar periodo vacacional" onCerrar={() => setVacacionAQuitar(null)}>
+        {vacacionAQuitar && (
+          <>
+            <p className="widget-formulario-calendario-modal-texto">
+              Se quitará el periodo del {etiquetaFecha(vacacionAQuitar.inicio)} al {etiquetaFecha(vacacionAQuitar.fin)} y se volverán a programar las sesiones ordinarias de esas fechas.
+            </p>
+            <div className="widget-formulario-calendario-modal-acciones">
+              <BotonS variant="claro" onClick={() => setVacacionAQuitar(null)}>Cancelar</BotonS>
+              <BotonS variant="claro" onClick={confirmarQuitarPeriodo}>Quitar periodo</BotonS>
+            </div>
+          </>
+        )}
+      </Modal>
       <Modal abierto={!!resumen} titulo="Regenerar el calendario" onCerrar={() => setResumen(null)}>
         {resumen && (
           <>

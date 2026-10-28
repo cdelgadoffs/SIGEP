@@ -24,6 +24,8 @@ export const {
   listarGeneraciones,
   agregarAsueto,
   quitarAsueto,
+  agregarVacaciones,
+  quitarVacaciones,
   listarPuntos,
   crearPunto,
   editarPunto,

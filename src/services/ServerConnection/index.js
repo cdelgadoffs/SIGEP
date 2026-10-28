@@ -46,6 +46,10 @@ export const agregarAsueto = (anio, asueto) =>
   solicitar('POST', `/calendarios/${anio}/asuetos`, { fecha: asueto?.fecha, destino: asueto?.destino });
 export const quitarAsueto = (anio, fecha) =>
   solicitar('DELETE', `/calendarios/${anio}/asuetos/${encodeURIComponent(fecha)}`);
+export const agregarVacaciones = (anio, periodo) =>
+  solicitar('POST', `/calendarios/${anio}/vacaciones`, { inicio: periodo?.inicio, fin: periodo?.fin });
+export const quitarVacaciones = (anio, inicio) =>
+  solicitar('DELETE', `/calendarios/${anio}/vacaciones/${encodeURIComponent(inicio)}`);
 export const establecerListaCerrada = () => noImplementado();
 export const establecerNumeroSesion = () => noImplementado();
 export const celebrarSesion = () => noImplementado();

@@ -7,7 +7,7 @@ import {
 } from './db.js';
 import {
   usuarioActual, exigirEscritura, exigirDescarga, puedeVerConfidencial, puedeVerLista,
-  validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
+  validarFechasISO, calcularEstados, validarCalendario, validarAsueto, validarVacacion, generarFechasAnuales, enVacaciones,
   validarPunto, validarBorrador, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta, seccionParaLista,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
   entradasDeArchivos, validarArchivos, prepararArchivos,
@@ -213,6 +213,44 @@ export async function agregarAsueto(anio, asueto) {
   return { calendario: registro, sesiones: await listarSesiones() };
 }
 
+export async function agregarVacaciones(anio, periodo) {
+  exigirEscritura();
+  const calendario = await exigirCalendario(anio);
+  const nuevo = validarVacacion(anio, calendario, periodo);
+  const conPuntos = await puntosPorSesion();
+  const afectadas = (await obtenerTodos(STORE_SESIONES))
+    .filter((s) => tipoDeSesion(s) === 'ordinaria' && s.id >= nuevo.inicio && s.id <= nuevo.fin);
+  for (const s of afectadas) {
+    await exigirSesionLibre(s.id, conPuntos, `La sesión del ${s.id} ya tiene puntos; no puede caer en vacaciones.`);
+  }
+  const ahora = new Date().toISOString();
+  const vacaciones = [...calendario.vacaciones, nuevo].sort((a, b) => (a.inicio < b.inicio ? -1 : 1));
+  const registro = registroCalendario({ ...calendario, vacaciones }, calendario, ahora);
+  await escribirVarios({
+    poner: [{ store: STORE_CALENDARIOS, valor: registro }],
+    borrar: afectadas.map((s) => ({ store: STORE_SESIONES, id: s.id })),
+  });
+  return { calendario: registro, sesiones: await listarSesiones() };
+}
+export async function quitarVacaciones(anio, inicio) {
+  exigirEscritura();
+  const calendario = await exigirCalendario(anio);
+  const periodo = calendario.vacaciones.find((v) => v.inicio === inicio);
+  if (!periodo) throw new ApiError('NO_ENCONTRADO', `No hay un periodo vacacional que empiece el ${inicio}.`);
+  const restantes = calendario.vacaciones.filter((v) => v.inicio !== inicio);
+  const existentes = new Set((await obtenerTodos(STORE_SESIONES)).map((s) => s.id));
+  const fechas = generarFechasAnuales({ anio, diaSemana: calendario.diaSemana, vacaciones: restantes, asuetos: calendario.asuetos })
+    .filter((f) => f >= periodo.inicio && f <= periodo.fin && !existentes.has(f));
+  const ahora = new Date().toISOString();
+  const registro = registroCalendario({ ...calendario, vacaciones: restantes }, calendario, ahora);
+  await escribirVarios({
+    poner: [
+      { store: STORE_CALENDARIOS, valor: registro },
+      ...fechas.map((f) => ({ store: STORE_SESIONES, valor: nuevaSesion(f, ahora) })),
+    ],
+  });
+  return { calendario: registro, sesiones: await listarSesiones() };
+}
 export async function quitarAsueto(anio, fecha) {
   exigirEscritura();
   const calendario = await exigirCalendario(anio);

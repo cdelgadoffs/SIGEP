@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect } from 'react';
 import BotonS from '../../base/BotonS.jsx';
 import FormularioCalendario from './FormularioCalendario.jsx';
 import ListaSesionesMes from './ListaSesionesMes.jsx';
+import ListaVacaciones from './ListaVacaciones.jsx';
 import { useUI } from '../../../context/UIContext.jsx';
 import { useProyecto } from '../../../context/ProyectoContext.jsx';
 import '../../../styles/widgets/panelcontrol/CalendarizacionAnual.css';
@@ -32,7 +33,10 @@ export default function CalendarizacionAnual() {
       {mostrarFormularioCalendario ? (
         <FormularioCalendario key={CALENDARIO ? 'con-calendario' : 'sin-calendario'} onGenerado={() => setMostrarFormularioCalendario(false)} />
       ) : (
-        <ListaSesionesMes />
+        <>
+          <ListaSesionesMes />
+          <ListaVacaciones />
+        </>
       )}
     </div>
   );

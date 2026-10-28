@@ -127,6 +127,24 @@ export function validarAsueto(anio, calendario, asueto) {
   return { fecha, destino };
 }
 
+export function validarVacacion(anio, calendario, periodo) {
+  validarAnio(anio);
+  if (!periodo || !fechaValida(periodo.inicio) || !fechaValida(periodo.fin)) {
+    throw new ApiError('VALIDACION', 'Periodo vacacional con fechas inválidas.');
+  }
+  const { inicio, fin } = periodo;
+  if (inicio > fin) throw new ApiError('VALIDACION', 'El inicio de las vacaciones debe ser anterior a su fin.');
+  if (!inicio.startsWith(`${anio}-`) || !fin.startsWith(`${anio}-`)) {
+    throw new ApiError('VALIDACION', `El periodo vacacional debe estar dentro de ${anio}.`);
+  }
+  if (calendario.vacaciones.some((v) => v.inicio <= fin && inicio <= v.fin)) {
+    throw new ApiError('VALIDACION', 'El periodo se encima con otro periodo vacacional registrado.');
+  }
+  const asueto = calendario.asuetos.find((a) => (a.fecha >= inicio && a.fecha <= fin) || (a.destino >= inicio && a.destino <= fin));
+  if (asueto) throw new ApiError('VALIDACION', `El periodo cubre el asueto del ${asueto.fecha}; quítalo primero.`);
+  return { inicio, fin };
+}
+
 export function generarFechasAnuales({ anio, diaSemana, vacaciones, asuetos }) {
   const d = new Date(anio, 0, 1);
   let diferencia = diaSemana - d.getDay();

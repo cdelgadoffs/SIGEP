@@ -401,6 +401,8 @@ El consecutivo oficial se calcula desde el inicio del año; si el órgano ya hab
 | `listarGeneraciones(anio)` | año | `Generacion[]` del año, la más reciente primero | `VALIDACION` |
 | `agregarAsueto(anio, asueto)` | año, `{ fecha, destino }` | `{ calendario, sesiones }` | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `SESION_CELEBRADA` |
 | `quitarAsueto(anio, fecha)` | año, fecha del asueto | `{ calendario, sesiones }` | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `SESION_CELEBRADA` |
+| `agregarVacaciones(anio, periodo)` | año, `{ inicio, fin }` | `{ calendario, sesiones }` | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `SESION_CELEBRADA` |
+| `quitarVacaciones(anio, inicio)` | año, inicio del periodo | `{ calendario, sesiones }` | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
 
 - `generarCalendarioAnual` guarda el calendario del año y crea las sesiones que falten (las existentes se conservan con su `celebrada`). Es **atómica** y **idempotente**.
 - Si ya existe un calendario de ese año y `sobrescribir` no es `true` → `CALENDARIO_EXISTE`.
@@ -408,6 +410,7 @@ El consecutivo oficial se calcula desde el inicio del año; si el órgano ya hab
 - **`Generacion`** (un registro por cada archivado): `{ id, anio, creadoEn, creadoPor, calendario (el anterior, o null), resumen: { sesiones, celebradas, extraordinarias, puntos, archivos } }`. Los datos archivados conservan sus ids y llevan el `generacionId`; ninguna operación activa los devuelve (se consultarán desde la papelería de reciclaje, pendiente, que también podrá restaurarlos). `resumenArchivoCalendario` permite mostrar al usuario lo que se archivará antes de confirmar.
 - Validación (`VALIDACION`): `anio` entero entre 2000 y 2100; `diaSemana` entero de 1 a 5; cada vacación con fechas válidas e `inicio <= fin`.
 - **Asuetos sin regenerar el calendario.** `agregarAsueto` exige que el año ya tenga calendario (`NO_ENCONTRADO` si no). Valida que `fecha` sea del año y caiga en `diaSemana`, que `destino` sea `fecha ± 1` y no caiga en vacaciones, y que no haya ya un asueto en esa `fecha`. La sesión de `fecha` debe existir, no estar celebrada (`SESION_CELEBRADA`) ni tener puntos (`VALIDACION`): se elimina y se crea la del `destino` (si no existía). `quitarAsueto` revierte: elimina la sesión del `destino` (que no debe estar celebrada ni tener puntos) y recrea la de `fecha` si no cae en vacaciones. Ambas son atómicas y suben la `version` del calendario.
+- **Periodos vacacionales sin regenerar el calendario.** `agregarVacaciones` exige calendario del año (`NO_ENCONTRADO`). Valida fechas del año con `inicio <= fin`, que no se encime con otro periodo y que no cubra la `fecha` ni el `destino` de un asueto (`VALIDACION`). Las sesiones **ordinarias** dentro del periodo no deben estar celebradas (`SESION_CELEBRADA`) ni tener puntos (`VALIDACION`): se eliminan junto con el guardado del periodo; las extraordinarias no se tocan. `quitarVacaciones` quita el periodo y recrea las sesiones ordinarias del rango en `diaSemana` (las que no existan). Ambas son atómicas y suben la `version` del calendario; la numeración se recalcula al leer.
 - `crearSesiones(fechas)` sigue en el contrato (crea sesiones **ordinarias** sueltas), pero el cliente no la usa; las extraordinarias se crean con `crearSesionExtraordinaria`.
 
 ### Papelera de puntos (reciclaje)
@@ -530,6 +533,8 @@ Notas de comportamiento:
 | `listarGeneraciones(anio)` | `GET /calendarios/{anio}/generaciones` |
 | `agregarAsueto(anio, asueto)` | `POST /calendarios/{anio}/asuetos` con `{ fecha, destino }` |
 | `quitarAsueto(anio, fecha)` | `DELETE /calendarios/{anio}/asuetos/{fecha}` |
+| `agregarVacaciones(anio, periodo)` | `POST /calendarios/{anio}/vacaciones` con `{ inicio, fin }` |
+| `quitarVacaciones(anio, inicio)` | `DELETE /calendarios/{anio}/vacaciones/{inicio}` |
 | (usuario del token) | `GET /info/usuario` → `{ id, nombre, correo, rol }` |
 | (chequeo de salud, sin token) | `GET /salud` |
 

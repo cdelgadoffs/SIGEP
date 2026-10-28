@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   listarCatalogos, listarSesiones, celebrarSesion, comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, editarBloqueActa as editarBloqueActaEnApi, restablecerBloqueActa as restablecerBloqueActaEnApi, listarAsistencia, registrarAsistencia as registrarAsistenciaEnApi, listarFechasExtraordinaria, crearSesionExtraordinaria as crearSesionExtraordinariaEnApi, eliminarSesion as eliminarSesionEnApi, establecerListaCerrada as establecerListaCerradaEnApi, establecerNumeroSesion as establecerNumeroSesionEnApi,
   obtenerCalendario as obtenerCalendarioEnApi, generarCalendarioAnual as generarCalendarioAnualEnApi, resumenArchivoCalendario,
-  agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi,
+  agregarAsueto as agregarAsuetoEnApi, quitarAsueto as quitarAsuetoEnApi, agregarVacaciones as agregarVacacionesEnApi, quitarVacaciones as quitarVacacionesEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi, enviarEngrose as enviarEngroseEnApi, registrarVotacion as registrarVotacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   retirarPunto as retirarPuntoEnApi, restaurarPunto as restaurarPuntoEnApi, trasladarPunto as trasladarPuntoEnApi, listarPapelera,
@@ -232,6 +232,12 @@ export function ProyectoProvider({ children }) {
   }
   async function quitarAsueto(anio, fecha) {
     return aplicarCalendario(await quitarAsuetoEnApi(anio, fecha));
+  }
+  async function agregarVacaciones(anio, periodo) {
+    return aplicarCalendario(await agregarVacacionesEnApi(anio, periodo));
+  }
+  async function quitarVacaciones(anio, inicio) {
+    return aplicarCalendario(await quitarVacacionesEnApi(anio, inicio));
   }
   function cargarSesion(fecha) {
     setSesionActivaFecha(fecha);
@@ -468,7 +474,7 @@ export function ProyectoProvider({ children }) {
     AVISOS_EDICION: avisos, enviarAvisoEdicion, descartarAvisoEdicion, listarHistorialPunto,
     PUNTOS: puntos, PAPELERA: papelera, retirarPunto, restaurarPunto, guardarPuntoBorrador, editarPuntoBorrador, registrarPuntoBorrador, eliminarPuntoBorrador, moverABorradores, trasladarPunto, refrescarPuntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, enviarEngrose, registrarVotacion, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, renombrarArchivo, renombrarCarpeta, reordenarArchivos, descargarArchivo,
-    CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto,
+    CALENDARIO: calendario, ANIO_CALENDARIO, generarCalendarioAnual, resumenArchivoCalendario, agregarAsueto, quitarAsueto, agregarVacaciones, quitarVacaciones,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,
   };
