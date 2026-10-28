@@ -5,11 +5,13 @@ import Modal from '../base/Modal.jsx';
 import SelectorArchivos from './SelectorArchivos.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
+import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import '../../styles/widgets/OpcionesAUD.css';
 
 export default function OpcionesAUD({ punto, ocultar = [], children }) {
   const { eliminarPunto, moverABorradores, adjuntarArchivos } = useProyecto();
-  const { puntoEnEdicionId, abrirEdicionPunto, cerrarSidebar3 } = useUI();
+  const { puntoEnEdicionId, abrirEdicionPunto, cerrarSidebar3, setBorradorRecienteId, setSidebar4Abierto } = useUI();
+  const { filtroReciclaje, cambiarAjuste } = useAjustesVisuales();
   const [confirmando, setConfirmando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
   const [error, setError] = useState(null);
@@ -38,6 +40,10 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
     try {
       if (aBorradores) await moverABorradores(punto.id);
       else await eliminarPunto(punto.id);
+      const motivo = aBorradores ? 'borrador' : 'eliminado';
+      if (filtroReciclaje !== motivo && filtroReciclaje !== 'todos') cambiarAjuste('filtroReciclaje', motivo);
+      setBorradorRecienteId(punto.id);
+      setSidebar4Abierto(true);
       if (puntoEnEdicionId === punto.id) cerrarSidebar3();
       setConfirmando(false);
     } catch (e) {

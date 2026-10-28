@@ -2,7 +2,7 @@ import { CATALOGOS_SEMILLA } from './semilla.js';
 import { docDesdeTexto, hojaPorOmision } from './reglas.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 34;
+const DB_VERSION = 35;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -66,6 +66,25 @@ function abrirDB() {
       if (!db.objectStoreNames.contains(STORE_CATALOGOS)) {
         const store = db.createObjectStore(STORE_CATALOGOS, { keyPath: 'nombre' });
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
+      }
+      if (evento.oldVersion < 35) {
+        const tx = req.transaction;
+        ['categorias', 'remitentes'].forEach((nombre) => tx.objectStore(STORE_CATALOGOS).put({ nombre, items: CATALOGOS_SEMILLA[nombre] }));
+        const validos = CATALOGOS_SEMILLA.remitentes.map((r) => r.id);
+        [[STORE_PUNTOS, 'remitente'], [STORE_PAPELERA, 'remitente'], [STORE_AVISOS_EDICION, 'remitenteId']].forEach(([store, campo]) => {
+          tx.objectStore(store).openCursor().onsuccess = (e) => {
+            const cursor = e.target.result;
+            if (!cursor) return;
+            if (cursor.value[campo] && !validos.includes(cursor.value[campo])) cursor.update({ ...cursor.value, [campo]: 'pleno' });
+            cursor.continue();
+          };
+        });
+        tx.objectStore(STORE_CORREOS_REMITENTES).openCursor().onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (!cursor) return;
+          if (!validos.includes(cursor.value.remitenteId)) cursor.delete();
+          cursor.continue();
+        };
       }
       if (evento.oldVersion < 33) {
         req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'textosActa', items: CATALOGOS_SEMILLA.textosActa });

@@ -48,9 +48,13 @@
 }
 .widget-lista-reciclaje-etiquetas {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   min-width: 0;
+}
+.widget-lista-reciclaje-etiquetas .base-badge-dinamico {
+  max-width: 100%;
 }
 .widget-lista-reciclaje-etiquetas .base-badge-dinamico {
   padding: 2px 7px;
@@ -98,5 +102,33 @@
   gap: 8px;
 }
 .widget-lista-reciclaje-item-reciente {
-  border-color: #3b6fd4;
+  border: 2px solid #3b6fd4;
+  border-left-width: 4px;
+}
+.widget-lista-reciclaje-item.widget-lista-reciclaje-item-editando {
+  border: 2px solid #2e9e5b;
+  border-left-width: 4px;
+}
+.widget-lista-reciclaje-item {
+  cursor: grab;
+  user-select: none;
+}
+.widget-lista-reciclaje-item-desplazable {
+  transition: transform 0.15s ease;
+}
+.widget-lista-reciclaje-item-arrastrado {
+  position: relative;
+  z-index: 2;
+  cursor: grabbing;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+body.widget-lista-reciclaje-arrastrando,
+body.widget-lista-reciclaje-arrastrando * {
+  cursor: grabbing !important;
+}
+.widget-lista-reciclaje-item-eliminado.widget-lista-reciclaje-item-reciente {
+  border-color: #d9534f;
+}
+.widget-lista-reciclaje-item-pendiente.widget-lista-reciclaje-item-reciente {
+  border-color: #f0a030;
 }

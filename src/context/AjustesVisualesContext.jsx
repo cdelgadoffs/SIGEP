@@ -30,6 +30,7 @@ export function AjustesVisualesProvider({ children }) {
     cambiarInfoNavegador,
     actaPlegada: ajustes.actaPlegada === true,
     filtroReciclaje: FILTROS_RECICLAJE.includes(ajustes.filtroReciclaje) ? ajustes.filtroReciclaje : 'borrador',
+    ordenPapelera: Array.isArray(ajustes.ordenPapelera) ? ajustes.ordenPapelera.filter((id) => typeof id === 'string') : [],
     filtroCinta: FILTROS_CINTA.some((f) => f.id === ajustes.filtroCinta) ? ajustes.filtroCinta : 'todas',
     brilloPantalla: NIVELES_BRILLO.includes(ajustes.brilloPantalla) ? ajustes.brilloPantalla : 0,
     cambiarAjuste,

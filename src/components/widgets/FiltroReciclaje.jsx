@@ -3,9 +3,9 @@ import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import '../../styles/widgets/FiltroReciclaje.css';
 
 const OPCIONES = [
-  { id: 'borrador', label: 'Borradores' },
   { id: 'todos', label: 'Todos los puntos' },
-  { id: 'pendiente', label: 'Puntos pendientes' },
+  { id: 'borrador', label: 'Borradores' },
+  { id: 'pendiente', label: 'Pendientes en lista' },
   { id: 'eliminado', label: 'Puntos eliminados' },
 ];
 

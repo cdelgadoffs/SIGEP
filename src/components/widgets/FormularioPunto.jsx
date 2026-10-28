@@ -3,6 +3,7 @@ import SelectorArchivos from './SelectorArchivos.jsx';
 import ListaExpandible from '../base/ListaExpandible.jsx';
 import Checkbox from '../base/Checkbox.jsx';
 import CampoTexto from '../base/CampoTexto.jsx';
+import CampoAutocompletar from '../base/CampoAutocompletar.jsx';
 import BotonS from '../base/BotonS.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import EditorTexto from './EditorTexto.jsx';
@@ -13,7 +14,7 @@ import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../../context/UI
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import { docDesdeTexto, docVacio, esDocVacio } from '../../utils/documento.js';
 import { contenidoPorOmision, hojaPorOmision } from '../../utils/plantillasActa.js';
-import { tituloPunto } from '../../utils/puntos.js';
+import { normalizarTexto, tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/FormularioPunto.css';
 
 function estadoVacio(seccion, esInforme, plantillas, textosActa, plantillaId, considerandosFijos) {
@@ -49,6 +50,7 @@ export default function FormularioPunto() {
   const { filtroReciclaje, cambiarAjuste } = useAjustesVisuales();
   const esInformeSeccion = (id) => SECCIONES_DOCUMENTO.find((x) => x.id === id)?.requiereAcuerdo === false;
   const [ultimaSeleccion, setUltimaSeleccion] = useState({ categoria: '', remitente: '' });
+  const [busquedaRemitente, setBusquedaRemitente] = useState(null);
   const formularioVacio = (seccion) => ({ ...estadoVacio(seccion, esInformeSeccion(seccion), PLANTILLAS_ACTA, TEXTOS_ACTA, SECCIONES_DOCUMENTO.find((x) => x.id === seccion)?.plantillaPorOmision, CONSIDERANDOS_FIJOS), ...ultimaSeleccion });
   const [form, setForm] = useState(() => formularioVacio(seccionNuevoPunto));
   const [aporte, setAporte] = useState(false);
@@ -82,6 +84,7 @@ export default function FormularioPunto() {
     if (puntoEnEdicionId) {
       const original = PUNTOS.find((p) => p.id === puntoEnEdicionId);
       if (original) {
+        setBusquedaRemitente(null);
         setForm({
           seccion: original.seccion,
           categoria: '',
@@ -107,6 +110,7 @@ export default function FormularioPunto() {
       if (original) {
         const base = formularioVacio(original.seccion);
         const remitente = REMITENTES.find((r) => r.id === original.remitente);
+        setBusquedaRemitente(null);
         setForm({
           ...base,
           seccion: original.seccion,
@@ -132,6 +136,7 @@ export default function FormularioPunto() {
     }
     let vigente = true;
     const seccion = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
+    setBusquedaRemitente(null);
     setForm(formularioVacio(seccion));
     setArchivosNuevoPunto([]);
     setAporte(false);
@@ -144,6 +149,7 @@ export default function FormularioPunto() {
         claveGuardadaRef.current = borrador ? claveBorrador(seccion) : null;
         if (borrador) {
           const base = formularioVacio(seccion);
+          setBusquedaRemitente(null);
           setForm({ ...base, ...aDocumentos(borrador), categoria: borrador.categoria || base.categoria, remitente: borrador.remitente || base.remitente, seccion });
           setAporte(true);
           reiniciarEditor();
@@ -186,23 +192,34 @@ export default function FormularioPunto() {
     .map((s) => ({ id: s.id, label: s.nombre }));
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
-  const categoriaActual = CATEGORIAS.find((c) => c.id === form.categoria)
-    || CATEGORIAS.find((c) => c.id === REMITENTES.find((r) => r.id === form.remitente)?.categoria)
-    || CATEGORIAS[0];
-  const remitentesDeCategoria = REMITENTES.filter((r) => r.categoria === categoriaActual?.id);
-  const remitenteActual = remitentesDeCategoria.some((r) => r.id === form.remitente) ? form.remitente : (remitentesDeCategoria[0]?.id || '');
+  const remitentePorOmision = REMITENTES.find((r) => r.categoria === CATEGORIAS[0]?.id)?.id || REMITENTES[0]?.id || '';
+  const escribiendoRemitente = !!busquedaRemitente && busquedaRemitente.remitente === form.remitente;
+  const remitenteActual = REMITENTES.some((r) => r.id === form.remitente) ? form.remitente : (escribiendoRemitente ? '' : remitentePorOmision);
+  const nombreRemitenteActual = REMITENTES.find((r) => r.id === remitenteActual)?.nombre ?? '';
+  const textoRemitente = escribiendoRemitente ? busquedaRemitente.texto : nombreRemitenteActual;
+  const buscadoRemitente = escribiendoRemitente ? normalizarTexto(busquedaRemitente.texto).trim() : '';
+  const opcionesRemitente = REMITENTES
+    .filter((r) => !buscadoRemitente || normalizarTexto(r.nombre).includes(buscadoRemitente) || normalizarTexto(CATEGORIAS.find((c) => c.id === r.categoria)?.nombre ?? '').includes(buscadoRemitente))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    .map((r) => ({ id: r.id, label: r.nombre, detalle: CATEGORIAS.find((c) => c.id === r.categoria)?.nombre }));
+  const errorRemitente = escribiendoRemitente && !remitenteActual ? 'Elige un remitente de la lista.' : null;
   const seccionOrigen = SECCIONES_DOCUMENTO.find((s) => s.id === seccionNuevoPunto);
   const mostrarSeccion = editando || enBorrador || !!seccionOrigen?.permiteCambiarSeccion;
 
-  function cambiarCategoria(id) {
-    const remitente = REMITENTES.find((r) => r.categoria === id)?.id || '';
-    if (!editando) setUltimaSeleccion({ categoria: id, remitente });
-    setForm((f) => ({ ...f, categoria: id, remitente }));
+  function cambiarRemitente(id) {
+    const categoria = REMITENTES.find((r) => r.id === id)?.categoria ?? '';
+    if (!editando) setUltimaSeleccion({ categoria, remitente: id });
+    setBusquedaRemitente(null);
+    setForm((f) => ({ ...f, categoria, remitente: id }));
   }
 
-  function cambiarRemitente(id) {
-    if (!editando) setUltimaSeleccion({ categoria: categoriaActual?.id ?? '', remitente: id });
-    actualizar('remitente', id);
+  function escribirRemitente(texto) {
+    const buscado = normalizarTexto(texto).trim();
+    const exacto = REMITENTES.find((r) => normalizarTexto(r.nombre).trim() === buscado);
+    const remitente = exacto?.id ?? '';
+    if (exacto && !editando) setUltimaSeleccion({ categoria: exacto.categoria, remitente });
+    setBusquedaRemitente({ texto, remitente });
+    setForm((f) => ({ ...f, categoria: exacto?.categoria ?? '', remitente }));
   }
 
   function actualizar(campo, valor) {
@@ -230,6 +247,7 @@ export default function FormularioPunto() {
   function borrar() {
     setAvisoArchivos(null);
     setArchivosNuevoPunto([]);
+    setBusquedaRemitente(null);
     setForm(formularioVacio(form.seccion));
     setAporte(false);
     setPreviaVisible(false);
@@ -255,6 +273,7 @@ export default function FormularioPunto() {
   function reiniciarTrasEnviar() {
     setAvisoArchivos(null);
     setArchivosNuevoPunto([]);
+    setBusquedaRemitente(null);
     setForm(formularioVacio(form.seccion));
     setAporte(false);
     setPreviaVisible(false);
@@ -396,25 +415,19 @@ export default function FormularioPunto() {
         </div>
       )}
 
-      <div className="widget-formulario-punto-fila">
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Categoría</label>
-          <ListaExpandible
-            valorActual={categoriaActual?.id}
-            etiquetaActual={categoriaActual?.nombre ?? ''}
-            opciones={CATEGORIAS.map((c) => ({ id: c.id, label: c.nombre }))}
-            onSeleccionar={cambiarCategoria}
-          />
-        </div>
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Remitente</label>
-          <ListaExpandible
-            valorActual={remitenteActual}
-            etiquetaActual={remitentesDeCategoria.find((r) => r.id === remitenteActual)?.nombre ?? ''}
-            opciones={remitentesDeCategoria.map((r) => ({ id: r.id, label: r.nombre }))}
-            onSeleccionar={cambiarRemitente}
-          />
-        </div>
+      <div className="widget-formulario-punto-campo">
+        <label className="widget-formulario-punto-label">Remitente</label>
+        <CampoAutocompletar
+          texto={textoRemitente}
+          onCambiarTexto={escribirRemitente}
+          opciones={opcionesRemitente}
+          valorActual={remitenteActual}
+          onSeleccionar={cambiarRemitente}
+          placeholder="Escribe para buscar un remitente"
+          textoVacio="Ningún remitente coincide"
+          error={errorRemitente}
+          ariaLabel="Remitente"
+        />
       </div>
 
       {!editando && (
