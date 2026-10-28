@@ -4,6 +4,7 @@ import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
+import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import ExploradorArchivos from './ExploradorArchivos.jsx';
 import NavegadorPapelera from './NavegadorPapelera.jsx';
@@ -14,7 +15,7 @@ import '../../styles/widgets/VistaNavegador.css';
 
 export default function VistaNavegador() {
   const { puedeEscribir } = useAuth();
-  const { sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO, PUNTOS, PAPELERA, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
+  const { sesionSeleccionada, FECHAS_SESIONES, SECCIONES_DOCUMENTO, PUNTOS, cargando, error, renombrarArchivo, renombrarCarpeta } = useProyecto();
   const { abrirVistaArchivo, terminoBusqueda, elementoNavegador, setElementoNavegador, irAPunto } = useUI();
   const { infoNavegadorPorSesion, cambiarInfoNavegador } = useAjustesVisuales();
   const [papeleraAbierta, setPapeleraAbierta] = useState(false);
@@ -82,11 +83,7 @@ export default function VistaNavegador() {
         herramientas={(
           <>
             {puedeEscribir && (
-              <BotonIcono
-                icono="ri-delete-bin-line"
-                ariaLabel={`Papelería de reciclaje (${PAPELERA.length})`}
-                onClick={() => setPapeleraAbierta(true)}
-              />
+              <BotonS variant="claro" onClick={() => setPapeleraAbierta(true)}>Papelería</BotonS>
             )}
             <BotonIcono
               icono={infoAbierta ? 'ri-information-fill' : 'ri-information-line'}

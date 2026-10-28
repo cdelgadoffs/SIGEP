@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import '../../styles/base/CampoAutocompletar.css';
+
+function ListaSugerencias({ children }) {
+  const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
+  return (
+    <>
+      <div className="base-campo-autocompletar-scroll" ref={contenedorRef} onScroll={onScroll}>{children}</div>
+      {thumb.visible && (
+        <div
+          className="base-campo-autocompletar-thumb"
+          style={{ height: thumb.alto, top: thumb.top }}
+          onMouseDown={onArrastrarThumb}
+        />
+      )}
+    </>
+  );
+}
 
 export default function CampoAutocompletar({ texto, onCambiarTexto, opciones, onSeleccionar, valorActual, placeholder, textoVacio = 'Sin coincidencias', error, ariaLabel }) {
   const [abierto, setAbierto] = useState(false);
@@ -91,6 +108,7 @@ export default function CampoAutocompletar({ texto, onCambiarTexto, opciones, on
       {error && <div className="base-campo-autocompletar-mensaje">{error}</div>}
       {abierto && createPortal(
         <div ref={menuRef} className="base-campo-autocompletar-menu" style={{ top: pos.top, left: pos.left, width: pos.width }}>
+          <ListaSugerencias>
           {opciones.length === 0 && <div className="base-campo-autocompletar-vacio">{textoVacio}</div>}
           {opciones.map((op, i) => (
             <div
@@ -106,6 +124,7 @@ export default function CampoAutocompletar({ texto, onCambiarTexto, opciones, on
               {op.detalle && <span className="base-campo-autocompletar-detalle">{op.detalle}</span>}
             </div>
           ))}
+          </ListaSugerencias>
         </div>,
         document.body
       )}

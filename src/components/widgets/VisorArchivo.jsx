@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import Scrollbar from '../base/Scrollbar.jsx';
 import Modal from '../base/Modal.jsx';
 import BotonS from '../base/BotonS.jsx';
 import { useUI } from '../../context/UIContext.jsx';
@@ -74,8 +75,8 @@ export default function VisorArchivo() {
     if (!cargado.archivo) return null;
     if (vista === 'imagen') return <img className="widget-visor-archivo-imagen" src={cargado.url} alt={cargado.archivo.nombre} />;
     if (vista === 'pdf') return <embed className="widget-visor-archivo-pdf" src={`${cargado.url}#toolbar=0&navpanes=0`} type="application/pdf" />;
-    if (vista === 'texto') return <pre className="widget-visor-archivo-texto">{cargado.texto}</pre>;
-    if (vista === 'word') return <div className="widget-visor-archivo-word" ref={contenedorWord}></div>;
+    if (vista === 'texto') return <div className="widget-visor-archivo-texto"><Scrollbar><pre className="widget-visor-archivo-texto-contenido">{cargado.texto}</pre></Scrollbar></div>;
+    if (vista === 'word') return <div className="widget-visor-archivo-word"><Scrollbar><div ref={contenedorWord}></div></Scrollbar></div>;
     return <p className="widget-visor-archivo-mensaje">No se puede mostrar vista previa de este tipo de archivo ({cargado.archivo.tipo || 'desconocido'}).{puedeBajar ? ' Puedes descargarlo.' : ''}</p>;
   }
 

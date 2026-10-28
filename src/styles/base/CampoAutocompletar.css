@@ -24,15 +24,37 @@
 }
 .base-campo-autocompletar-menu {
   position: fixed;
-  max-height: 260px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
   background: #fff;
   border: 1px solid #d0d0d0;
   border-radius: 6px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   z-index: 2100;
+}
+.base-campo-autocompletar-scroll {
+  max-height: 260px;
+  overflow-y: auto;
   padding: 4px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.base-campo-autocompletar-scroll::-webkit-scrollbar {
+  display: none;
+}
+.base-campo-autocompletar-thumb {
+  position: absolute;
+  right: 2px;
+  width: 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.base-campo-autocompletar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
 }
 .base-campo-autocompletar-item {
   display: flex;

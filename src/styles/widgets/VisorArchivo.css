@@ -26,12 +26,14 @@
 .widget-visor-archivo-texto {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+.widget-visor-archivo-texto-contenido {
   box-sizing: border-box;
   margin: 0;
   padding: 12px;
-  overflow: auto;
-  background: #f5f5f5;
-  border-radius: 4px;
   font-size: 12.5px;
   text-align: left;
   white-space: pre-wrap;
@@ -39,7 +41,13 @@
 .widget-visor-archivo-word {
   width: 100%;
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
   background: #737373;
   border-radius: 4px;
+}
+.widget-visor-archivo-word .base-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.45);
+}
+.widget-visor-archivo-word .base-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.7);
 }
