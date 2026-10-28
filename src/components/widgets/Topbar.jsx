@@ -14,7 +14,7 @@ import '../../styles/widgets/Topbar.css';
 const PREFIJO_BRILLO = 'brillo:';
 
 export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesConfiguracion = [], onSeleccionarConfiguracion, mostrarNuevaExtraordinaria = true }) {
-  const { toggleSidebar5 } = useUI();
+  const { toggleSidebar5, setVistaActual } = useUI();
   const { usuario, cerrarSesion, puedeEscribir } = useAuth();
   const { brilloPantalla, cambiarAjuste } = useAjustesVisuales();
   const opcionesBrillo = NIVELES_BRILLO.map((nivel) => ({
@@ -35,12 +35,14 @@ export default function Topbar({ terminoBusqueda, onCambiarBusqueda, opcionesCon
         {puedeEscribir && (
           <button type="button" className="widget-topbar-menu" aria-label="Alternar panel" onClick={toggleSidebar5}>☰</button>
         )}
-        <img
-          className="widget-topbar-logo"
-          src={URL_LOGO}
-          alt="Logo institucional"
-        />
-        <img className="widget-topbar-logo-sigep" src={logoSigepNegro} alt="SIGEP" />
+        <button type="button" className="widget-topbar-inicio" aria-label="Ir a Inicio" title="Ir a Inicio" onClick={() => setVistaActual('inicio')}>
+          <img
+            className="widget-topbar-logo"
+            src={URL_LOGO}
+            alt="Logo institucional"
+          />
+          <img className="widget-topbar-logo-sigep" src={logoSigepNegro} alt="SIGEP" />
+        </button>
       </div>
       <div className="widget-topbar-right">
         <BuscadorGlobal value={terminoBusqueda} onChange={onCambiarBusqueda} placeholder="Buscar punto..." />

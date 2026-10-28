@@ -63,3 +63,12 @@
 .widget-topbar .base-boton-agregar.base-boton-agregar-expandible {
   padding: 0 9px;
 }
+.widget-topbar-inicio {
+  display: flex;
+  align-items: center;
+  gap: inherit;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}

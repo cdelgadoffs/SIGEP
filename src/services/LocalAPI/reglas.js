@@ -622,7 +622,8 @@ function textoVotacionGenerado(v, lineas, catalogos) {
   else if (voto.admitePrecision && votacion.admitePrecision && norm.precision) {
     completo = `El Pleno, ${voto.frase} de votos, con la precisión de que ${norm.precision}, ${estado.nombre}.`;
   } else completo = `El Pleno, en ${votacion.nombre}, ${voto.frase}, ${estado.nombre}.`;
-  return unico ? `${sinPunto(completo)}, ${unico}.` : completo;
+  if (unico) return `${sinPunto(completo)}, ${unico}.`;
+  return lineas.length > 1 ? `${sinPunto(completo)}:` : completo;
 }
 
 function descriptorVotacionEngrose(v, catalogos) {
