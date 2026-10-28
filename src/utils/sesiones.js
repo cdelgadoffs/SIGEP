@@ -67,3 +67,7 @@ export function nombreActaDeSesion(sesion) {
   const { titulo, subtitulo } = encabezadoSesion(sesion);
   return `Acta de la ${titulo} (${subtitulo})`;
 }
+
+export function etiquetaSesionCorta(sesion) {
+  return `${nombreTipoSesion(sesion.tipo)} N° ${sesion.numeroSesion ?? '—'} · ${sesion.label}`;
+}

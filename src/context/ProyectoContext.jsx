@@ -276,8 +276,8 @@ export function ProyectoProvider({ children }) {
     await refrescarPapelera();
     await refrescarAvisos();
   }
-  async function restaurarPunto(id) {
-    await restaurarPuntoEnApi(id, sesionActivaFecha);
+  async function restaurarPunto(id, sesionId = sesionActivaFecha) {
+    await restaurarPuntoEnApi(id, sesionId);
     await refrescarPuntos();
     await refrescarPapelera();
   }

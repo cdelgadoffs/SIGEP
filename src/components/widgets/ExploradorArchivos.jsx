@@ -65,6 +65,7 @@ export default function ExploradorArchivos({
   onRenombrarCarpeta,
   onRenombrarArchivo,
   accionFila,
+  accionesAlPasar = false,
   herramientas,
 }) {
   const [posicion, setPosicion] = useState({ clave: null, ruta: [], busqueda: '' });
@@ -157,7 +158,7 @@ export default function ExploradorArchivos({
   }
 
   function celdaAccion(puntoId) {
-    return <span className="widget-explorador-archivos-col-acciones">{accionFila ? accionFila(puntoId) : null}</span>;
+    return <span className={'widget-explorador-archivos-col-acciones' + (accionesAlPasar ? ' widget-explorador-archivos-col-acciones-al-pasar' : '')}>{accionFila ? accionFila(puntoId) : null}</span>;
   }
 
   const migas = [

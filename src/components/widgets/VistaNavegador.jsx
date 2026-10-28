@@ -51,7 +51,7 @@ export default function VistaNavegador() {
     return (
       <button
         type="button"
-        className="widget-explorador-archivos-ir"
+        className="widget-vista-navegador-ir"
         onClick={(e) => { e.stopPropagation(); irAPunto(puntoId, punto.seccion); }}
         onDoubleClick={(e) => e.stopPropagation()}
       >
@@ -78,6 +78,7 @@ export default function VistaNavegador() {
         onRenombrarCarpeta={(c, rutaSub, nuevo) => renombrarCarpeta(c.puntoId, rutaSub, nuevo)}
         onRenombrarArchivo={renombrarArchivo}
         accionFila={accionFila}
+        accionesAlPasar
         herramientas={(
           <>
             {puedeEscribir && (

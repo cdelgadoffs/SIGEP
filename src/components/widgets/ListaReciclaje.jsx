@@ -9,6 +9,8 @@ import { useUI } from '../../context/UIContext.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import { etiquetaFecha } from '../../utils/fechas.js';
+import { motivoPapelera } from '../../utils/papelera.js';
+import ReintegrarPunto from './ReintegrarPunto.jsx';
 import '../../styles/widgets/ListaReciclaje.css';
 
 const MAX_RESUMEN = 140;
@@ -26,15 +28,9 @@ function fechaLocal(iso) {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-const MOTIVOS = {
-  pendiente: 'Pendiente en lista',
-  eliminado: 'Eliminado',
-  borrador: 'Borrador',
-};
-
 export default function ListaReciclaje() {
-  const { PAPELERA, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, restaurarPunto, eliminarPuntoBorrador, cargando } = useProyecto();
-  const { continuarBorrador, borradorRecienteId, borradorEnEdicionId, sidebar3Abierto } = useUI();
+  const { PAPELERA, SECCIONES_DOCUMENTO, REMITENTES, eliminarPuntoBorrador, cargando } = useProyecto();
+  const { borradorRecienteId, borradorEnEdicionId, sidebar3Abierto } = useUI();
   const [borradorAEliminar, setBorradorAEliminar] = useState(null);
   const [errorEliminar, setErrorEliminar] = useState(null);
   const { filtroReciclaje, ordenPapelera, cambiarAjuste } = useAjustesVisuales();
@@ -42,11 +38,7 @@ export default function ListaReciclaje() {
   const inicioRef = useRef(null);
   const itemsRef = useRef(new Map());
   const { puedeEscribir } = useAuth();
-  const [error, setError] = useState(null);
-  const [restaurandoId, setRestaurandoId] = useState(null);
 
-  const puedeRestaurar = puedeEscribir && !!sesionSeleccionada && !sesionFinalizada && !sesionSeleccionada.horaInicio;
-  const puedeContinuar = puedeEscribir && ['proxima', 'pendiente'].includes(sesionSeleccionada?.estado);
   const ordenada = ordenarPapelera(PAPELERA, ordenPapelera);
   const visibles = ordenada.filter((p) => filtroReciclaje === 'todos' || p.motivo === filtroReciclaje);
 
@@ -124,22 +116,11 @@ export default function ListaReciclaje() {
   }, []);
 
   function empezarArrastre(e, indice) {
-    if (e.button !== 0 || e.target.closest('button, a, input, textarea')) return;
+    if (e.button !== 0 || !e.currentTarget.contains(e.target) || e.target.closest('button, a, input, textarea')) return;
     e.preventDefault();
     inicioRef.current = { y: e.clientY, indice, ids: visibles.map((p) => p.id), activo: false };
   }
 
-  async function restaurar(id) {
-    setError(null);
-    setRestaurandoId(id);
-    try {
-      await restaurarPunto(id);
-    } catch (e) {
-      setError(e.mensaje || 'No se pudo reintegrar el punto.');
-    } finally {
-      setRestaurandoId(null);
-    }
-  }
 
   function faltantes(p) {
     const seccion = SECCIONES_DOCUMENTO.find((s) => s.id === p.seccion);
@@ -171,7 +152,6 @@ export default function ListaReciclaje() {
     <div className="widget-lista-reciclaje">
       <Scrollbar>
         <div className="widget-lista-reciclaje-contenido">
-          {error && <div className="widget-lista-reciclaje-error">{error}</div>}
           {visibles.length === 0 && (
             <div className="widget-lista-reciclaje-vacio">{cargando ? 'Cargando…' : 'No hay puntos en esta lista.'}</div>
           )}
@@ -186,20 +166,15 @@ export default function ListaReciclaje() {
               <div className="widget-lista-reciclaje-cabecera">
                 <div className="widget-lista-reciclaje-etiquetas">
                   <BadgeDinamico texto={p.remitente ? (REMITENTES.find((r) => r.id === p.remitente)?.nombre ?? p.remitente) : 'Sin remitente'} tono={p.remitente ? 'azul' : 'gris'} />
-                  <span className={`widget-lista-reciclaje-motivo widget-lista-reciclaje-motivo-${p.motivo}`}>{MOTIVOS[p.motivo] ?? MOTIVOS.pendiente}</span>
+                  <span className={`widget-lista-reciclaje-motivo widget-lista-reciclaje-motivo-${p.motivo}`}>{motivoPapelera(p.motivo).texto}</span>
                 </div>
                 {p.motivo === 'borrador' ? (
                   <div className="widget-lista-reciclaje-botones">
-                    <BotonIcono icono="ri-edit-line" ariaLabel="Continuar borrador" disabled={!puedeContinuar} onClick={() => continuarBorrador(p.id, p.seccion)} />
+                    <ReintegrarPunto punto={p} />
                     <BotonIcono icono="ri-delete-bin-line" ariaLabel="Eliminar borrador" disabled={!puedeEscribir} onClick={() => setBorradorAEliminar(p)} />
                   </div>
                 ) : (
-                  <BotonIcono
-                    icono="ri-arrow-go-back-line"
-                    ariaLabel="Reintegrar a la sesión"
-                    disabled={!puedeRestaurar || restaurandoId === p.id}
-                    onClick={() => restaurar(p.id)}
-                  />
+                  <ReintegrarPunto punto={p} />
                 )}
               </div>
               <span className="widget-lista-reciclaje-seccion">

@@ -3,3 +3,19 @@
   height: calc(95vh - 90px);
   margin: -16px;
 }
+.widget-vista-navegador-ir {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.widget-vista-navegador-ir:hover {
+  background: #e4e4e4;
+  border-color: #b5b5b5;
+}

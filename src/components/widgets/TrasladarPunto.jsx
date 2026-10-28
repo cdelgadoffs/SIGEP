@@ -5,7 +5,7 @@ import Checkbox from '../base/Checkbox.jsx';
 import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { nombreTipoSesion } from '../../utils/sesiones.js';
+import { etiquetaSesionCorta } from '../../utils/sesiones.js';
 import { tituloPunto } from '../../utils/puntos.js';
 import '../../styles/widgets/TrasladarPunto.css';
 
@@ -21,7 +21,6 @@ export default function TrasladarPunto({ punto }) {
     .filter((s) => s.id !== sesionActivaFecha && (s.estado === 'proxima' || s.estado === 'pendiente'))
     .sort((a, b) => (a.id < b.id ? -1 : 1))
     .slice(0, 3);
-  const etiquetaDe = (s) => `${nombreTipoSesion(s.tipo)} N° ${s.numeroSesion ?? '—'} · ${s.label}`;
   const elegida = proximas.find((s) => s.id === destino);
   const resumen = (punto.contenido || '').slice(0, 90).trim();
 
@@ -59,8 +58,8 @@ export default function TrasladarPunto({ punto }) {
           <div className="widget-trasladar-punto-selector">
             <ListaExpandible
               valorActual={destino}
-              etiquetaActual={elegida ? etiquetaDe(elegida) : 'No hay sesiones próximas disponibles'}
-              opciones={proximas.map((s) => ({ id: s.id, label: etiquetaDe(s) }))}
+              etiquetaActual={elegida ? etiquetaSesionCorta(elegida) : 'No hay sesiones próximas disponibles'}
+              opciones={proximas.map((s) => ({ id: s.id, label: etiquetaSesionCorta(s) }))}
               onSeleccionar={setDestino}
             />
           </div>
