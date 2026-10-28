@@ -75,6 +75,19 @@ export function carpetasDeSesion(puntos, sesion, sesiones = [], secciones = []) 
   return carpetas;
 }
 
+export function carpetasDePapelera(papelera, secciones = []) {
+  return papelera.map((punto) => {
+    const resumen = punto.nombreCarpeta || (secciones.find((x) => x.id === punto.seccion)?.requiereAcuerdo === false ? 'Informe' : 'Proyecto de acuerdo');
+    return {
+      id: punto.id,
+      nombre: nombreSeguro(resumen),
+      puntoId: punto.id,
+      puntoRef: punto.id,
+      archivos: entradasDe(punto),
+    };
+  });
+}
+
 export function contenidoDeNivel(carpeta, ruta) {
   const prefijo = ruta.length ? `${ruta.join('/')}/` : '';
   const subcarpetas = new Map();

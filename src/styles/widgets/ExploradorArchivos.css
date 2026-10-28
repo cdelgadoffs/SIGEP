@@ -1,0 +1,280 @@
+.widget-explorador-archivos {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 18px 28px 0;
+  box-sizing: border-box;
+  align-self: stretch;
+  flex: 1;
+  min-width: 0;
+  container-type: inline-size;
+}
+.widget-explorador-archivos {
+  outline: none;
+}
+.widget-explorador-archivos-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+.widget-explorador-archivos-herramientas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 10px;
+}
+.widget-explorador-archivos-herramientas-espacio {
+  flex: 1;
+}
+.widget-explorador-archivos-fila-seleccionada,
+.widget-explorador-archivos-fila-seleccionada:hover {
+  background: #e3ecff;
+}
+.widget-explorador-archivos-fila {
+  user-select: none;
+}
+.widget-explorador-archivos-migas {
+  display: flex;
+  align-items: center;
+  flex: 1 1 160px;
+  flex-wrap: wrap;
+  min-width: 0;
+  min-height: 34px;
+  font-size: 18px;
+}
+.widget-explorador-archivos-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 260px;
+  max-width: 100%;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  color: #777;
+}
+.widget-explorador-archivos-busqueda:focus-within {
+  border-color: #1a56db;
+}
+.widget-explorador-archivos-busqueda-entrada {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  color: #222;
+}
+.widget-explorador-archivos-busqueda-limpiar {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 16px;
+  cursor: pointer;
+}
+.widget-explorador-archivos-busqueda-limpiar:hover {
+  color: #1a1a1a;
+}
+.widget-explorador-archivos-origen {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #999;
+}
+.widget-explorador-archivos-miga-envoltorio {
+  display: inline-flex;
+  align-items: center;
+}
+.widget-explorador-archivos-separador {
+  margin: 0 2px;
+  color: #999;
+  font-size: 20px;
+}
+.widget-explorador-archivos-miga {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  color: #444;
+  cursor: pointer;
+}
+.widget-explorador-archivos-miga:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+.widget-explorador-archivos-miga-actual {
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: default;
+}
+.widget-explorador-archivos-encabezado {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e3e3e3;
+  font-size: 12px;
+  color: #777;
+}
+.widget-explorador-archivos-cuerpo {
+  flex: 1;
+  min-height: 0;
+}
+.widget-explorador-archivos-fila {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 12px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13.5px;
+  color: #222;
+  cursor: pointer;
+}
+.widget-explorador-archivos-fila:hover {
+  background: #f5f8ff;
+}
+.widget-explorador-archivos-col-nombre {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+.widget-explorador-archivos-col-fecha {
+  width: 130px;
+  flex-shrink: 0;
+  color: #666;
+}
+.widget-explorador-archivos-col-tamano {
+  width: 110px;
+  flex-shrink: 0;
+  color: #666;
+}
+.widget-explorador-archivos-col-acciones {
+  display: flex;
+  justify-content: flex-end;
+  width: 96px;
+  flex-shrink: 0;
+}
+.widget-explorador-archivos-ir {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  color: #333;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+}
+.widget-explorador-archivos-ir:hover {
+  background: #e4e4e4;
+  border-color: #b5b5b5;
+}
+.widget-explorador-archivos-fila:hover .widget-explorador-archivos-ir,
+.widget-explorador-archivos-fila-seleccionada .widget-explorador-archivos-ir,
+.widget-explorador-archivos-ir:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .widget-explorador-archivos-ir {
+    opacity: 1;
+  }
+}
+.widget-explorador-archivos-nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-explorador-archivos-icono-carpeta {
+  font-size: 22px;
+  color: #f2b01e;
+}
+.widget-explorador-archivos-fila-vacia,
+.widget-explorador-archivos-fila-vacia:hover {
+  background: transparent;
+  color: #aaa;
+  cursor: default;
+}
+.widget-explorador-archivos-fila-vacia .widget-explorador-archivos-icono-carpeta {
+  color: #c9c9c9;
+}
+.widget-explorador-archivos-fila-vacia .widget-explorador-archivos-col-tamano {
+  color: #bbb;
+}
+.widget-explorador-archivos-icono {
+  font-size: 20px;
+}
+.widget-explorador-archivos-icono-rojo { color: #c62828; }
+.widget-explorador-archivos-icono-azul { color: #1a56db; }
+.widget-explorador-archivos-icono-verde { color: #1e7d34; }
+.widget-explorador-archivos-icono-morado { color: #6a3fc1; }
+.widget-explorador-archivos-icono-gris { color: #777; }
+.widget-explorador-archivos-edicion {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+.widget-explorador-archivos-prefijo,
+.widget-explorador-archivos-extension {
+  flex-shrink: 0;
+  color: #666;
+}
+.widget-explorador-archivos-entrada {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid #1a56db;
+  border-radius: 3px;
+  font: inherit;
+  outline: none;
+}
+.widget-explorador-archivos-vacio {
+  padding: 40px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #999;
+}
+.widget-explorador-archivos-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #333;
+}
+.widget-explorador-archivos-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@container (max-width: 480px) {
+  .widget-explorador-archivos-col-fecha {
+    display: none;
+  }
+  .widget-explorador-archivos-col-acciones {
+    width: 80px;
+  }
+}
+
+@container (max-width: 360px) {
+  .widget-explorador-archivos-col-tamano {
+    display: none;
+  }
+}
+.widget-explorador-archivos-carpeta-azul .widget-explorador-archivos-icono-carpeta { color: #3b6fd4; }
+.widget-explorador-archivos-carpeta-naranja .widget-explorador-archivos-icono-carpeta { color: #f0a030; }
+.widget-explorador-archivos-carpeta-rojo .widget-explorador-archivos-icono-carpeta { color: #d9534f; }

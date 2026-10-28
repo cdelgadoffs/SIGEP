@@ -6,7 +6,7 @@ import {
   obtenerTodos, obtener, guardar, escribirVarios,
 } from './db.js';
 import {
-  usuarioActual, exigirEscritura, puedeVerConfidencial, puedeVerLista,
+  usuarioActual, exigirEscritura, exigirDescarga, puedeVerConfidencial, puedeVerLista,
   validarFechasISO, calcularEstados, validarCalendario, validarAsueto, generarFechasAnuales, enVacaciones,
   validarPunto, validarBorrador, normalizarPunto, validarNuevoNombreArchivo, validarNombreCarpeta, seccionParaLista,
   esPuntoFijo, analizarPuntoFijo, exigirNoFijo, exigirListaAbierta, validarVotacion, decorarPunto, engroseDePunto, generarPuntosFijos, ordenarPuntosDocumento, ocultarConfidencial,
@@ -1004,7 +1004,11 @@ export async function descargarArchivo(archivoId) {
   const registro = await obtener(STORE_ARCHIVOS, archivoId);
   if (!registro) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
   const punto = await obtener(STORE_PUNTOS, registro.puntoId);
-  if (!punto) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
+  if (!punto) {
+    if (!(await obtener(STORE_PAPELERA, registro.puntoId))) throw new ApiError('NO_ENCONTRADO', 'El archivo no existe.');
+    exigirDescarga();
+    return { nombre: registro.nombre, tipo: registro.tipo, blob: registro.blob };
+  }
   if (punto.confidencial && !puedeVerConfidencial()) {
     throw new ApiError('NO_AUTORIZADO', 'No tienes permiso para ver este archivo.');
   }
